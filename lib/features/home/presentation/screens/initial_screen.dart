@@ -45,13 +45,6 @@ class InitialScreen extends StatelessWidget {
               ),
               const SizedBox(height: AppDimensions.spacing12),
               AppButton.outlined(
-                label: 'Completar perfil',
-                icon: Icons.person_outline_rounded,
-                onPressed: () => context.pushNamed(RouteNames.completeProfile),
-                width: double.infinity,
-              ),
-              const SizedBox(height: AppDimensions.spacing12),
-              AppButton.outlined(
                 label: 'Explorar ofertas',
                 icon: Icons.work_outline_rounded,
                 onPressed: () => context.pushNamed(RouteNames.offers),
