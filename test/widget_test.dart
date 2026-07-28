@@ -1,28 +1,36 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:ocupa2/app/app.dart';
 import 'package:ocupa2/app/theme/app_theme.dart';
 import 'package:ocupa2/core/widgets/app_button.dart';
 import 'package:ocupa2/core/widgets/app_text_field.dart';
+import 'package:ocupa2/features/offers/data/providers/offers_data_providers.dart';
+import 'package:ocupa2/features/offers/domain/entities/job_type.dart';
+import 'package:ocupa2/features/offers/domain/entities/offer.dart';
+import 'package:ocupa2/features/offers/domain/entities/offer_location.dart';
+import 'package:ocupa2/features/offers/domain/entities/offer_payment.dart';
+import 'package:ocupa2/features/offers/domain/repositories/offers_repository.dart';
+import 'package:ocupa2/features/offers/presentation/pages/offers_screen.dart';
 
 void main() {
   testWidgets('App se construye correctamente', (tester) async {
-    await tester.pumpWidget(const Ocupa2App());
+    await tester.pumpWidget(_testApp());
     await tester.pumpAndSettle();
 
     expect(find.byType(MaterialApp), findsOneWidget);
   });
 
   testWidgets('La pantalla inicial muestra Ocupa2', (tester) async {
-    await tester.pumpWidget(const Ocupa2App());
+    await tester.pumpWidget(_testApp());
     await tester.pumpAndSettle();
 
     expect(find.text('Ocupa2'), findsOneWidget);
   });
 
   testWidgets('InitialScreen abre LoginPlaceholderScreen', (tester) async {
-    await tester.pumpWidget(const Ocupa2App());
+    await tester.pumpWidget(_testApp());
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('Ver login provisional'));
@@ -34,7 +42,7 @@ void main() {
   testWidgets('El boton Volver regresa correctamente a InitialScreen', (
     tester,
   ) async {
-    await tester.pumpWidget(const Ocupa2App());
+    await tester.pumpWidget(_testApp());
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('Ver login provisional'));
@@ -46,10 +54,8 @@ void main() {
     expect(find.text('Acceso a Ocupa2'), findsNothing);
   });
 
-  testWidgets('La pantalla de ofertas se construye sin error de locale', (
-    tester,
-  ) async {
-    await tester.pumpWidget(const Ocupa2App());
+  testWidgets('La ruta de ofertas abre OffersScreen', (tester) async {
+    await tester.pumpWidget(_testApp());
     await tester.pumpAndSettle();
 
     await tester.ensureVisible(find.text('Explorar ofertas'));
@@ -57,40 +63,29 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(tester.takeException(), isNull);
-    expect(find.text('Explorar ofertas'), findsOneWidget);
-    expect(find.text('22/07/2026'), findsOneWidget);
+    expect(find.byType(OffersScreen), findsOneWidget);
+    expect(find.text('Filtros'), findsOneWidget);
   });
 
-  testWidgets('Los chips permiten cambiar al estado de carga', (tester) async {
-    await tester.pumpWidget(const Ocupa2App());
+  testWidgets('OffersScreen carga datos del repositorio', (tester) async {
+    await tester.pumpWidget(_testApp());
     await tester.pumpAndSettle();
 
     await tester.ensureVisible(find.text('Explorar ofertas'));
     await tester.tap(find.text('Explorar ofertas'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Carga'));
-    await tester.pump();
 
-    expect(find.text('Estado de carga demostrativo.'), findsOneWidget);
-  });
-
-  testWidgets('Los chips permiten cambiar al estado vacío', (tester) async {
-    await tester.pumpWidget(const Ocupa2App());
-    await tester.pumpAndSettle();
-
-    await tester.ensureVisible(find.text('Explorar ofertas'));
-    await tester.tap(find.text('Explorar ofertas'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Vacío'));
-    await tester.pumpAndSettle();
-
-    expect(find.text('Sin ofertas para mostrar'), findsOneWidget);
+    expect(find.text('Chofer'), findsWidgets);
+    expect(
+      find.text('Se necesita chofer con disponibilidad inmediata.'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('La pantalla de perfil muestra los campos provisionales reales', (
     tester,
   ) async {
-    await tester.pumpWidget(const Ocupa2App());
+    await tester.pumpWidget(_testApp());
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('Completar perfil'));
@@ -159,4 +154,67 @@ void main() {
 
     expect(find.text('El correo es obligatorio'), findsOneWidget);
   });
+}
+
+Widget _testApp() {
+  return ProviderScope(
+    overrides: [
+      offersRepositoryProvider.overrideWithValue(_FakeOffersRepository()),
+    ],
+    child: const Ocupa2App(),
+  );
+}
+
+JobType _jobType() {
+  return JobType(
+    id: 'chofer-id',
+    key: 'chofer',
+    name: 'Chofer',
+    active: true,
+    customFields: const [],
+    createdAt: DateTime(2026),
+  );
+}
+
+Offer _offer() {
+  return Offer(
+    id: 'offer-id',
+    jobTypeKey: 'chofer',
+    jobTypeName: 'Chofer',
+    contractType: 'temporal',
+    description: 'Se necesita chofer con disponibilidad inmediata.',
+    address: 'Santo Domingo, República Dominicana',
+    location: const OfferLocation(lat: 18.4861, lng: -69.9312),
+    payment: const OfferPayment(
+      amount: 35000,
+      currency: 'DOP',
+      period: 'total',
+    ),
+    photo: 'string',
+    deadline: DateTime(2026, 8, 30),
+    customAnswers: const {},
+    questions: const [],
+    status: 'published',
+    applicantsCount: 1,
+    likesCount: 0,
+    createdAt: DateTime(2026, 7, 9),
+    updatedAt: DateTime(2026, 7, 9),
+    isIdentityRevealed: false,
+    likedByMe: false,
+  );
+}
+
+class _FakeOffersRepository implements OffersRepository {
+  @override
+  Future<List<JobType>> getJobTypes() async {
+    return [_jobType()];
+  }
+
+  @override
+  Future<List<Offer>> getOffers({
+    String? jobTypeKey,
+    String? contractType,
+  }) async {
+    return [_offer()];
+  }
 }

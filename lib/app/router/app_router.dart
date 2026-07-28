@@ -2,7 +2,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../features/auth/presentation/screens/login_placeholder_screen.dart';
 import '../../features/home/presentation/screens/initial_screen.dart';
-import '../../features/offers/presentation/screens/offers_placeholder_screen.dart';
+import '../../features/offers/presentation/pages/offers_screen.dart';
 import '../../features/profile/presentation/screens/complete_profile_placeholder_screen.dart';
 import 'route_names.dart';
 
@@ -27,7 +27,7 @@ GoRouter get appRouter => GoRouter(
     GoRoute(
       path: RouteNames.offersPath,
       name: RouteNames.offers,
-      builder: (context, state) => const OffersPlaceholderScreen(),
+      builder: (context, state) => const OffersScreen(),
     ),
   ],
 );
