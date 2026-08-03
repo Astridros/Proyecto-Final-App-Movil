@@ -2,12 +2,20 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ocupa2/core/errors/api_exception.dart';
+import 'package:ocupa2/core/errors/conflict_exception.dart';
 import 'package:ocupa2/core/network/api_client.dart';
 import 'package:ocupa2/features/offers/data/datasources/offers_remote_datasource.dart';
+import 'package:ocupa2/features/offers/data/models/apply_offer_answer_model.dart';
+import 'package:ocupa2/features/offers/data/models/apply_offer_request_model.dart';
+import 'package:ocupa2/features/offers/data/models/apply_offer_result_model.dart';
 import 'package:ocupa2/features/offers/data/models/api_list_response.dart';
 import 'package:ocupa2/features/offers/data/models/job_type_model.dart';
 import 'package:ocupa2/features/offers/data/models/offer_model.dart';
+import 'package:ocupa2/features/offers/data/models/offer_question_model.dart';
 import 'package:ocupa2/features/offers/data/providers/offers_data_providers.dart';
+import 'package:ocupa2/features/offers/data/repositories/offers_repository_impl.dart';
+import 'package:ocupa2/features/offers/domain/entities/apply_offer_answer.dart';
+import 'package:ocupa2/features/offers/domain/entities/apply_offer_result.dart';
 import 'package:ocupa2/features/offers/domain/entities/job_type.dart';
 import 'package:ocupa2/features/offers/domain/entities/offer.dart';
 import 'package:ocupa2/features/offers/domain/repositories/offers_repository.dart';
@@ -196,6 +204,91 @@ void main() {
     });
   });
 
+  group('OfferQuestionModel', () {
+    test('OfferQuestion sin options', () {
+      final question = OfferQuestionModel.fromJson({
+        'id': 'q1',
+        'label': '¿Tienes experiencia?',
+        'type': 'text',
+        'required': true,
+      });
+
+      expect(question.options, isEmpty);
+    });
+
+    test('OfferQuestion con options', () {
+      final question = OfferQuestionModel.fromJson({
+        'id': 'q1',
+        'label': 'Turno',
+        'type': 'select',
+        'required': true,
+        'options': ['Mañana', 'Tarde'],
+      });
+
+      expect(question.options, ['Mañana', 'Tarde']);
+    });
+
+    test('ignora opciones no String', () {
+      final question = OfferQuestionModel.fromJson({
+        'id': 'q1',
+        'label': 'Turno',
+        'type': 'select',
+        'required': true,
+        'options': ['Mañana', 2, null, 'Tarde'],
+      });
+
+      expect(question.options, ['Mañana', 'Tarde']);
+    });
+  });
+
+  group('ApplyOffer models', () {
+    test('serialización de ApplyOfferAnswer', () {
+      const answer = ApplyOfferAnswerModel(questionId: 'q1', value: 'Sí');
+
+      expect(answer.toJson(), {'questionId': 'q1', 'value': 'Sí'});
+    });
+
+    test('serialización exacta del request', () {
+      const request = ApplyOfferRequestModel(
+        comment: 'Ejemplo',
+        answers: [ApplyOfferAnswer(questionId: 'q1', value: 'Respuesta')],
+      );
+
+      expect(request.toJson(), {
+        'comment': 'Ejemplo',
+        'answers': [
+          {'questionId': 'q1', 'value': 'Respuesta'},
+        ],
+      });
+    });
+
+    test('answers vacías', () {
+      const request = ApplyOfferRequestModel(comment: 'Ejemplo', answers: []);
+
+      expect(request.toJson(), {'comment': 'Ejemplo', 'answers': []});
+    });
+
+    test('parseo de resultado id/status', () {
+      final result = ApplyOfferResultModel.fromApiResponse({
+        'ok': true,
+        'data': {'id': 'application-id', 'status': 'applied'},
+      });
+
+      expect(result.id, 'application-id');
+      expect(result.status, 'applied');
+    });
+
+    test('resultado sin id produce error', () {
+      expect(
+        () => ApplyOfferResultModel.fromApiResponse({
+          'ok': true,
+          'data': {'status': 'applied'},
+        }),
+        throwsA(isA<ApiException>()),
+      );
+    });
+  });
+
   group('OffersRemoteDataSource', () {
     test('query sin filtros no envía parámetros vacíos', () async {
       final client = _TestApiClient({'ok': true, 'data': []});
@@ -237,6 +330,127 @@ void main() {
         'jobTypeKey': 'chofer',
         'contractType': 'temporal',
       });
+    });
+
+    test('GET usa /offers/{id}', () async {
+      final client = _TestApiClient({'ok': true, 'data': _offerJson()});
+      final dataSource = OffersRemoteDataSourceImpl(client.apiClient);
+
+      await dataSource.getOfferById(' offer-id ');
+
+      expect(client.lastOptions.method, 'GET');
+      expect(client.lastOptions.path, '/offers/offer-id');
+    });
+
+    test('GET parsea Offer existente', () async {
+      final client = _TestApiClient({'ok': true, 'data': _offerJson()});
+      final dataSource = OffersRemoteDataSourceImpl(client.apiClient);
+
+      final offer = await dataSource.getOfferById('offer-id');
+
+      expect(offer, isA<Offer>());
+      expect(offer.jobTypeName, 'Chofer');
+    });
+
+    test('ID vacío produce error claro', () {
+      final client = _TestApiClient({'ok': true, 'data': _offerJson()});
+      final dataSource = OffersRemoteDataSourceImpl(client.apiClient);
+
+      expect(
+        () => dataSource.getOfferById('   '),
+        throwsA(
+          isA<ApiException>().having(
+            (error) => error.message,
+            'message',
+            'El campo "id" es requerido.',
+          ),
+        ),
+      );
+    });
+
+    test('POST usa /offers/{id}/apply', () async {
+      final client = _TestApiClient(_applyResultJson());
+      final dataSource = OffersRemoteDataSourceImpl(client.apiClient);
+
+      await dataSource.applyToOffer(
+        offerId: ' offer-id ',
+        comment: 'Ejemplo',
+        answers: const [],
+      );
+
+      expect(client.lastOptions.method, 'POST');
+      expect(client.lastOptions.path, '/offers/offer-id/apply');
+    });
+
+    test('POST envía body correcto', () async {
+      final client = _TestApiClient(_applyResultJson());
+      final dataSource = OffersRemoteDataSourceImpl(client.apiClient);
+
+      await dataSource.applyToOffer(
+        offerId: 'offer-id',
+        comment: 'Ejemplo',
+        answers: const [ApplyOfferAnswer(questionId: 'q1', value: 'Respuesta')],
+      );
+
+      expect(client.lastOptions.data, {
+        'comment': 'Ejemplo',
+        'answers': [
+          {'questionId': 'q1', 'value': 'Respuesta'},
+        ],
+      });
+    });
+
+    test('Error 409 conserva “Ya aplicaste a esta oferta.”', () async {
+      final client = _TestApiClient.conflict({
+        'ok': false,
+        'error': 'Ya aplicaste a esta oferta.',
+      });
+      final dataSource = OffersRemoteDataSourceImpl(client.apiClient);
+
+      expect(
+        () => dataSource.applyToOffer(
+          offerId: 'offer-id',
+          comment: 'Ejemplo',
+          answers: const [],
+        ),
+        throwsA(
+          isA<ConflictException>().having(
+            (error) => error.message,
+            'message',
+            'Ya aplicaste a esta oferta.',
+          ),
+        ),
+      );
+    });
+  });
+
+  group('OffersRepository', () {
+    test('Repository delega getOfferById', () async {
+      final dataSource = _FakeOffersRemoteDataSource();
+      final repository = OffersRepositoryImpl(dataSource);
+
+      final offer = await repository.getOfferById('offer-id');
+
+      expect(dataSource.getOfferByIdCalls, ['offer-id']);
+      expect(offer, same(dataSource.offer));
+    });
+
+    test('Repository delega applyToOffer', () async {
+      final dataSource = _FakeOffersRemoteDataSource();
+      final repository = OffersRepositoryImpl(dataSource);
+      const answers = [ApplyOfferAnswer(questionId: 'q1', value: 'Respuesta')];
+
+      final result = await repository.applyToOffer(
+        offerId: 'offer-id',
+        comment: 'Ejemplo',
+        answers: answers,
+      );
+
+      expect(
+        dataSource.applyCalls.single,
+        _ApplyCall(offerId: 'offer-id', comment: 'Ejemplo', answers: answers),
+      );
+      expect(result, same(dataSource.result));
     });
   });
 
@@ -321,8 +535,15 @@ Map<String, Object?> _offerJson({
   };
 }
 
+Map<String, Object?> _applyResultJson() {
+  return {
+    'ok': true,
+    'data': {'id': 'application-id', 'status': 'applied'},
+  };
+}
+
 class _TestApiClient {
-  _TestApiClient(this.responseData) {
+  _TestApiClient(this.responseData) : conflictData = null {
     dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) {
@@ -339,11 +560,105 @@ class _TestApiClient {
     );
   }
 
+  _TestApiClient.conflict(this.conflictData) : responseData = null {
+    dio.interceptors.add(
+      InterceptorsWrapper(
+        onRequest: (options, handler) {
+          lastOptions = options;
+          handler.reject(
+            DioException(
+              requestOptions: options,
+              response: Response<Object?>(
+                requestOptions: options,
+                statusCode: 409,
+                data: conflictData,
+              ),
+              type: DioExceptionType.badResponse,
+            ),
+          );
+        },
+      ),
+    );
+  }
+
   final Object? responseData;
+  final Object? conflictData;
   final Dio dio = Dio(BaseOptions(baseUrl: 'https://example.test'));
   late RequestOptions lastOptions;
 
   ApiClient get apiClient => ApiClient(dio);
+}
+
+class _FakeOffersRemoteDataSource implements OffersRemoteDataSource {
+  final offer = OfferModel.fromJson(_offerJson());
+  final result = ApplyOfferResultModel.fromApiResponse(_applyResultJson());
+  final getOfferByIdCalls = <String>[];
+  final applyCalls = <_ApplyCall>[];
+
+  @override
+  Future<List<JobType>> getJobTypes() async {
+    return const [];
+  }
+
+  @override
+  Future<List<Offer>> getOffers({String? jobTypeKey, String? contractType}) {
+    return Future.value(const []);
+  }
+
+  @override
+  Future<Offer> getOfferById(String id) async {
+    getOfferByIdCalls.add(id);
+    return offer;
+  }
+
+  @override
+  Future<ApplyOfferResult> applyToOffer({
+    required String offerId,
+    required String comment,
+    required List<ApplyOfferAnswer> answers,
+  }) async {
+    applyCalls.add(
+      _ApplyCall(offerId: offerId, comment: comment, answers: answers),
+    );
+    return result;
+  }
+}
+
+class _ApplyCall {
+  const _ApplyCall({
+    required this.offerId,
+    required this.comment,
+    required this.answers,
+  });
+
+  final String offerId;
+  final String comment;
+  final List<ApplyOfferAnswer> answers;
+
+  @override
+  bool operator ==(Object other) {
+    return other is _ApplyCall &&
+        other.offerId == offerId &&
+        other.comment == comment &&
+        _listEquals(other.answers, answers);
+  }
+
+  @override
+  int get hashCode => Object.hash(offerId, comment, Object.hashAll(answers));
+}
+
+bool _listEquals<T>(List<T> a, List<T> b) {
+  if (a.length != b.length) {
+    return false;
+  }
+
+  for (var index = 0; index < a.length; index++) {
+    if (a[index] != b[index]) {
+      return false;
+    }
+  }
+
+  return true;
 }
 
 class _FakeOffersRepository implements OffersRepository {
@@ -358,5 +673,19 @@ class _FakeOffersRepository implements OffersRepository {
     String? contractType,
   }) async {
     return const [];
+  }
+
+  @override
+  Future<Offer> getOfferById(String id) async {
+    return OfferModel.fromJson(_offerJson());
+  }
+
+  @override
+  Future<ApplyOfferResult> applyToOffer({
+    required String offerId,
+    required String comment,
+    required List<ApplyOfferAnswer> answers,
+  }) async {
+    return ApplyOfferResultModel.fromApiResponse(_applyResultJson());
   }
 }

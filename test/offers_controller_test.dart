@@ -7,6 +7,8 @@ import 'package:ocupa2/core/errors/api_exception.dart';
 import 'package:ocupa2/core/errors/validation_exception.dart';
 import 'package:ocupa2/features/offers/data/providers/offers_data_providers.dart';
 import 'package:ocupa2/features/offers/domain/constants/contract_types.dart';
+import 'package:ocupa2/features/offers/domain/entities/apply_offer_answer.dart';
+import 'package:ocupa2/features/offers/domain/entities/apply_offer_result.dart';
 import 'package:ocupa2/features/offers/domain/entities/job_type.dart';
 import 'package:ocupa2/features/offers/domain/entities/offer.dart';
 import 'package:ocupa2/features/offers/domain/entities/offer_location.dart';
@@ -426,6 +428,20 @@ class _FakeOffersRepository implements OffersRepository {
     }
 
     return offers;
+  }
+
+  @override
+  Future<Offer> getOfferById(String id) async {
+    return offers.first;
+  }
+
+  @override
+  Future<ApplyOfferResult> applyToOffer({
+    required String offerId,
+    required String comment,
+    required List<ApplyOfferAnswer> answers,
+  }) async {
+    return const ApplyOfferResult(id: 'application-id', status: 'applied');
   }
 }
 
