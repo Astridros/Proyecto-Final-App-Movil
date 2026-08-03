@@ -13,6 +13,16 @@ import 'package:ocupa2/core/storage/secure_storage_provider.dart';
 import 'package:ocupa2/core/storage/token_storage.dart';
 import 'package:ocupa2/core/widgets/app_button.dart';
 import 'package:ocupa2/core/widgets/app_text_field.dart';
+import 'package:ocupa2/features/auth/data/providers/auth_data_providers.dart';
+import 'package:ocupa2/features/auth/domain/entities/auth_session_result.dart';
+import 'package:ocupa2/features/auth/domain/repositories/auth_repository.dart';
+import 'package:ocupa2/features/auth/presentation/pages/forgot_password_screen.dart';
+import 'package:ocupa2/features/auth/presentation/pages/login_screen.dart';
+import 'package:ocupa2/features/auth/presentation/pages/register_screen.dart';
+import 'package:ocupa2/features/auth/presentation/providers/auth_session_providers.dart';
+import 'package:ocupa2/features/change_password/data/providers/change_password_data_providers.dart';
+import 'package:ocupa2/features/change_password/domain/repositories/change_password_repository.dart';
+import 'package:ocupa2/features/change_password/presentation/pages/change_password_screen.dart';
 import 'package:ocupa2/features/offers/data/providers/offers_data_providers.dart';
 import 'package:ocupa2/features/offers/domain/entities/job_type.dart';
 import 'package:ocupa2/features/offers/domain/entities/offer.dart';
@@ -33,30 +43,381 @@ void main() {
     expect(find.byType(MaterialApp), findsOneWidget);
   });
 
-  testWidgets('La pantalla inicial muestra Ocupa2', (tester) async {
+  testWidgets('/login muestra LoginScreen real', (tester) async {
     await tester.pumpWidget(_testApp());
     await tester.pumpAndSettle();
 
-    expect(find.text('Ocupa2'), findsOneWidget);
+    expect(find.byType(LoginScreen), findsOneWidget);
+    expect(find.text('Iniciar sesión'), findsOneWidget);
+    expect(find.text('Acceso a Ocupa2'), findsNothing);
   });
 
-  testWidgets('El acceso permanente Completar perfil no aparece', (
+  testWidgets('Login abre Registro', (tester) async {
+    await tester.pumpWidget(_testApp());
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('¿No tienes cuenta? Regístrate'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(RegisterScreen), findsOneWidget);
+    expect(find.text('Crear cuenta'), findsOneWidget);
+  });
+
+  testWidgets('Login abre Recuperar contraseña', (tester) async {
+    await tester.pumpWidget(_testApp());
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('¿Olvidaste tu contraseña?'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(ForgotPasswordScreen), findsOneWidget);
+    expect(find.text('Recuperar contraseña'), findsOneWidget);
+  });
+
+  testWidgets('Registro vuelve a Login', (tester) async {
+    await tester.pumpWidget(_testApp());
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('¿No tienes cuenta? Regístrate'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('¿Ya tienes cuenta? Inicia sesión'));
+    await tester.tap(find.text('¿Ya tienes cuenta? Inicia sesión'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(LoginScreen), findsOneWidget);
+    expect(find.byType(RegisterScreen), findsNothing);
+  });
+
+  testWidgets('Recuperación vuelve a Login', (tester) async {
+    await tester.pumpWidget(_testApp());
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('¿Olvidaste tu contraseña?'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Volver al login'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(LoginScreen), findsOneWidget);
+    expect(find.byType(ForgotPasswordScreen), findsNothing);
+  });
+
+  testWidgets('Usuario sin token no accede a rutas privadas', (tester) async {
+    await tester.pumpWidget(_testApp());
+    await tester.pumpAndSettle();
+
+    GoRouter.of(
+      tester.element(find.byType(LoginScreen)),
+    ).go(RouteNames.offersPath);
+    await tester.pumpAndSettle();
+
+    expect(find.byType(LoginScreen), findsOneWidget);
+    expect(find.byType(OffersScreen), findsNothing);
+  });
+
+  testWidgets('Usuario sin token no accede a change-password', (tester) async {
+    await tester.pumpWidget(_testApp());
+    await tester.pumpAndSettle();
+
+    GoRouter.of(
+      tester.element(find.byType(LoginScreen)),
+    ).go(RouteNames.changePasswordPath);
+    await tester.pumpAndSettle();
+
+    expect(find.byType(LoginScreen), findsOneWidget);
+    expect(find.byType(ChangePasswordScreen), findsNothing);
+  });
+
+  testWidgets('Usuario sin token puede abrir las tres rutas públicas', (
     tester,
   ) async {
     await tester.pumpWidget(_testApp());
     await tester.pumpAndSettle();
 
-    expect(find.text('Completar perfil'), findsNothing);
+    final router = GoRouter.of(tester.element(find.byType(LoginScreen)));
+    expect(find.byType(LoginScreen), findsOneWidget);
+
+    router.go(RouteNames.registerPath);
+    await tester.pumpAndSettle();
+    expect(find.byType(RegisterScreen), findsOneWidget);
+
+    router.go(RouteNames.forgotPasswordPath);
+    await tester.pumpAndSettle();
+    expect(find.byType(ForgotPasswordScreen), findsOneWidget);
+
+    router.go(RouteNames.loginPath);
+    await tester.pumpAndSettle();
+    expect(find.byType(LoginScreen), findsOneWidget);
   });
 
-  testWidgets('InitialScreen abre LoginPlaceholderScreen', (tester) async {
+  testWidgets(
+    'Usuario autenticado con perfil incompleto va a complete-profile',
+    (tester) async {
+      final profileRepository = _FakeProfileRepository();
+      await tester.pumpWidget(
+        _testApp(profileRepository: profileRepository, hasToken: true),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byType(CompleteProfileScreen), findsOneWidget);
+      expect(profileRepository.getProfileCalls, 1);
+    },
+  );
+
+  testWidgets('Perfil incompleto no puede volver a rutas públicas', (
+    tester,
+  ) async {
+    await tester.pumpWidget(_testApp(hasToken: true));
+    await tester.pumpAndSettle();
+
+    GoRouter.of(
+      tester.element(find.byType(CompleteProfileScreen)),
+    ).go(RouteNames.loginPath);
+    await tester.pumpAndSettle();
+
+    expect(find.byType(CompleteProfileScreen), findsOneWidget);
+    expect(find.byType(LoginScreen), findsNothing);
+  });
+
+  testWidgets('Perfil incompleto no puede abrir change-password', (
+    tester,
+  ) async {
+    await tester.pumpWidget(_testApp(hasToken: true));
+    await tester.pumpAndSettle();
+
+    GoRouter.of(
+      tester.element(find.byType(CompleteProfileScreen)),
+    ).go(RouteNames.changePasswordPath);
+    await tester.pumpAndSettle();
+
+    expect(find.byType(CompleteProfileScreen), findsOneWidget);
+    expect(find.byType(ChangePasswordScreen), findsNothing);
+  });
+
+  testWidgets(
+    'Usuario autenticado con perfil completo entra a ruta principal',
+    (tester) async {
+      await tester.pumpWidget(_testApp(hasToken: true, profileCompleted: true));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Base provisional'), findsOneWidget);
+      expect(find.byType(LoginScreen), findsNothing);
+      expect(find.text('Iniciar sesión'), findsNothing);
+    },
+  );
+
+  testWidgets('Perfil completo puede acceder a change-password', (
+    tester,
+  ) async {
+    await tester.pumpWidget(_testApp(hasToken: true, profileCompleted: true));
+    await tester.pumpAndSettle();
+
+    GoRouter.of(
+      tester.element(find.text('Ocupa2')),
+    ).go(RouteNames.changePasswordPath);
+    await tester.pumpAndSettle();
+
+    expect(find.byType(ChangePasswordScreen), findsOneWidget);
+    expect(find.text('Cambiar contraseña'), findsWidgets);
+  });
+
+  testWidgets('El botón Cambiar contraseña aparece en InitialScreen', (
+    tester,
+  ) async {
+    await tester.pumpWidget(_testApp(hasToken: true, profileCompleted: true));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Cambiar contraseña'), findsOneWidget);
+  });
+
+  testWidgets('El botón Cambiar contraseña navega correctamente', (
+    tester,
+  ) async {
+    await tester.pumpWidget(_testApp(hasToken: true, profileCompleted: true));
+    await tester.pumpAndSettle();
+
+    await tester.ensureVisible(find.text('Cambiar contraseña'));
+    await tester.tap(find.text('Cambiar contraseña'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(ChangePasswordScreen), findsOneWidget);
+  });
+
+  testWidgets('El botón de regreso funciona', (tester) async {
+    await tester.pumpWidget(_testApp(hasToken: true, profileCompleted: true));
+    await tester.pumpAndSettle();
+
+    await tester.ensureVisible(find.text('Cambiar contraseña'));
+    await tester.tap(find.text('Cambiar contraseña'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Volver'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Base provisional'), findsOneWidget);
+    expect(find.byType(ChangePasswordScreen), findsNothing);
+  });
+
+  testWidgets('Un cambio exitoso mantiene la sesión activa', (tester) async {
+    await tester.pumpWidget(_testApp(hasToken: true, profileCompleted: true));
+    await tester.pumpAndSettle();
+
+    await tester.ensureVisible(find.text('Cambiar contraseña'));
+    await tester.tap(find.text('Cambiar contraseña'));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Nueva contraseña'),
+      'NuevaClave123',
+    );
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Confirmar nueva contraseña'),
+      'NuevaClave123',
+    );
+    await tester.tap(find.text('Cambiar contraseña').last);
+    await tester.pumpAndSettle();
+
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(ChangePasswordScreen)),
+    );
+    expect(
+      container.read(authSessionControllerProvider).isAuthenticated,
+      isTrue,
+    );
+    expect(find.text('Contraseña actualizada correctamente.'), findsOneWidget);
+  });
+
+  testWidgets(
+    'Perfil completo no puede volver a login, registro ni recuperación',
+    (tester) async {
+      await tester.pumpWidget(_testApp(hasToken: true, profileCompleted: true));
+      await tester.pumpAndSettle();
+
+      final router = GoRouter.of(tester.element(find.text('Ocupa2')));
+
+      router.go(RouteNames.loginPath);
+      await tester.pumpAndSettle();
+      expect(find.text('Base provisional'), findsOneWidget);
+      expect(find.byType(LoginScreen), findsNothing);
+
+      router.go(RouteNames.registerPath);
+      await tester.pumpAndSettle();
+      expect(find.text('Base provisional'), findsOneWidget);
+      expect(find.byType(RegisterScreen), findsNothing);
+
+      router.go(RouteNames.forgotPasswordPath);
+      await tester.pumpAndSettle();
+      expect(find.text('Base provisional'), findsOneWidget);
+      expect(find.byType(ForgotPasswordScreen), findsNothing);
+    },
+  );
+
+  testWidgets(
+    'Login exitoso con profileCompleted false redirige a completar perfil',
+    (tester) async {
+      await tester.pumpWidget(
+        _testApp(
+          authRepository: _FakeAuthRepository(
+            loginResult: _sessionResult(profileCompleted: false),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await _fillLogin(tester);
+      await tester.tap(find.text('Entrar'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(CompleteProfileScreen), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'Login exitoso con profileCompleted true redirige al flujo principal',
+    (tester) async {
+      await tester.pumpWidget(
+        _testApp(
+          authRepository: _FakeAuthRepository(
+            loginResult: _sessionResult(profileCompleted: true),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await _fillLogin(tester);
+      await tester.tap(find.text('Entrar'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Base provisional'), findsOneWidget);
+      expect(find.byType(LoginScreen), findsNothing);
+    },
+  );
+
+  testWidgets('Registro exitoso respeta profileCompleted', (tester) async {
+    await tester.pumpWidget(
+      _testApp(
+        authRepository: _FakeAuthRepository(
+          registerResult: _sessionResult(profileCompleted: false),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('¿No tienes cuenta? Regístrate'));
+    await tester.pumpAndSettle();
+    await _fillRegister(tester);
+    await tester.tap(find.text('Registrarme'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(CompleteProfileScreen), findsOneWidget);
+  });
+
+  testWidgets('No existen loops de redirección', (tester) async {
+    await tester.pumpWidget(_testApp(hasToken: true, profileCompleted: true));
+    await tester.pumpAndSettle();
+
+    GoRouter.of(tester.element(find.text('Ocupa2'))).go(RouteNames.loginPath);
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    expect(find.text('Base provisional'), findsOneWidget);
+  });
+
+  testWidgets('No hay loops al abrir change-password', (tester) async {
+    await tester.pumpWidget(_testApp(hasToken: true, profileCompleted: true));
+    await tester.pumpAndSettle();
+
+    GoRouter.of(
+      tester.element(find.text('Ocupa2')),
+    ).go(RouteNames.changePasswordPath);
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    expect(find.byType(ChangePasswordScreen), findsOneWidget);
+  });
+
+  testWidgets('LoginPlaceholderScreen ya no se utiliza', (tester) async {
     await tester.pumpWidget(_testApp());
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Ver login provisional'));
+    expect(find.byType(LoginScreen), findsOneWidget);
+    expect(find.text('Acceso a Ocupa2'), findsNothing);
+    expect(
+      find.text('Vista temporal para validar campos y botones.'),
+      findsNothing,
+    );
+  });
+
+  testWidgets('Navegación no acumula múltiples pantallas Login', (
+    tester,
+  ) async {
+    await tester.pumpWidget(_testApp());
     await tester.pumpAndSettle();
 
-    expect(find.text('Acceso a Ocupa2'), findsOneWidget);
+    await tester.tap(find.text('¿No tienes cuenta? Regístrate'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('¿Ya tienes cuenta? Inicia sesión'));
+    await tester.tap(find.text('¿Ya tienes cuenta? Inicia sesión'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(LoginScreen), findsOneWidget);
   });
 
   testWidgets('Usuario autenticado ve loading mientras carga GET me', (
@@ -85,31 +446,17 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Base provisional'), findsOneWidget);
+    expect(find.byType(LoginScreen), findsOneWidget);
     expect(find.text('Validando sesión...'), findsNothing);
   });
 
-  testWidgets('El boton Volver regresa correctamente a InitialScreen', (
+  testWidgets('La ruta de ofertas abre OffersScreen para perfil completo', (
     tester,
   ) async {
-    await tester.pumpWidget(_testApp());
+    await tester.pumpWidget(_testApp(hasToken: true, profileCompleted: true));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Ver login provisional'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Volver al inicio'));
-    await tester.pumpAndSettle();
-
-    expect(find.text('Base provisional'), findsOneWidget);
-    expect(find.text('Acceso a Ocupa2'), findsNothing);
-  });
-
-  testWidgets('La ruta de ofertas abre OffersScreen', (tester) async {
-    await tester.pumpWidget(_testApp());
-    await tester.pumpAndSettle();
-
-    await tester.ensureVisible(find.text('Explorar ofertas'));
-    await tester.tap(find.text('Explorar ofertas'));
+    GoRouter.of(tester.element(find.text('Ocupa2'))).go(RouteNames.offersPath);
     await tester.pumpAndSettle();
 
     expect(tester.takeException(), isNull);
@@ -118,11 +465,10 @@ void main() {
   });
 
   testWidgets('OffersScreen carga datos del repositorio', (tester) async {
-    await tester.pumpWidget(_testApp());
+    await tester.pumpWidget(_testApp(hasToken: true, profileCompleted: true));
     await tester.pumpAndSettle();
 
-    await tester.ensureVisible(find.text('Explorar ofertas'));
-    await tester.tap(find.text('Explorar ofertas'));
+    GoRouter.of(tester.element(find.text('Ocupa2'))).go(RouteNames.offersPath);
     await tester.pumpAndSettle();
 
     expect(find.text('Chofer'), findsWidgets);
@@ -130,103 +476,6 @@ void main() {
       find.text('Se necesita chofer con disponibilidad inmediata.'),
       findsOneWidget,
     );
-  });
-
-  testWidgets(
-    'profileCompleted false exige CompleteProfileScreen y desbloquea al guardar',
-    (tester) async {
-      final profileRepository = _FakeProfileRepository();
-      await tester.pumpWidget(
-        _testApp(profileRepository: profileRepository, hasToken: true),
-      );
-      await tester.pumpAndSettle();
-
-      expect(find.byType(CompleteProfileScreen), findsOneWidget);
-      expect(profileRepository.getProfileCalls, 1);
-      expect(find.text('Astrid'), findsWidgets);
-      expect(find.text('Diaz'), findsWidgets);
-      expect(find.text('00112345678'), findsWidgets);
-
-      expect(find.text('Cédula'), findsOneWidget);
-      expect(find.text('Nombre'), findsOneWidget);
-      expect(find.text('Apellido'), findsOneWidget);
-      expect(find.text('Género'), findsOneWidget);
-      expect(find.text('Fecha de nacimiento'), findsOneWidget);
-
-      await tester.enterText(
-        find.widgetWithText(TextFormField, 'Nombre'),
-        'Ana',
-      );
-      await tester.enterText(
-        find.widgetWithText(TextFormField, 'Apellido'),
-        'Perez',
-      );
-      await tester.enterText(
-        find.widgetWithText(TextFormField, 'Cédula'),
-        '40212345678',
-      );
-      await tester.ensureVisible(find.text('Guardar perfil'));
-      await tester.tap(find.text('Guardar perfil'));
-      await tester.pumpAndSettle();
-
-      expect(profileRepository.updateProfileCalls, 1);
-      expect(profileRepository.profile.profileCompleted, isTrue);
-      await tester.pumpAndSettle();
-
-      expect(find.byType(CompleteProfileScreen), findsNothing);
-      expect(find.text('Base provisional'), findsOneWidget);
-      expect(find.text('Completar perfil'), findsNothing);
-    },
-  );
-
-  testWidgets('profileCompleted false no puede abrir rutas normales', (
-    tester,
-  ) async {
-    final profileRepository = _FakeProfileRepository();
-    await tester.pumpWidget(
-      _testApp(profileRepository: profileRepository, hasToken: true),
-    );
-    await tester.pumpAndSettle();
-
-    GoRouter.of(
-      tester.element(find.byType(CompleteProfileScreen)),
-    ).go(RouteNames.offersPath);
-    await tester.pumpAndSettle();
-
-    expect(find.byType(CompleteProfileScreen), findsOneWidget);
-    expect(find.byType(OffersScreen), findsNothing);
-  });
-
-  testWidgets('profileCompleted true entra a la ruta principal', (
-    tester,
-  ) async {
-    final profileRepository = _FakeProfileRepository(profileCompleted: true);
-    await tester.pumpWidget(
-      _testApp(profileRepository: profileRepository, hasToken: true),
-    );
-    await tester.pumpAndSettle();
-
-    expect(find.text('Base provisional'), findsOneWidget);
-    expect(find.byType(CompleteProfileScreen), findsNothing);
-    expect(find.text('Completar perfil'), findsNothing);
-  });
-
-  testWidgets('profileCompleted true no es redirigido a complete profile', (
-    tester,
-  ) async {
-    final profileRepository = _FakeProfileRepository(profileCompleted: true);
-    await tester.pumpWidget(
-      _testApp(profileRepository: profileRepository, hasToken: true),
-    );
-    await tester.pumpAndSettle();
-
-    GoRouter.of(
-      tester.element(find.text('Ocupa2')),
-    ).go(RouteNames.completeProfilePath);
-    await tester.pumpAndSettle();
-
-    expect(find.text('Base provisional'), findsOneWidget);
-    expect(find.byType(CompleteProfileScreen), findsNothing);
   });
 
   testWidgets('AppButton outlined se construye correctamente', (tester) async {
@@ -258,7 +507,7 @@ void main() {
     expect(find.text('Guardar'), findsNothing);
   });
 
-  testWidgets('AppTextField muestra error de validaciÃ³n', (tester) async {
+  testWidgets('AppTextField muestra error de validación', (tester) async {
     final formKey = GlobalKey<FormState>();
 
     await tester.pumpWidget(
@@ -288,20 +537,79 @@ void main() {
 }
 
 Widget _testApp({
+  _FakeAuthRepository? authRepository,
   _FakeProfileRepository? profileRepository,
   bool hasToken = false,
+  bool profileCompleted = false,
 }) {
   return ProviderScope(
     overrides: [
+      authRepositoryProvider.overrideWithValue(
+        authRepository ?? _FakeAuthRepository(),
+      ),
       tokenStorageProvider.overrideWithValue(
         _FakeTokenStorage(hasToken ? 'token' : null),
       ),
       offersRepositoryProvider.overrideWithValue(_FakeOffersRepository()),
+      changePasswordRepositoryProvider.overrideWithValue(
+        _FakeChangePasswordRepository(),
+      ),
       profileRepositoryProvider.overrideWithValue(
-        profileRepository ?? _FakeProfileRepository(),
+        profileRepository ??
+            _FakeProfileRepository(profileCompleted: profileCompleted),
       ),
     ],
     child: const Ocupa2App(),
+  );
+}
+
+Future<void> _fillLogin(WidgetTester tester) async {
+  await tester.enterText(
+    find.widgetWithText(TextFormField, 'Correo'),
+    'user@example.com',
+  );
+  await tester.enterText(
+    find.widgetWithText(TextFormField, 'Contraseña'),
+    'secret123',
+  );
+}
+
+Future<void> _fillRegister(WidgetTester tester) async {
+  await tester.enterText(find.widgetWithText(TextFormField, 'Nombre'), 'Ana');
+  await tester.enterText(
+    find.widgetWithText(TextFormField, 'Apellido'),
+    'Perez',
+  );
+  await tester.enterText(
+    find.widgetWithText(TextFormField, 'Correo'),
+    'user@example.com',
+  );
+  await tester.enterText(
+    find.widgetWithText(TextFormField, 'Matrícula de referido'),
+    '12345678',
+  );
+  await tester.enterText(
+    find.widgetWithText(TextFormField, 'Contraseña'),
+    'secret123',
+  );
+  await tester.enterText(
+    find.widgetWithText(TextFormField, 'Confirmar contraseña'),
+    'secret123',
+  );
+  await tester.ensureVisible(find.text('Registrarme'));
+}
+
+AuthSessionResult _sessionResult({required bool profileCompleted}) {
+  return AuthSessionResult(
+    token: 'token',
+    tokenType: 'Bearer',
+    user: Profile(
+      id: 'profile-id',
+      email: 'user@example.com',
+      firstName: 'Ana',
+      lastName: 'Perez',
+      profileCompleted: profileCompleted,
+    ),
   );
 }
 
@@ -323,7 +631,7 @@ Offer _offer() {
     jobTypeName: 'Chofer',
     contractType: 'temporal',
     description: 'Se necesita chofer con disponibilidad inmediata.',
-    address: 'Santo Domingo, RepÃºblica Dominicana',
+    address: 'Santo Domingo, República Dominicana',
     location: const OfferLocation(lat: 18.4861, lng: -69.9312),
     payment: const OfferPayment(
       amount: 35000,
@@ -342,6 +650,52 @@ Offer _offer() {
     isIdentityRevealed: false,
     likedByMe: false,
   );
+}
+
+class _FakeAuthRepository implements AuthRepository {
+  _FakeAuthRepository({
+    AuthSessionResult? loginResult,
+    AuthSessionResult? registerResult,
+  }) : loginResult = loginResult ?? _sessionResult(profileCompleted: true),
+       registerResult =
+           registerResult ?? _sessionResult(profileCompleted: true);
+
+  final AuthSessionResult loginResult;
+  final AuthSessionResult registerResult;
+
+  @override
+  Future<AuthSessionResult> register({
+    required String email,
+    required String firstName,
+    required String lastName,
+    required String password,
+    required String referralMatricula,
+  }) async {
+    return registerResult;
+  }
+
+  @override
+  Future<AuthSessionResult> login({
+    required String email,
+    required String password,
+  }) async {
+    return loginResult;
+  }
+
+  @override
+  Future<void> forgotPassword({
+    required String email,
+    required String referralMatricula,
+  }) async {}
+}
+
+class _FakeChangePasswordRepository implements ChangePasswordRepository {
+  final passwords = <String>[];
+
+  @override
+  Future<void> changePassword({required String password}) async {
+    passwords.add(password);
+  }
 }
 
 class _FakeOffersRepository implements OffersRepository {
@@ -382,7 +736,6 @@ class _FakeProfileRepository implements ProfileRepository {
   Completer<Profile>? profileCompleter;
   Object? profileError;
   int getProfileCalls = 0;
-  int updateProfileCalls = 0;
 
   @override
   Future<Profile> getProfile() async {
@@ -407,7 +760,6 @@ class _FakeProfileRepository implements ProfileRepository {
     required String gender,
     required DateTime birthDate,
   }) async {
-    updateProfileCalls++;
     profile = Profile(
       id: profile.id,
       email: profile.email,

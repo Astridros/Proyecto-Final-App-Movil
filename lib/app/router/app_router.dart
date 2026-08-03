@@ -3,8 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../features/auth/presentation/providers/auth_session_providers.dart';
-import '../../features/auth/presentation/screens/login_placeholder_screen.dart';
+import '../../features/auth/presentation/pages/forgot_password_screen.dart';
+import '../../features/auth/presentation/pages/login_screen.dart';
+import '../../features/auth/presentation/pages/register_screen.dart';
 import '../../features/auth/presentation/screens/session_loading_screen.dart';
+import '../../features/change_password/presentation/pages/change_password_screen.dart';
 import '../../features/home/presentation/screens/initial_screen.dart';
 import '../../features/news/domain/entities/news_item.dart';
 import '../../features/news/presentation/pages/news_detail_screen.dart';
@@ -28,24 +31,25 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       final location = state.uri.path;
       final isLoadingRoute = location == RouteNames.sessionLoadingPath;
       final isCompleteProfileRoute = location == RouteNames.completeProfilePath;
+      final isPublicAuthRoute = _publicAuthPaths.contains(location);
 
       if (session.isRestoring || !session.hasCheckedSession) {
         return isLoadingRoute ? null : RouteNames.sessionLoadingPath;
       }
 
       if (!session.isAuthenticated) {
-        if (isLoadingRoute || isCompleteProfileRoute) {
-          return RouteNames.initialPath;
+        if (isPublicAuthRoute) {
+          return null;
         }
 
-        return null;
+        return RouteNames.loginPath;
       }
 
       if (session.requiresProfileCompletion) {
         return isCompleteProfileRoute ? null : RouteNames.completeProfilePath;
       }
 
-      if (isLoadingRoute || isCompleteProfileRoute) {
+      if (isLoadingRoute || isCompleteProfileRoute || isPublicAuthRoute) {
         return RouteNames.initialPath;
       }
 
@@ -60,7 +64,38 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: RouteNames.loginPath,
         name: RouteNames.login,
-        builder: (context, state) => const LoginPlaceholderScreen(),
+        builder: (context, state) => LoginScreen(
+          onRegister: () => context.pushNamed(RouteNames.register),
+          onForgotPassword: () => context.pushNamed(RouteNames.forgotPassword),
+        ),
+      ),
+      GoRoute(
+        path: RouteNames.registerPath,
+        name: RouteNames.register,
+        builder: (context, state) => RegisterScreen(
+          onBackToLogin: () {
+            if (context.canPop()) {
+              context.pop();
+              return;
+            }
+
+            context.goNamed(RouteNames.login);
+          },
+        ),
+      ),
+      GoRoute(
+        path: RouteNames.forgotPasswordPath,
+        name: RouteNames.forgotPassword,
+        builder: (context, state) => ForgotPasswordScreen(
+          onBackToLogin: () {
+            if (context.canPop()) {
+              context.pop();
+              return;
+            }
+
+            context.goNamed(RouteNames.login);
+          },
+        ),
       ),
       GoRoute(
         path: RouteNames.sessionLoadingPath,
@@ -76,6 +111,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: RouteNames.offersPath,
         name: RouteNames.offers,
         builder: (context, state) => const OffersScreen(),
+      ),
+      GoRoute(
+        path: RouteNames.changePasswordPath,
+        name: RouteNames.changePassword,
+        builder: (context, state) => const ChangePasswordScreen(),
       ),
 
       // Angel Daniel Genao 2024-1169: rutas de Noticias y Videos.
@@ -107,6 +147,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     ],
   );
 });
+
+const _publicAuthPaths = {
+  RouteNames.loginPath,
+  RouteNames.registerPath,
+  RouteNames.forgotPasswordPath,
+};
 
 class _GoRouterRefreshNotifier extends ChangeNotifier {
   _GoRouterRefreshNotifier(Ref ref) {
