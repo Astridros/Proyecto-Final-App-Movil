@@ -3,9 +3,12 @@ class RouteNames {
 
   static const initial = 'initial';
   static const login = 'login';
+  static const register = 'register';
+  static const forgotPassword = 'forgotPassword';
   static const sessionLoading = 'sessionLoading';
   static const completeProfile = 'completeProfile';
   static const offers = 'offers';
+  static const changePassword = 'changePassword';
 
   // Angel Daniel Genao 2024-1169: rutas agregadas para Noticias y Videos.
   static const news = 'news';
@@ -15,9 +18,12 @@ class RouteNames {
 
   static const initialPath = '/';
   static const loginPath = '/login';
+  static const registerPath = '/register';
+  static const forgotPasswordPath = '/forgot-password';
   static const sessionLoadingPath = '/session-loading';
   static const completeProfilePath = '/complete-profile';
   static const offersPath = '/offers';
+  static const changePasswordPath = '/change-password';
   static const newsPath = '/news';
   static const newsDetailPath = '/news/detail';
   static const videosPath = '/videos';

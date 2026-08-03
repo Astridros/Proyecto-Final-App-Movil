@@ -37,13 +37,6 @@ class InitialScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: AppDimensions.spacing24),
-              AppButton(
-                label: 'Ver login provisional',
-                icon: Icons.login_rounded,
-                onPressed: () => context.pushNamed(RouteNames.login),
-                width: double.infinity,
-              ),
-              const SizedBox(height: AppDimensions.spacing12),
               AppButton.outlined(
                 label: 'Explorar ofertas',
                 icon: Icons.work_outline_rounded,
@@ -63,6 +56,13 @@ class InitialScreen extends StatelessWidget {
                 label: 'Ver videos',
                 icon: Icons.smart_display_outlined,
                 onPressed: () => context.pushNamed(RouteNames.videos),
+                width: double.infinity,
+              ),
+              const SizedBox(height: AppDimensions.spacing12),
+              AppButton.outlined(
+                label: 'Cambiar contraseña',
+                icon: Icons.admin_panel_settings_outlined,
+                onPressed: () => context.pushNamed(RouteNames.changePassword),
                 width: double.infinity,
               ),
               const SizedBox(height: AppDimensions.spacing24),
