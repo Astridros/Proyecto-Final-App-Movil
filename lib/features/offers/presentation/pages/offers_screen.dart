@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../../app/router/route_names.dart';
 import '../../../../app/theme/app_dimensions.dart';
 import '../../../../core/widgets/app_empty_state.dart';
 import '../../../../core/widgets/app_error_view.dart';
@@ -21,7 +23,7 @@ class _OffersScreenState extends ConsumerState<OffersScreen> {
   @override
   void initState() {
     super.initState();
-    // Se difiere para evitar mutar providers durante la construcción inicial.
+    // Se difiere para evitar mutar providers durante la construccion inicial.
     Future.microtask(() {
       if (!mounted) {
         return;
@@ -114,7 +116,10 @@ class _OffersContent extends StatelessWidget {
         return OfferCard(
           offer: offer,
           onTap: () {
-            // TODO: conectar navegación al detalle cuando exista la ruta.
+            context.pushNamed(
+              RouteNames.offerDetail,
+              pathParameters: {'id': offer.id},
+            );
           },
         );
       },

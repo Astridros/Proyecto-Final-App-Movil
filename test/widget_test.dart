@@ -13,6 +13,9 @@ import 'package:ocupa2/core/storage/secure_storage_provider.dart';
 import 'package:ocupa2/core/storage/token_storage.dart';
 import 'package:ocupa2/core/widgets/app_button.dart';
 import 'package:ocupa2/core/widgets/app_text_field.dart';
+import 'package:ocupa2/features/applications/data/providers/applications_data_providers.dart';
+import 'package:ocupa2/features/applications/domain/entities/application.dart';
+import 'package:ocupa2/features/applications/domain/repositories/applications_repository.dart';
 import 'package:ocupa2/features/auth/data/providers/auth_data_providers.dart';
 import 'package:ocupa2/features/auth/domain/entities/auth_session_result.dart';
 import 'package:ocupa2/features/auth/domain/repositories/auth_repository.dart';
@@ -24,12 +27,16 @@ import 'package:ocupa2/features/change_password/data/providers/change_password_d
 import 'package:ocupa2/features/change_password/domain/repositories/change_password_repository.dart';
 import 'package:ocupa2/features/change_password/presentation/pages/change_password_screen.dart';
 import 'package:ocupa2/features/offers/data/providers/offers_data_providers.dart';
+import 'package:ocupa2/features/offers/domain/entities/apply_offer_answer.dart';
+import 'package:ocupa2/features/offers/domain/entities/apply_offer_result.dart';
 import 'package:ocupa2/features/offers/domain/entities/job_type.dart';
 import 'package:ocupa2/features/offers/domain/entities/offer.dart';
 import 'package:ocupa2/features/offers/domain/entities/offer_location.dart';
 import 'package:ocupa2/features/offers/domain/entities/offer_payment.dart';
 import 'package:ocupa2/features/offers/domain/repositories/offers_repository.dart';
+import 'package:ocupa2/features/offers/presentation/pages/offer_detail_screen.dart';
 import 'package:ocupa2/features/offers/presentation/pages/offers_screen.dart';
+import 'package:ocupa2/features/offers/presentation/widgets/offer_card.dart';
 import 'package:ocupa2/features/profile/data/providers/profile_data_providers.dart';
 import 'package:ocupa2/features/profile/domain/entities/profile.dart';
 import 'package:ocupa2/features/profile/domain/repositories/profile_repository.dart';
@@ -114,6 +121,19 @@ void main() {
     expect(find.byType(OffersScreen), findsNothing);
   });
 
+  testWidgets('Sin token redirige offer detail a login', (tester) async {
+    await tester.pumpWidget(_testApp());
+    await tester.pumpAndSettle();
+
+    GoRouter.of(
+      tester.element(find.byType(LoginScreen)),
+    ).go('/offers/offer-id');
+    await tester.pumpAndSettle();
+
+    expect(find.byType(LoginScreen), findsOneWidget);
+    expect(find.byType(OfferDetailScreen), findsNothing);
+  });
+
   testWidgets('Usuario sin token no accede a change-password', (tester) async {
     await tester.pumpWidget(_testApp());
     await tester.pumpAndSettle();
@@ -191,6 +211,21 @@ void main() {
 
     expect(find.byType(CompleteProfileScreen), findsOneWidget);
     expect(find.byType(ChangePasswordScreen), findsNothing);
+  });
+
+  testWidgets('Perfil incompleto no puede abrir detalle de oferta', (
+    tester,
+  ) async {
+    await tester.pumpWidget(_testApp(hasToken: true));
+    await tester.pumpAndSettle();
+
+    GoRouter.of(
+      tester.element(find.byType(CompleteProfileScreen)),
+    ).go('/offers/offer-id');
+    await tester.pumpAndSettle();
+
+    expect(find.byType(CompleteProfileScreen), findsOneWidget);
+    expect(find.byType(OfferDetailScreen), findsNothing);
   });
 
   testWidgets(
@@ -464,6 +499,53 @@ void main() {
     expect(find.text('Filtros'), findsOneWidget);
   });
 
+  testWidgets('/offers/:id muestra OfferDetailScreen', (tester) async {
+    await tester.pumpWidget(_testApp(hasToken: true, profileCompleted: true));
+    await tester.pumpAndSettle();
+
+    GoRouter.of(tester.element(find.text('Ocupa2'))).go('/offers/offer-id');
+    await tester.pumpAndSettle();
+
+    expect(find.byType(OfferDetailScreen), findsOneWidget);
+    expect(find.text('Detalle de oferta'), findsOneWidget);
+  });
+
+  testWidgets('OfferCard navega pasando solo el id', (tester) async {
+    final offersRepository = _FakeOffersRepository();
+    await tester.pumpWidget(
+      _testApp(
+        hasToken: true,
+        profileCompleted: true,
+        offersRepository: offersRepository,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    GoRouter.of(tester.element(find.text('Ocupa2'))).go(RouteNames.offersPath);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(OfferCard));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(OfferDetailScreen), findsOneWidget);
+    expect(offersRepository.lastDetailId, 'offer-id');
+  });
+
+  testWidgets('Boton volver del detalle regresa a ofertas', (tester) async {
+    await tester.pumpWidget(_testApp(hasToken: true, profileCompleted: true));
+    await tester.pumpAndSettle();
+
+    GoRouter.of(tester.element(find.text('Ocupa2'))).go(RouteNames.offersPath);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(OfferCard));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Volver'));
+    await tester.tap(find.text('Volver'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(OffersScreen), findsOneWidget);
+    expect(find.byType(OfferDetailScreen), findsNothing);
+  });
+
   testWidgets('OffersScreen carga datos del repositorio', (tester) async {
     await tester.pumpWidget(_testApp(hasToken: true, profileCompleted: true));
     await tester.pumpAndSettle();
@@ -539,6 +621,7 @@ void main() {
 Widget _testApp({
   _FakeAuthRepository? authRepository,
   _FakeProfileRepository? profileRepository,
+  _FakeOffersRepository? offersRepository,
   bool hasToken = false,
   bool profileCompleted = false,
 }) {
@@ -550,7 +633,12 @@ Widget _testApp({
       tokenStorageProvider.overrideWithValue(
         _FakeTokenStorage(hasToken ? 'token' : null),
       ),
-      offersRepositoryProvider.overrideWithValue(_FakeOffersRepository()),
+      offersRepositoryProvider.overrideWithValue(
+        offersRepository ?? _FakeOffersRepository(),
+      ),
+      applicationsRepositoryProvider.overrideWithValue(
+        _FakeApplicationsRepository(),
+      ),
       changePasswordRepositoryProvider.overrideWithValue(
         _FakeChangePasswordRepository(),
       ),
@@ -699,6 +787,8 @@ class _FakeChangePasswordRepository implements ChangePasswordRepository {
 }
 
 class _FakeOffersRepository implements OffersRepository {
+  String? lastDetailId;
+
   @override
   Future<List<JobType>> getJobTypes() async {
     return [_jobType()];
@@ -710,6 +800,28 @@ class _FakeOffersRepository implements OffersRepository {
     String? contractType,
   }) async {
     return [_offer()];
+  }
+
+  @override
+  Future<Offer> getOfferById(String id) async {
+    lastDetailId = id;
+    return _offer();
+  }
+
+  @override
+  Future<ApplyOfferResult> applyToOffer({
+    required String offerId,
+    required String comment,
+    required List<ApplyOfferAnswer> answers,
+  }) async {
+    return const ApplyOfferResult(id: 'application-id', status: 'applied');
+  }
+}
+
+class _FakeApplicationsRepository implements ApplicationsRepository {
+  @override
+  Future<List<Application>> getMyApplications() async {
+    return const [];
   }
 }
 

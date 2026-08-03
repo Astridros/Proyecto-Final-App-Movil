@@ -12,6 +12,7 @@ import '../../features/home/presentation/screens/initial_screen.dart';
 import '../../features/news/domain/entities/news_item.dart';
 import '../../features/news/presentation/pages/news_detail_screen.dart';
 import '../../features/news/presentation/pages/news_screen.dart';
+import '../../features/offers/presentation/pages/offer_detail_screen.dart';
 import '../../features/offers/presentation/pages/offers_screen.dart';
 import '../../features/profile/presentation/pages/complete_profile_screen.dart';
 import '../../features/videos/domain/entities/video.dart';
@@ -111,6 +112,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: RouteNames.offersPath,
         name: RouteNames.offers,
         builder: (context, state) => const OffersScreen(),
+      ),
+      GoRoute(
+        path: RouteNames.offerDetailPath,
+        name: RouteNames.offerDetail,
+        builder: (context, state) {
+          final offerId = state.pathParameters['id'] ?? '';
+          return OfferDetailScreen(offerId: offerId);
+        },
       ),
       GoRoute(
         path: RouteNames.changePasswordPath,
