@@ -23,6 +23,10 @@ migrate_working_dir/
 # is commented out by default.
 #.vscode/
 
+# Llaves de APIs externas (GNews, Pixabay) — nunca se suben a git.
+# Copia .env.example a .env y pega ahí tus llaves reales.
+.env
+
 # Flutter/Dart/Pub related
 **/doc/api/
 **/ios/Flutter/.last_build_id

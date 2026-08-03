@@ -6,8 +6,14 @@ import '../../features/auth/presentation/providers/auth_session_providers.dart';
 import '../../features/auth/presentation/screens/login_placeholder_screen.dart';
 import '../../features/auth/presentation/screens/session_loading_screen.dart';
 import '../../features/home/presentation/screens/initial_screen.dart';
+import '../../features/news/domain/entities/news_item.dart';
+import '../../features/news/presentation/pages/news_detail_screen.dart';
+import '../../features/news/presentation/pages/news_screen.dart';
 import '../../features/offers/presentation/pages/offers_screen.dart';
 import '../../features/profile/presentation/pages/complete_profile_screen.dart';
+import '../../features/videos/domain/entities/video.dart';
+import '../../features/videos/presentation/pages/video_detail_screen.dart';
+import '../../features/videos/presentation/pages/videos_screen.dart';
 import 'route_names.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
@@ -70,6 +76,33 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: RouteNames.offersPath,
         name: RouteNames.offers,
         builder: (context, state) => const OffersScreen(),
+      ),
+
+      // Angel Daniel Genao 2024-1169: rutas de Noticias y Videos.
+      // La lista (news/videos) no recibe parámetros; el detalle recibe
+      // el objeto completo (NewsItem o Video) por "extra" porque la API
+      // no tiene un endpoint de detalle por id para estos dos recursos.
+      GoRoute(
+        path: RouteNames.newsPath,
+        name: RouteNames.news,
+        builder: (context, state) => const NewsScreen(),
+      ),
+      GoRoute(
+        path: RouteNames.newsDetailPath,
+        name: RouteNames.newsDetail,
+        builder: (context, state) =>
+            NewsDetailScreen(newsItem: state.extra as NewsItem),
+      ),
+      GoRoute(
+        path: RouteNames.videosPath,
+        name: RouteNames.videos,
+        builder: (context, state) => const VideosScreen(),
+      ),
+      GoRoute(
+        path: RouteNames.videoDetailPath,
+        name: RouteNames.videoDetail,
+        builder: (context, state) =>
+            VideoDetailScreen(video: state.extra as Video),
       ),
     ],
   );
