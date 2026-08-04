@@ -13,6 +13,7 @@ import '../../domain/constants/contract_types.dart';
 import '../../domain/entities/offer.dart';
 import '../../domain/entities/offer_question.dart';
 import '../providers/offer_detail_providers.dart';
+import '../providers/offer_like_providers.dart';
 import '../widgets/apply_offer_form.dart';
 
 class OfferDetailScreen extends ConsumerStatefulWidget {
@@ -233,10 +234,7 @@ class _OfferInfoSection extends StatelessWidget {
             label: '${offer.applicantsCount} aplicantes',
           ),
           const SizedBox(height: AppDimensions.spacing12),
-          _InfoRow(
-            icon: Icons.favorite_border_rounded,
-            label: '${offer.likesCount} me gusta',
-          ),
+          _OfferLikeInfoRow(offer: offer),
           if (customAnswers.isNotEmpty) ...[
             const SizedBox(height: AppDimensions.spacing16),
             ...customAnswers.entries.map(
@@ -424,6 +422,96 @@ class _InfoRow extends StatelessWidget {
         Expanded(
           child: Text(
             label,
+            style: AppTextStyles.bodyMedium.copyWith(
+              color: AppColors.textSecondary,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _OfferLikeInfoRow extends ConsumerStatefulWidget {
+  const _OfferLikeInfoRow({required this.offer});
+
+  final Offer offer;
+
+  @override
+  ConsumerState<_OfferLikeInfoRow> createState() => _OfferLikeInfoRowState();
+}
+
+class _OfferLikeInfoRowState extends ConsumerState<_OfferLikeInfoRow> {
+  @override
+  void initState() {
+    super.initState();
+    _syncFromOffer();
+  }
+
+  @override
+  void didUpdateWidget(covariant _OfferLikeInfoRow oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.offer.id != widget.offer.id ||
+        oldWidget.offer.likedByMe != widget.offer.likedByMe ||
+        oldWidget.offer.likesCount != widget.offer.likesCount) {
+      _syncFromOffer();
+    }
+  }
+
+  void _syncFromOffer() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+
+      ref
+          .read(offerLikeControllerProvider(widget.offer.id).notifier)
+          .syncFromOffer(
+            likedByMe: widget.offer.likedByMe,
+            likesCount: widget.offer.likesCount,
+          );
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final provider = offerLikeControllerProvider(widget.offer.id);
+    final likeState = ref.watch(provider);
+    final tooltip = likeState.liked ? 'Quitar me gusta' : 'Dar me gusta';
+
+    ref.listen(provider, (previous, next) {
+      final error = next.error;
+      if (error == null || previous?.error == error) {
+        return;
+      }
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error.message)));
+    });
+
+    return Row(
+      children: [
+        Tooltip(
+          message: tooltip,
+          child: IconButton(
+            onPressed: likeState.isSubmitting
+                ? null
+                : () => ref.read(provider.notifier).toggleLike(),
+            icon: Icon(
+              likeState.liked
+                  ? Icons.favorite_rounded
+                  : Icons.favorite_border_rounded,
+              color: likeState.liked
+                  ? AppColors.error
+                  : AppColors.textSecondary,
+            ),
+          ),
+        ),
+        const SizedBox(width: AppDimensions.spacing8),
+        Expanded(
+          child: Text(
+            '${likeState.likesCount.clamp(0, 1 << 31)} me gusta',
             style: AppTextStyles.bodyMedium.copyWith(
               color: AppColors.textSecondary,
             ),

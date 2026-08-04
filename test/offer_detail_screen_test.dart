@@ -16,6 +16,7 @@ import 'package:ocupa2/features/offers/domain/entities/apply_offer_result.dart';
 import 'package:ocupa2/features/offers/domain/entities/job_type.dart';
 import 'package:ocupa2/features/offers/domain/entities/offer.dart';
 import 'package:ocupa2/features/offers/domain/entities/offer_location.dart';
+import 'package:ocupa2/features/offers/domain/entities/offer_like_result.dart';
 import 'package:ocupa2/features/offers/domain/entities/offer_payment.dart';
 import 'package:ocupa2/features/offers/domain/entities/offer_question.dart';
 import 'package:ocupa2/features/offers/domain/repositories/offers_repository.dart';
@@ -65,6 +66,36 @@ void main() {
     expect(find.text('3 me gusta'), findsOneWidget);
     expect(find.text('published'), findsOneWidget);
     expect(find.text('turno: nocturno'), findsOneWidget);
+  });
+
+  testWidgets('OfferDetailScreen conecta estado de like por offerId', (
+    tester,
+  ) async {
+    final repository = _FakeOffersRepository(
+      offer: _offer(likedByMe: true, likesCount: 6),
+    );
+
+    await tester.pumpWidget(_testDetail(repository));
+    await tester.pumpAndSettle();
+
+    expect(find.byIcon(Icons.favorite_rounded), findsOneWidget);
+    expect(find.text('6 me gusta'), findsOneWidget);
+  });
+
+  testWidgets('Like en detalle actualiza contador', (tester) async {
+    final repository = _FakeOffersRepository(
+      offer: _offer(likedByMe: false, likesCount: 3),
+    );
+
+    await tester.pumpWidget(_testDetail(repository));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.byTooltip('Dar me gusta'));
+    await tester.tap(find.byTooltip('Dar me gusta'));
+    await tester.pumpAndSettle();
+
+    expect(repository.likeCalls, ['offer-id']);
+    expect(find.byIcon(Icons.favorite_rounded), findsOneWidget);
+    expect(find.text('4 me gusta'), findsOneWidget);
   });
 
   testWidgets('Imagen invalida muestra placeholder', (tester) async {
@@ -617,6 +648,8 @@ Offer _offer({
   String id = 'offer-id',
   String photo = 'https://ocupa2.ia3x.com/media/imagen.jpg',
   Object? deadline = _deadlineUnset,
+  bool likedByMe = false,
+  int likesCount = 3,
   List<OfferQuestion> questions = const [
     OfferQuestion(
       id: 'q1',
@@ -644,11 +677,11 @@ Offer _offer({
     questions: questions,
     status: 'published',
     applicantsCount: 2,
-    likesCount: 3,
+    likesCount: likesCount,
     createdAt: DateTime(2026, 8, 3),
     updatedAt: DateTime(2026, 8, 3),
     isIdentityRevealed: false,
-    likedByMe: false,
+    likedByMe: likedByMe,
   );
 }
 
@@ -669,6 +702,8 @@ class _FakeOffersRepository implements OffersRepository {
   Completer<ApplyOfferResult>? applyCompleter;
   int detailCalls = 0;
   int applyCalls = 0;
+  final likeCalls = <String>[];
+  final unlikeCalls = <String>[];
   String? lastOfferId;
   String? lastComment;
   List<ApplyOfferAnswer> lastAnswers = const [];
@@ -710,6 +745,23 @@ class _FakeOffersRepository implements OffersRepository {
         Future.value(
           const ApplyOfferResult(id: 'application-id', status: 'applied'),
         );
+  }
+
+  @override
+  Future<OfferLikeResult> likeOffer(String offerId) async {
+    likeCalls.add(offerId);
+    return const OfferLikeResult(liked: true, likesCount: 4);
+  }
+
+  @override
+  Future<OfferLikeResult> unlikeOffer(String offerId) async {
+    unlikeCalls.add(offerId);
+    return const OfferLikeResult(liked: false, likesCount: 3);
+  }
+
+  @override
+  Future<List<Offer>> getMyLikedOffers() async {
+    return const [];
   }
 }
 

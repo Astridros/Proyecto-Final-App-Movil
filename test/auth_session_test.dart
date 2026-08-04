@@ -6,6 +6,14 @@ import 'package:ocupa2/core/errors/api_exception.dart';
 import 'package:ocupa2/core/storage/secure_storage_provider.dart';
 import 'package:ocupa2/core/storage/token_storage.dart';
 import 'package:ocupa2/features/auth/presentation/providers/auth_session_providers.dart';
+import 'package:ocupa2/features/offers/data/providers/offers_data_providers.dart';
+import 'package:ocupa2/features/offers/domain/entities/apply_offer_answer.dart';
+import 'package:ocupa2/features/offers/domain/entities/apply_offer_result.dart';
+import 'package:ocupa2/features/offers/domain/entities/job_type.dart';
+import 'package:ocupa2/features/offers/domain/entities/offer.dart';
+import 'package:ocupa2/features/offers/domain/entities/offer_like_result.dart';
+import 'package:ocupa2/features/offers/domain/repositories/offers_repository.dart';
+import 'package:ocupa2/features/offers/presentation/providers/offer_like_providers.dart';
 import 'package:ocupa2/features/profile/data/providers/profile_data_providers.dart';
 import 'package:ocupa2/features/profile/domain/entities/profile.dart';
 import 'package:ocupa2/features/profile/domain/repositories/profile_repository.dart';
@@ -181,6 +189,34 @@ void main() {
 
     expect(setup.repository.getProfileCalls, 0);
   });
+
+  test(
+    'logout invalida estado de likes y nueva sesion no hereda estado',
+    () async {
+      final setup = _setup(hasToken: true);
+      setup.container
+          .read(authSessionControllerProvider.notifier)
+          .updateAuthenticatedProfile(_profile(profileCompleted: true));
+      setup.container
+          .read(offerLikeControllerProvider('offer-a').notifier)
+          .syncFromOffer(likedByMe: true, likesCount: 5);
+
+      expect(
+        setup.container.read(offerLikeControllerProvider('offer-a')).liked,
+        isTrue,
+      );
+
+      await setup.container
+          .read(authSessionControllerProvider.notifier)
+          .logout();
+
+      final stateAfterLogout = setup.container.read(
+        offerLikeControllerProvider('offer-a'),
+      );
+      expect(stateAfterLogout.liked, isFalse);
+      expect(stateAfterLogout.likesCount, 0);
+    },
+  );
 }
 
 _Setup _setup({required bool hasToken, bool profileCompleted = false}) {
@@ -192,6 +228,7 @@ _Setup _setup({required bool hasToken, bool profileCompleted = false}) {
     overrides: [
       tokenStorageProvider.overrideWithValue(tokenStorage),
       profileRepositoryProvider.overrideWithValue(repository),
+      offersRepositoryProvider.overrideWithValue(_FakeOffersRepository()),
     ],
   );
   addTearDown(container.dispose);
@@ -201,6 +238,46 @@ _Setup _setup({required bool hasToken, bool profileCompleted = false}) {
     repository: repository,
     tokenStorage: tokenStorage,
   );
+}
+
+class _FakeOffersRepository implements OffersRepository {
+  @override
+  Future<List<JobType>> getJobTypes() async => const [];
+
+  @override
+  Future<List<Offer>> getOffers({
+    String? jobTypeKey,
+    String? contractType,
+  }) async {
+    return const [];
+  }
+
+  @override
+  Future<Offer> getOfferById(String id) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<ApplyOfferResult> applyToOffer({
+    required String offerId,
+    required String comment,
+    required List<ApplyOfferAnswer> answers,
+  }) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<OfferLikeResult> likeOffer(String offerId) async {
+    return const OfferLikeResult(liked: true, likesCount: 1);
+  }
+
+  @override
+  Future<OfferLikeResult> unlikeOffer(String offerId) async {
+    return const OfferLikeResult(liked: false, likesCount: 0);
+  }
+
+  @override
+  Future<List<Offer>> getMyLikedOffers() async => const [];
 }
 
 Profile _profile({bool profileCompleted = false}) {
