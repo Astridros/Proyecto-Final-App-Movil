@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/router/route_names.dart';
@@ -7,12 +8,26 @@ import '../../../../app/theme/app_dimensions.dart';
 import '../../../../app/theme/app_text_styles.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_card.dart';
+import '../../../auth/presentation/providers/auth_session_providers.dart';
 
-class InitialScreen extends StatelessWidget {
+class InitialScreen extends ConsumerWidget {
   const InitialScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    ref.listen(authSessionControllerProvider, (previous, next) {
+      final message = next.error?.message;
+      if (message == null || previous?.error == next.error) {
+        return;
+      }
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(message)));
+    });
+
+    final session = ref.watch(authSessionControllerProvider);
+
     return Scaffold(
       body: SafeArea(
         child: SingleChildScrollView(
@@ -65,6 +80,16 @@ class InitialScreen extends StatelessWidget {
                 onPressed: () => context.pushNamed(RouteNames.changePassword),
                 width: double.infinity,
               ),
+              const SizedBox(height: AppDimensions.spacing12),
+              AppButton.outlined(
+                label: 'Cerrar sesión',
+                icon: Icons.logout,
+                isLoading: session.isLoggingOut,
+                onPressed: session.isLoggingOut
+                    ? null
+                    : () => _confirmLogout(context, ref),
+                width: double.infinity,
+              ),
               const SizedBox(height: AppDimensions.spacing24),
               const AppCard(
                 child: Row(
@@ -89,6 +114,35 @@ class InitialScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Future<void> _confirmLogout(BuildContext context, WidgetRef ref) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Cerrar sesión'),
+          content: const Text('¿Estás seguro de que deseas cerrar sesión?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Cancelar'),
+            ),
+            FilledButton.icon(
+              onPressed: () => Navigator.of(context).pop(true),
+              icon: const Icon(Icons.logout),
+              label: const Text('Cerrar sesión'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed != true) {
+      return;
+    }
+
+    await ref.read(authSessionControllerProvider.notifier).logout();
   }
 }
 

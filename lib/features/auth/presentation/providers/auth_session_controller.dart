@@ -65,4 +65,29 @@ class AuthSessionController extends Notifier<AuthSessionState> {
       hasCheckedSession: true,
     );
   }
+
+  Future<void> logout() async {
+    if (state.isLoggingOut) {
+      return;
+    }
+
+    state = state.copyWith(isLoggingOut: true, error: null);
+
+    try {
+      await _tokenStorage.clearSession();
+      state = state.copyWith(
+        isAuthenticated: false,
+        profile: null,
+        error: null,
+        hasCheckedSession: true,
+      );
+    } catch (error) {
+      state = state.copyWith(
+        error: ErrorMapper.fromObject(error),
+        hasCheckedSession: true,
+      );
+    } finally {
+      state = state.copyWith(isLoggingOut: false);
+    }
+  }
 }

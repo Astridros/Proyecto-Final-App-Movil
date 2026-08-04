@@ -264,6 +264,85 @@ void main() {
     expect(find.text('Cambiar contraseña'), findsOneWidget);
   });
 
+  testWidgets('El botón Cerrar sesión aparece en InitialScreen', (
+    tester,
+  ) async {
+    await tester.pumpWidget(_testApp(hasToken: true, profileCompleted: true));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Cerrar sesión'), findsOneWidget);
+  });
+
+  testWidgets('Cancelar no cierra sesión', (tester) async {
+    final tokenStorage = _FakeTokenStorage('token');
+    await tester.pumpWidget(
+      _testApp(
+        hasToken: true,
+        profileCompleted: true,
+        tokenStorage: tokenStorage,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.ensureVisible(find.text('Cerrar sesión'));
+    await tester.tap(find.text('Cerrar sesión'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Cancelar'));
+    await tester.pumpAndSettle();
+
+    expect(tokenStorage.clearSessionCalls, 0);
+    expect(find.text('Base provisional'), findsOneWidget);
+  });
+
+  testWidgets('Confirmar ejecuta logout y muestra LoginScreen', (tester) async {
+    final tokenStorage = _FakeTokenStorage('token');
+    await tester.pumpWidget(
+      _testApp(
+        hasToken: true,
+        profileCompleted: true,
+        tokenStorage: tokenStorage,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.ensureVisible(find.text('Cerrar sesión'));
+    await tester.tap(find.text('Cerrar sesión'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Cerrar sesión').last);
+    await tester.pumpAndSettle();
+
+    expect(tokenStorage.clearSessionCalls, 1);
+    expect(find.byType(LoginScreen), findsOneWidget);
+  });
+
+  testWidgets('Usuario cerrado no puede acceder a rutas privadas', (
+    tester,
+  ) async {
+    final tokenStorage = _FakeTokenStorage('token');
+    await tester.pumpWidget(
+      _testApp(
+        hasToken: true,
+        profileCompleted: true,
+        tokenStorage: tokenStorage,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.ensureVisible(find.text('Cerrar sesión'));
+    await tester.tap(find.text('Cerrar sesión'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Cerrar sesión').last);
+    await tester.pumpAndSettle();
+
+    GoRouter.of(
+      tester.element(find.byType(LoginScreen)),
+    ).go(RouteNames.offersPath);
+    await tester.pumpAndSettle();
+
+    expect(find.byType(LoginScreen), findsOneWidget);
+    expect(find.byType(OffersScreen), findsNothing);
+  });
+
   testWidgets('El botón Cambiar contraseña navega correctamente', (
     tester,
   ) async {
@@ -622,6 +701,7 @@ Widget _testApp({
   _FakeAuthRepository? authRepository,
   _FakeProfileRepository? profileRepository,
   _FakeOffersRepository? offersRepository,
+  _FakeTokenStorage? tokenStorage,
   bool hasToken = false,
   bool profileCompleted = false,
 }) {
@@ -631,7 +711,7 @@ Widget _testApp({
         authRepository ?? _FakeAuthRepository(),
       ),
       tokenStorageProvider.overrideWithValue(
-        _FakeTokenStorage(hasToken ? 'token' : null),
+        tokenStorage ?? _FakeTokenStorage(hasToken ? 'token' : null),
       ),
       offersRepositoryProvider.overrideWithValue(
         offersRepository ?? _FakeOffersRepository(),
@@ -897,6 +977,7 @@ class _FakeTokenStorage implements TokenStorage {
   _FakeTokenStorage(this._token);
 
   String? _token;
+  int clearSessionCalls = 0;
 
   @override
   Future<void> saveAccessToken(String token) async {
@@ -925,6 +1006,7 @@ class _FakeTokenStorage implements TokenStorage {
 
   @override
   Future<void> clearSession() async {
+    clearSessionCalls++;
     _token = null;
   }
 }
