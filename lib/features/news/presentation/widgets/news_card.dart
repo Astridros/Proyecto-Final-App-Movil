@@ -175,8 +175,7 @@ class _NewsImage extends StatelessWidget {
                 fit: BoxFit.cover,
                 fadeInDuration: const Duration(milliseconds: 200),
                 placeholder: (context, url) => const _ImagePlaceholder(),
-                errorWidget: (context, url, error) =>
-                    const _ImagePlaceholder(),
+                errorWidget: (context, url, error) => const _ImagePlaceholder(),
               ),
       ),
     );
