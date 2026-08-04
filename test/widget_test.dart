@@ -256,22 +256,58 @@ void main() {
     expect(find.text('Cambiar contraseña'), findsWidgets);
   });
 
-  testWidgets('El botón Cambiar contraseña aparece en InitialScreen', (
-    tester,
-  ) async {
+  testWidgets('InitialScreen muestra icono hamburguesa', (tester) async {
     await tester.pumpWidget(_testApp(hasToken: true, profileCompleted: true));
     await tester.pumpAndSettle();
 
-    expect(find.text('Cambiar contraseña'), findsOneWidget);
+    expect(find.byTooltip('Abrir menú'), findsOneWidget);
   });
 
-  testWidgets('El botón Cerrar sesión aparece en InitialScreen', (
+  testWidgets('El menú muestra opciones privadas', (tester) async {
+    await tester.pumpWidget(_testApp(hasToken: true, profileCompleted: true));
+    await tester.pumpAndSettle();
+    await _openDrawer(tester);
+
+    expect(find.text('Inicio'), findsWidgets);
+    expect(find.text('Cambiar contraseña'), findsOneWidget);
+    expect(find.text('Cerrar sesión'), findsOneWidget);
+  });
+
+  testWidgets('Los accesos privados ya no aparecen en el contenido principal', (
     tester,
   ) async {
     await tester.pumpWidget(_testApp(hasToken: true, profileCompleted: true));
     await tester.pumpAndSettle();
 
-    expect(find.text('Cerrar sesión'), findsOneWidget);
+    expect(find.text('Cambiar contraseña'), findsNothing);
+    expect(find.text('Cerrar sesión'), findsNothing);
+    expect(find.text('Explorar ofertas'), findsOneWidget);
+  });
+
+  testWidgets('Inicio cierra el drawer y vuelve a la ruta principal', (
+    tester,
+  ) async {
+    await tester.pumpWidget(_testApp(hasToken: true, profileCompleted: true));
+    await tester.pumpAndSettle();
+    await _openDrawer(tester);
+
+    await tester.tap(find.text('Inicio').last);
+    await tester.pumpAndSettle();
+
+    expect(find.byType(NavigationDrawer), findsNothing);
+    expect(find.text('Base provisional'), findsOneWidget);
+  });
+
+  testWidgets('El encabezado del menú muestra datos reales si existen', (
+    tester,
+  ) async {
+    await tester.pumpWidget(_testApp(hasToken: true, profileCompleted: true));
+    await tester.pumpAndSettle();
+    await _openDrawer(tester);
+
+    expect(find.text('Ocupa2'), findsWidgets);
+    expect(find.text('Astrid Diaz'), findsOneWidget);
+    expect(find.text('astrid@example.com'), findsOneWidget);
   });
 
   testWidgets('Cancelar no cierra sesión', (tester) async {
@@ -285,7 +321,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.ensureVisible(find.text('Cerrar sesión'));
+    await _openDrawer(tester);
     await tester.tap(find.text('Cerrar sesión'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Cancelar'));
@@ -306,7 +342,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.ensureVisible(find.text('Cerrar sesión'));
+    await _openDrawer(tester);
     await tester.tap(find.text('Cerrar sesión'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Cerrar sesión').last);
@@ -329,7 +365,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.ensureVisible(find.text('Cerrar sesión'));
+    await _openDrawer(tester);
     await tester.tap(find.text('Cerrar sesión'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Cerrar sesión').last);
@@ -344,24 +380,25 @@ void main() {
     expect(find.byType(OffersScreen), findsNothing);
   });
 
-  testWidgets('El botón Cambiar contraseña navega correctamente', (
+  testWidgets('Cambiar contraseña navega correctamente desde el menú', (
     tester,
   ) async {
     await tester.pumpWidget(_testApp(hasToken: true, profileCompleted: true));
     await tester.pumpAndSettle();
 
-    await tester.ensureVisible(find.text('Cambiar contraseña'));
+    await _openDrawer(tester);
     await tester.tap(find.text('Cambiar contraseña'));
     await tester.pumpAndSettle();
 
     expect(find.byType(ChangePasswordScreen), findsOneWidget);
+    expect(find.byType(NavigationDrawer), findsNothing);
   });
 
   testWidgets('El botón de regreso funciona', (tester) async {
     await tester.pumpWidget(_testApp(hasToken: true, profileCompleted: true));
     await tester.pumpAndSettle();
 
-    await tester.ensureVisible(find.text('Cambiar contraseña'));
+    await _openDrawer(tester);
     await tester.tap(find.text('Cambiar contraseña'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Volver'));
@@ -375,7 +412,7 @@ void main() {
     await tester.pumpWidget(_testApp(hasToken: true, profileCompleted: true));
     await tester.pumpAndSettle();
 
-    await tester.ensureVisible(find.text('Cambiar contraseña'));
+    await _openDrawer(tester);
     await tester.tap(find.text('Cambiar contraseña'));
     await tester.pumpAndSettle();
     await tester.enterText(
@@ -730,6 +767,11 @@ Widget _testApp({
     ],
     child: const Ocupa2App(),
   );
+}
+
+Future<void> _openDrawer(WidgetTester tester) async {
+  await tester.tap(find.byTooltip('Abrir menú'));
+  await tester.pumpAndSettle();
 }
 
 Future<void> _fillLogin(WidgetTester tester) async {
