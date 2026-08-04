@@ -33,4 +33,7 @@ class RouteNames {
   static const newsDetailPath = '/news/detail';
   static const videosPath = '/videos';
   static const videoDetailPath = '/videos/detail';
+
+  static const experiences = 'experiences';
+  static const addExperience = 'addExperience';
 }

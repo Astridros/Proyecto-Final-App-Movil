@@ -109,6 +109,13 @@ class InitialScreen extends ConsumerWidget {
                 onPressed: () => context.pushNamed(RouteNames.videos),
                 width: double.infinity,
               ),
+              const SizedBox(height: AppDimensions.spacing12),
+              AppButton.outlined(
+                label: 'Experiencias',
+                icon: Icons.book,
+                onPressed: () => context.pushNamed(RouteNames.experiences),
+                width: double.infinity,
+              ),
               const SizedBox(height: AppDimensions.spacing24),
               const SizedBox(height: AppDimensions.spacing16),
 
