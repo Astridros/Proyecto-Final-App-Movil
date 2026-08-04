@@ -10,7 +10,10 @@ class RouteNames {
   static const offers = 'offers';
   static const offerDetail = 'offerDetail';
   static const changePassword = 'changePassword';
-
+  static const offersMap = 'offersMap';
+  static const offersMapPath = '/offers-map';
+  static const aboutPath = '/about';
+  static const about = 'about';
   // Angel Daniel Genao 2024-1169: rutas agregadas para Noticias y Videos.
   static const news = 'news';
   static const newsDetail = 'newsDetail';

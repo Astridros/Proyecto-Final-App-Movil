@@ -43,6 +43,16 @@ class InitialScreen extends StatelessWidget {
                 onPressed: () => context.pushNamed(RouteNames.offers),
                 width: double.infinity,
               ),
+              const SizedBox(height: AppDimensions.spacing16),
+              AppButton.outlined(
+                label: 'Mapa de ofertas',
+                icon: Icons.map_outlined,
+                onPressed: () => context.pushNamed(RouteNames.offersMap),
+                width: double.infinity,
+              ),
+
+              const SizedBox(height: AppDimensions.spacing12),
+
               const SizedBox(height: AppDimensions.spacing12),
               // Angel Daniel Genao 2024-1169: accesos a Noticias y Videos.
               AppButton.outlined(
@@ -66,6 +76,15 @@ class InitialScreen extends StatelessWidget {
                 width: double.infinity,
               ),
               const SizedBox(height: AppDimensions.spacing24),
+              const SizedBox(height: AppDimensions.spacing16),
+
+              AppButton.outlined(
+                label: 'Acerca de',
+                icon: Icons.info_outline_rounded,
+                onPressed: () => context.pushNamed(RouteNames.about),
+                width: double.infinity,
+              ),
+              const SizedBox(height: AppDimensions.spacing12),
               const AppCard(
                 child: Row(
                   children: [

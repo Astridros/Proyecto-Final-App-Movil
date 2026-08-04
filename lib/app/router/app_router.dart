@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-
+import '../../features/about/presentation/screens/about_screen.dart';
 import '../../features/auth/presentation/providers/auth_session_providers.dart';
 import '../../features/auth/presentation/pages/forgot_password_screen.dart';
 import '../../features/auth/presentation/pages/login_screen.dart';
@@ -19,6 +19,7 @@ import '../../features/videos/domain/entities/video.dart';
 import '../../features/videos/presentation/pages/video_detail_screen.dart';
 import '../../features/videos/presentation/pages/videos_screen.dart';
 import 'route_names.dart';
+import '../../features/offer_map/presentation/screens/offers_map_screen.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   final refreshNotifier = _GoRouterRefreshNotifier(ref);
@@ -112,6 +113,16 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: RouteNames.offersPath,
         name: RouteNames.offers,
         builder: (context, state) => const OffersScreen(),
+      ),
+      GoRoute(
+        path: RouteNames.offersMapPath,
+        name: RouteNames.offersMap,
+        builder: (context, state) => const OffersMapScreen(),
+      ),
+      GoRoute(
+        path: RouteNames.aboutPath,
+        name: RouteNames.about,
+        builder: (context, state) => const AboutScreen(),
       ),
       GoRoute(
         path: RouteNames.offerDetailPath,

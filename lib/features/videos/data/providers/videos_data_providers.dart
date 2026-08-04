@@ -10,9 +10,7 @@ import '../../domain/repositories/videos_repository.dart';
 import '../datasources/videos_remote_datasource.dart';
 import '../repositories/videos_repository_impl.dart';
 
-final videosRemoteDataSourceProvider = Provider<VideosRemoteDataSource>((
-  ref,
-) {
+final videosRemoteDataSourceProvider = Provider<VideosRemoteDataSource>((ref) {
   return OcupaBackendVideosRemoteDataSource(ref.watch(apiClientProvider));
 });
 

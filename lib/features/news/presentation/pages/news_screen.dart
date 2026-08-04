@@ -59,10 +59,7 @@ class _NewsScreenState extends ConsumerState<NewsScreen> {
               // RefreshIndicator permite "deslizar hacia abajo" para recargar.
               : RefreshIndicator(
                   onRefresh: controller.refresh,
-                  child: _NewsContent(
-                    state: state,
-                    onRetry: controller.retry,
-                  ),
+                  child: _NewsContent(state: state, onRetry: controller.retry),
                 ),
         ),
       ),

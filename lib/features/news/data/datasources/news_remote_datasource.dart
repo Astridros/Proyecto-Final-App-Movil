@@ -35,8 +35,6 @@ class OcupaBackendNewsRemoteDataSource implements NewsRemoteDataSource {
       return const [];
     }
 
-    return List.unmodifiable(
-      data.whereType<Map>().map(NewsItemModel.fromJson),
-    );
+    return List.unmodifiable(data.whereType<Map>().map(NewsItemModel.fromJson));
   }
 }
