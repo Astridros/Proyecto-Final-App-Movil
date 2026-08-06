@@ -12,6 +12,10 @@ abstract class ExperienceRemoteDataSource {
   Future<void> createExperience(
     ExperienceModel experience,
   );
+
+  Future<void> deleteExperience(
+    String id
+  );
 }
 
 class OcupaBackendExperienceRemoteDataSource implements ExperienceRemoteDataSource {
@@ -26,7 +30,7 @@ class OcupaBackendExperienceRemoteDataSource implements ExperienceRemoteDataSour
     bool forceRefresh = false,
   }) async{
     final response = await _apiClient.get<Object?>(
-      '/experiences',
+      '/me/experiences',
     );
 
     final map = requireJsonMap(
@@ -58,8 +62,15 @@ class OcupaBackendExperienceRemoteDataSource implements ExperienceRemoteDataSour
     ExperienceModel experience,
   ) async{
     await _apiClient.post<Object?>(
-      '/experiences',
+      '/me/experiences',
       data: experience.toJson(),
+    );
+  }
+
+  @override
+  Future<void> deleteExperience(String id) async {
+    await _apiClient.delete(
+      '/me/experiences/$id',
     );
   }
 }

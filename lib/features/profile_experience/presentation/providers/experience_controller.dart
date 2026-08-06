@@ -84,6 +84,18 @@ class ExperienceController extends Notifier<ExperienceState>{
     }
   }
 
+  Future<void> deleteExperience(String id) async {
+    try {
+      await _repository.deleteExperience(id);
+
+      await refresh();
+    } catch (error) {
+      state = state.copyWith(
+        error: _toAppException(error),
+      );
+    }
+  }
+
   Future<void> retry() async {
     state = state.copyWith(
       isInitialLoading: false,

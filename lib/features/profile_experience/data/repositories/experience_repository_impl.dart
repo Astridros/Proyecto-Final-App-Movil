@@ -27,4 +27,9 @@ class ExperienceRepositoryImpl implements ExperienceRepository{
       ExperienceModel.fromEntity(experience),
     );
   }
+
+  @override
+  Future<void> deleteExperience(String id) {
+    return _remoteDataSource.deleteExperience(id);
+  }
 }
