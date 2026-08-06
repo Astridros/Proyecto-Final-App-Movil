@@ -20,9 +20,9 @@ class AboutScreen extends StatelessWidget {
     TeamMember(
       name: 'Astrid Rondón',
       studentId: '2024-1277',
-      phone: '+8494782210',
-      telegramUrl: 'https://t.me/maria_ejemplo',
-      photoAsset: 'assets/images/team/maria.jpg',
+      phone: '+18494782210',
+      telegramUrl: 'https://web.telegram.org/a/#5026367095',
+      photoAsset: 'assets/images/team/astrid.jpeg',
     ),
     TeamMember(
       name: 'Dailyn Aastro',
