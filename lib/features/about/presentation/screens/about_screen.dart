@@ -59,6 +59,13 @@ class AboutScreen extends StatelessWidget {
       telegramUrl: 'https://t.me/carlos_ejemplo',
       photoAsset: 'assets/images/team/carlos.jpg',
     ),
+    TeamMember(
+      name: 'Anthony Urbaez',
+      studentId: '2023-1394',
+      phone: '+18498627678',
+      telegramUrl: '',
+      photoAsset: '',
+    ),
   ];
 
   @override

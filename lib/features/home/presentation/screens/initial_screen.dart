@@ -93,7 +93,6 @@ class InitialScreen extends ConsumerWidget {
               ),
 
               const SizedBox(height: AppDimensions.spacing12),
-
               const SizedBox(height: AppDimensions.spacing12),
               // Angel Daniel Genao 2024-1169: accesos a Noticias y Videos.
               AppButton.outlined(
@@ -109,6 +108,15 @@ class InitialScreen extends ConsumerWidget {
                 onPressed: () => context.pushNamed(RouteNames.videos),
                 width: double.infinity,
               ),
+              const SizedBox(height: AppDimensions.spacing24),
+
+              AppButton.outlined(
+                label: 'Mi Perfil',
+                icon: Icons.person,
+                onPressed: () => context.pushNamed(RouteNames.experiences),
+                width: double.infinity,
+              ),
+              
               const SizedBox(height: AppDimensions.spacing24),
               const SizedBox(height: AppDimensions.spacing16),
 

@@ -52,6 +52,7 @@ class _AddExperienceScreenState extends ConsumerState<AddExperienceScreen>{
 
     try {
       final experience = Experience(
+        id: '',
         title: _titleController.text.trim(),
         description: _descriptionController.text.trim(),
         jobTypeKey: _jobTypeController.text.trim(),

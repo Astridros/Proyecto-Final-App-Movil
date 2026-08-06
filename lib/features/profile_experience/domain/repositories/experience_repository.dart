@@ -8,4 +8,8 @@ abstract class ExperienceRepository {
   Future<void> createExperience(
     Experience experience,
   );
+
+  Future<void> deleteExperience(
+    String id
+  );
 }
