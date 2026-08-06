@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:ocupa2/features/profile_experience/presentation/screens/add_experience_screen.dart';
+import 'package:ocupa2/features/profile_experience/presentation/screens/experience_screen.dart';
 import '../../features/about/presentation/screens/about_screen.dart';
 import '../../features/auth/presentation/providers/auth_session_providers.dart';
 import '../../features/auth/presentation/pages/forgot_password_screen.dart';
@@ -163,6 +165,17 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         name: RouteNames.videoDetail,
         builder: (context, state) =>
             VideoDetailScreen(video: state.extra as Video),
+      ),
+
+      GoRoute(
+        name: RouteNames.experiences,
+        path: RouteNames.experiencesPath,
+        builder: (context, state) => const ExperienceScreen(),
+      ),
+      GoRoute(
+        name: RouteNames.addExperience,
+        path: RouteNames.addExperiencePath,
+        builder: (context, state) => const AddExperienceScreen(),
       ),
     ],
   );
