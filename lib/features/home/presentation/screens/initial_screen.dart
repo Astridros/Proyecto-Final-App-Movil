@@ -113,7 +113,7 @@ class InitialScreen extends ConsumerWidget {
               AppButton.outlined(
                 label: 'Mi Perfil',
                 icon: Icons.person,
-                onPressed: () => context.pushNamed(RouteNames.experiences),
+                onPressed: () => context.pushNamed(RouteNames.profile),
                 width: double.infinity,
               ),
               

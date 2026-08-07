@@ -64,7 +64,7 @@ class AboutScreen extends StatelessWidget {
       studentId: '2023-1394',
       phone: '+18498627678',
       telegramUrl: '',
-      photoAsset: '',
+      photoAsset: 'assets/images/team/anthony-urbaez.jpeg',
     ),
   ];
 
