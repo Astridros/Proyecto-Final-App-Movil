@@ -37,6 +37,8 @@ class RouteNames {
   // Anthony Urbaez - 2023-1394 feature mi perfil / experiencia
   static const experiences = 'experiences';
   static const addExperience = 'addExperience';
+  static const editProfile = 'editProfile';
+  static const profile = 'profile';
 
   static const experiencesPath = '/experiences';
   static const addExperiencePath = '/add-experience';
