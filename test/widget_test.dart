@@ -32,6 +32,7 @@ import 'package:ocupa2/features/offers/domain/entities/apply_offer_result.dart';
 import 'package:ocupa2/features/offers/domain/entities/job_type.dart';
 import 'package:ocupa2/features/offers/domain/entities/offer.dart';
 import 'package:ocupa2/features/offers/domain/entities/offer_location.dart';
+import 'package:ocupa2/features/offers/domain/entities/offer_like_result.dart';
 import 'package:ocupa2/features/offers/domain/entities/offer_payment.dart';
 import 'package:ocupa2/features/offers/domain/repositories/offers_repository.dart';
 import 'package:ocupa2/features/offers/presentation/pages/offer_detail_screen.dart';
@@ -255,33 +256,149 @@ void main() {
     expect(find.text('Cambiar contraseña'), findsWidgets);
   });
 
-  testWidgets('El botón Cambiar contraseña aparece en InitialScreen', (
-    tester,
-  ) async {
+  testWidgets('InitialScreen muestra icono hamburguesa', (tester) async {
     await tester.pumpWidget(_testApp(hasToken: true, profileCompleted: true));
     await tester.pumpAndSettle();
 
-    expect(find.text('Cambiar contraseña'), findsOneWidget);
+    expect(find.byTooltip('Abrir menú'), findsOneWidget);
   });
 
-  testWidgets('El botón Cambiar contraseña navega correctamente', (
+  testWidgets('El menú muestra opciones privadas', (tester) async {
+    await tester.pumpWidget(_testApp(hasToken: true, profileCompleted: true));
+    await tester.pumpAndSettle();
+    await _openDrawer(tester);
+
+    expect(find.text('Inicio'), findsWidgets);
+    expect(find.text('Cambiar contraseña'), findsOneWidget);
+    expect(find.text('Cerrar sesión'), findsOneWidget);
+  });
+
+  testWidgets('Los accesos privados ya no aparecen en el contenido principal', (
     tester,
   ) async {
     await tester.pumpWidget(_testApp(hasToken: true, profileCompleted: true));
     await tester.pumpAndSettle();
 
-    await tester.ensureVisible(find.text('Cambiar contraseña'));
+    expect(find.text('Cambiar contraseña'), findsNothing);
+    expect(find.text('Cerrar sesión'), findsNothing);
+    expect(find.text('Explorar ofertas'), findsOneWidget);
+  });
+
+  testWidgets('Inicio cierra el drawer y vuelve a la ruta principal', (
+    tester,
+  ) async {
+    await tester.pumpWidget(_testApp(hasToken: true, profileCompleted: true));
+    await tester.pumpAndSettle();
+    await _openDrawer(tester);
+
+    await tester.tap(find.text('Inicio').last);
+    await tester.pumpAndSettle();
+
+    expect(find.byType(NavigationDrawer), findsNothing);
+    expect(find.text('Base provisional'), findsOneWidget);
+  });
+
+  testWidgets('El encabezado del menú muestra datos reales si existen', (
+    tester,
+  ) async {
+    await tester.pumpWidget(_testApp(hasToken: true, profileCompleted: true));
+    await tester.pumpAndSettle();
+    await _openDrawer(tester);
+
+    expect(find.text('Ocupa2'), findsWidgets);
+    expect(find.text('Astrid Diaz'), findsOneWidget);
+    expect(find.text('astrid@example.com'), findsOneWidget);
+  });
+
+  testWidgets('Cancelar no cierra sesión', (tester) async {
+    final tokenStorage = _FakeTokenStorage('token');
+    await tester.pumpWidget(
+      _testApp(
+        hasToken: true,
+        profileCompleted: true,
+        tokenStorage: tokenStorage,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await _openDrawer(tester);
+    await tester.tap(find.text('Cerrar sesión'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Cancelar'));
+    await tester.pumpAndSettle();
+
+    expect(tokenStorage.clearSessionCalls, 0);
+    expect(find.text('Base provisional'), findsOneWidget);
+  });
+
+  testWidgets('Confirmar ejecuta logout y muestra LoginScreen', (tester) async {
+    final tokenStorage = _FakeTokenStorage('token');
+    await tester.pumpWidget(
+      _testApp(
+        hasToken: true,
+        profileCompleted: true,
+        tokenStorage: tokenStorage,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await _openDrawer(tester);
+    await tester.tap(find.text('Cerrar sesión'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Cerrar sesión').last);
+    await tester.pumpAndSettle();
+
+    expect(tokenStorage.clearSessionCalls, 1);
+    expect(find.byType(LoginScreen), findsOneWidget);
+  });
+
+  testWidgets('Usuario cerrado no puede acceder a rutas privadas', (
+    tester,
+  ) async {
+    final tokenStorage = _FakeTokenStorage('token');
+    await tester.pumpWidget(
+      _testApp(
+        hasToken: true,
+        profileCompleted: true,
+        tokenStorage: tokenStorage,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await _openDrawer(tester);
+    await tester.tap(find.text('Cerrar sesión'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Cerrar sesión').last);
+    await tester.pumpAndSettle();
+
+    GoRouter.of(
+      tester.element(find.byType(LoginScreen)),
+    ).go(RouteNames.offersPath);
+    await tester.pumpAndSettle();
+
+    expect(find.byType(LoginScreen), findsOneWidget);
+    expect(find.byType(OffersScreen), findsNothing);
+  });
+
+  testWidgets('Cambiar contraseña navega correctamente desde el menú', (
+    tester,
+  ) async {
+    await tester.pumpWidget(_testApp(hasToken: true, profileCompleted: true));
+    await tester.pumpAndSettle();
+
+    await _openDrawer(tester);
     await tester.tap(find.text('Cambiar contraseña'));
     await tester.pumpAndSettle();
 
     expect(find.byType(ChangePasswordScreen), findsOneWidget);
+    expect(find.byType(NavigationDrawer), findsNothing);
   });
 
   testWidgets('El botón de regreso funciona', (tester) async {
     await tester.pumpWidget(_testApp(hasToken: true, profileCompleted: true));
     await tester.pumpAndSettle();
 
-    await tester.ensureVisible(find.text('Cambiar contraseña'));
+    await _openDrawer(tester);
     await tester.tap(find.text('Cambiar contraseña'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Volver'));
@@ -295,7 +412,7 @@ void main() {
     await tester.pumpWidget(_testApp(hasToken: true, profileCompleted: true));
     await tester.pumpAndSettle();
 
-    await tester.ensureVisible(find.text('Cambiar contraseña'));
+    await _openDrawer(tester);
     await tester.tap(find.text('Cambiar contraseña'));
     await tester.pumpAndSettle();
     await tester.enterText(
@@ -622,6 +739,7 @@ Widget _testApp({
   _FakeAuthRepository? authRepository,
   _FakeProfileRepository? profileRepository,
   _FakeOffersRepository? offersRepository,
+  _FakeTokenStorage? tokenStorage,
   bool hasToken = false,
   bool profileCompleted = false,
 }) {
@@ -631,7 +749,7 @@ Widget _testApp({
         authRepository ?? _FakeAuthRepository(),
       ),
       tokenStorageProvider.overrideWithValue(
-        _FakeTokenStorage(hasToken ? 'token' : null),
+        tokenStorage ?? _FakeTokenStorage(hasToken ? 'token' : null),
       ),
       offersRepositoryProvider.overrideWithValue(
         offersRepository ?? _FakeOffersRepository(),
@@ -649,6 +767,11 @@ Widget _testApp({
     ],
     child: const Ocupa2App(),
   );
+}
+
+Future<void> _openDrawer(WidgetTester tester) async {
+  await tester.tap(find.byTooltip('Abrir menú'));
+  await tester.pumpAndSettle();
 }
 
 Future<void> _fillLogin(WidgetTester tester) async {
@@ -816,6 +939,21 @@ class _FakeOffersRepository implements OffersRepository {
   }) async {
     return const ApplyOfferResult(id: 'application-id', status: 'applied');
   }
+
+  @override
+  Future<OfferLikeResult> likeOffer(String offerId) async {
+    return const OfferLikeResult(liked: true, likesCount: 1);
+  }
+
+  @override
+  Future<OfferLikeResult> unlikeOffer(String offerId) async {
+    return const OfferLikeResult(liked: false, likesCount: 0);
+  }
+
+  @override
+  Future<List<Offer>> getMyLikedOffers() async {
+    return const [];
+  }
 }
 
 class _FakeApplicationsRepository implements ApplicationsRepository {
@@ -897,6 +1035,7 @@ class _FakeTokenStorage implements TokenStorage {
   _FakeTokenStorage(this._token);
 
   String? _token;
+  int clearSessionCalls = 0;
 
   @override
   Future<void> saveAccessToken(String token) async {
@@ -925,6 +1064,7 @@ class _FakeTokenStorage implements TokenStorage {
 
   @override
   Future<void> clearSession() async {
+    clearSessionCalls++;
     _token = null;
   }
 }

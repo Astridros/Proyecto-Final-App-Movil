@@ -10,7 +10,10 @@ class RouteNames {
   static const offers = 'offers';
   static const offerDetail = 'offerDetail';
   static const changePassword = 'changePassword';
-
+  static const offersMap = 'offersMap';
+  static const offersMapPath = '/offers-map';
+  static const aboutPath = '/about';
+  static const about = 'about';
   // Angel Daniel Genao 2024-1169: rutas agregadas para Noticias y Videos.
   static const news = 'news';
   static const newsDetail = 'newsDetail';
@@ -30,4 +33,13 @@ class RouteNames {
   static const newsDetailPath = '/news/detail';
   static const videosPath = '/videos';
   static const videoDetailPath = '/videos/detail';
+
+  // Anthony Urbaez - 2023-1394 feature mi perfil / experiencia
+  static const experiences = 'experiences';
+  static const addExperience = 'addExperience';
+  static const editProfile = 'editProfile';
+  static const profile = 'profile';
+
+  static const experiencesPath = '/experiences';
+  static const addExperiencePath = '/add-experience';
 }

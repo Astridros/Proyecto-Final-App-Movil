@@ -6,6 +6,14 @@ import 'package:ocupa2/core/errors/api_exception.dart';
 import 'package:ocupa2/core/storage/secure_storage_provider.dart';
 import 'package:ocupa2/core/storage/token_storage.dart';
 import 'package:ocupa2/features/auth/presentation/providers/auth_session_providers.dart';
+import 'package:ocupa2/features/offers/data/providers/offers_data_providers.dart';
+import 'package:ocupa2/features/offers/domain/entities/apply_offer_answer.dart';
+import 'package:ocupa2/features/offers/domain/entities/apply_offer_result.dart';
+import 'package:ocupa2/features/offers/domain/entities/job_type.dart';
+import 'package:ocupa2/features/offers/domain/entities/offer.dart';
+import 'package:ocupa2/features/offers/domain/entities/offer_like_result.dart';
+import 'package:ocupa2/features/offers/domain/repositories/offers_repository.dart';
+import 'package:ocupa2/features/offers/presentation/providers/offer_like_providers.dart';
 import 'package:ocupa2/features/profile/data/providers/profile_data_providers.dart';
 import 'package:ocupa2/features/profile/domain/entities/profile.dart';
 import 'package:ocupa2/features/profile/domain/repositories/profile_repository.dart';
@@ -100,23 +108,176 @@ void main() {
 
     expect(setup.repository.getProfileCalls, 1);
   });
+
+  test('logout elimina el token', () async {
+    final setup = _setup(hasToken: true);
+    setup.container
+        .read(authSessionControllerProvider.notifier)
+        .updateAuthenticatedProfile(_profile(profileCompleted: true));
+
+    await setup.container.read(authSessionControllerProvider.notifier).logout();
+
+    expect(await setup.tokenStorage.hasAccessToken(), isFalse);
+    expect(setup.tokenStorage.clearSessionCalls, 1);
+  });
+
+  test('logout limpia el perfil y establece sesion no autenticada', () async {
+    final setup = _setup(hasToken: true);
+    setup.container
+        .read(authSessionControllerProvider.notifier)
+        .updateAuthenticatedProfile(_profile(profileCompleted: true));
+
+    await setup.container.read(authSessionControllerProvider.notifier).logout();
+
+    final state = setup.container.read(authSessionControllerProvider);
+    expect(state.profile, isNull);
+    expect(state.isAuthenticated, isFalse);
+    expect(state.hasCheckedSession, isTrue);
+    expect(state.error, isNull);
+  });
+
+  test('logout activa y desactiva isLoggingOut', () async {
+    final setup = _setup(hasToken: true);
+    setup.tokenStorage.clearSessionCompleter = Completer<void>();
+    setup.container
+        .read(authSessionControllerProvider.notifier)
+        .updateAuthenticatedProfile(_profile(profileCompleted: true));
+
+    final future = setup.container
+        .read(authSessionControllerProvider.notifier)
+        .logout();
+
+    expect(
+      setup.container.read(authSessionControllerProvider).isLoggingOut,
+      isTrue,
+    );
+    setup.tokenStorage.clearSessionCompleter!.complete();
+    await future;
+
+    expect(
+      setup.container.read(authSessionControllerProvider).isLoggingOut,
+      isFalse,
+    );
+  });
+
+  test('error al limpiar almacenamiento conserva estado coherente', () async {
+    final setup = _setup(hasToken: true);
+    final profile = _profile(profileCompleted: true);
+    setup.tokenStorage.clearSessionError = const ApiException(
+      message: 'No se pudo cerrar sesion',
+    );
+    setup.container
+        .read(authSessionControllerProvider.notifier)
+        .updateAuthenticatedProfile(profile);
+
+    await setup.container.read(authSessionControllerProvider.notifier).logout();
+
+    final state = setup.container.read(authSessionControllerProvider);
+    expect(state.isAuthenticated, isTrue);
+    expect(state.profile, profile);
+    expect(state.isLoggingOut, isFalse);
+    expect(state.error?.message, 'No se pudo cerrar sesion');
+  });
+
+  test('logout no llama ningun endpoint', () async {
+    final setup = _setup(hasToken: true);
+    setup.container
+        .read(authSessionControllerProvider.notifier)
+        .updateAuthenticatedProfile(_profile(profileCompleted: true));
+
+    await setup.container.read(authSessionControllerProvider.notifier).logout();
+
+    expect(setup.repository.getProfileCalls, 0);
+  });
+
+  test(
+    'logout invalida estado de likes y nueva sesion no hereda estado',
+    () async {
+      final setup = _setup(hasToken: true);
+      setup.container
+          .read(authSessionControllerProvider.notifier)
+          .updateAuthenticatedProfile(_profile(profileCompleted: true));
+      setup.container
+          .read(offerLikeControllerProvider('offer-a').notifier)
+          .syncFromOffer(likedByMe: true, likesCount: 5);
+
+      expect(
+        setup.container.read(offerLikeControllerProvider('offer-a')).liked,
+        isTrue,
+      );
+
+      await setup.container
+          .read(authSessionControllerProvider.notifier)
+          .logout();
+
+      final stateAfterLogout = setup.container.read(
+        offerLikeControllerProvider('offer-a'),
+      );
+      expect(stateAfterLogout.liked, isFalse);
+      expect(stateAfterLogout.likesCount, 0);
+    },
+  );
 }
 
 _Setup _setup({required bool hasToken, bool profileCompleted = false}) {
   final repository = _FakeProfileRepository(
     profile: _profile(profileCompleted: profileCompleted),
   );
+  final tokenStorage = _FakeTokenStorage(hasToken ? 'token' : null);
   final container = ProviderContainer(
     overrides: [
-      tokenStorageProvider.overrideWithValue(
-        _FakeTokenStorage(hasToken ? 'token' : null),
-      ),
+      tokenStorageProvider.overrideWithValue(tokenStorage),
       profileRepositoryProvider.overrideWithValue(repository),
+      offersRepositoryProvider.overrideWithValue(_FakeOffersRepository()),
     ],
   );
   addTearDown(container.dispose);
 
-  return _Setup(container: container, repository: repository);
+  return _Setup(
+    container: container,
+    repository: repository,
+    tokenStorage: tokenStorage,
+  );
+}
+
+class _FakeOffersRepository implements OffersRepository {
+  @override
+  Future<List<JobType>> getJobTypes() async => const [];
+
+  @override
+  Future<List<Offer>> getOffers({
+    String? jobTypeKey,
+    String? contractType,
+  }) async {
+    return const [];
+  }
+
+  @override
+  Future<Offer> getOfferById(String id) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<ApplyOfferResult> applyToOffer({
+    required String offerId,
+    required String comment,
+    required List<ApplyOfferAnswer> answers,
+  }) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<OfferLikeResult> likeOffer(String offerId) async {
+    return const OfferLikeResult(liked: true, likesCount: 1);
+  }
+
+  @override
+  Future<OfferLikeResult> unlikeOffer(String offerId) async {
+    return const OfferLikeResult(liked: false, likesCount: 0);
+  }
+
+  @override
+  Future<List<Offer>> getMyLikedOffers() async => const [];
 }
 
 Profile _profile({bool profileCompleted = false}) {
@@ -133,10 +294,15 @@ Profile _profile({bool profileCompleted = false}) {
 }
 
 class _Setup {
-  const _Setup({required this.container, required this.repository});
+  const _Setup({
+    required this.container,
+    required this.repository,
+    required this.tokenStorage,
+  });
 
   final ProviderContainer container;
   final _FakeProfileRepository repository;
+  final _FakeTokenStorage tokenStorage;
 }
 
 class _FakeProfileRepository implements ProfileRepository {
@@ -178,6 +344,9 @@ class _FakeTokenStorage implements TokenStorage {
   _FakeTokenStorage(this._token);
 
   String? _token;
+  Completer<void>? clearSessionCompleter;
+  Object? clearSessionError;
+  int clearSessionCalls = 0;
 
   @override
   Future<void> saveAccessToken(String token) async {
@@ -206,6 +375,16 @@ class _FakeTokenStorage implements TokenStorage {
 
   @override
   Future<void> clearSession() async {
+    clearSessionCalls++;
+    if (clearSessionError != null) {
+      throw clearSessionError!;
+    }
+
+    final completer = clearSessionCompleter;
+    if (completer != null) {
+      await completer.future;
+    }
+
     _token = null;
   }
 }

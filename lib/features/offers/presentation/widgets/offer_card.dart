@@ -9,9 +9,22 @@ import '../../domain/constants/contract_types.dart';
 import '../../domain/entities/offer.dart';
 
 class OfferCard extends StatelessWidget {
-  const OfferCard({super.key, required this.offer, this.onTap});
+  OfferCard({
+    super.key,
+    required this.offer,
+    this.onTap,
+    bool? liked,
+    int? likesCount,
+    this.isLikeSubmitting = false,
+    this.onLikePressed,
+  }) : liked = liked ?? offer.likedByMe,
+       likesCount = likesCount ?? offer.likesCount;
 
   final Offer offer;
+  final bool liked;
+  final int likesCount;
+  final bool isLikeSubmitting;
+  final VoidCallback? onLikePressed;
 
   /// Callback externo para reutilizar la tarjeta en listados con navegación futura.
   final VoidCallback? onTap;
@@ -49,6 +62,13 @@ class OfferCard extends StatelessWidget {
                     const SizedBox(width: AppDimensions.spacing12),
                     Chip(label: Text(_contractTypeLabel)),
                   ],
+                ),
+                const SizedBox(height: AppDimensions.spacing12),
+                _LikeAction(
+                  liked: liked,
+                  likesCount: likesCount,
+                  isSubmitting: isLikeSubmitting,
+                  onPressed: onLikePressed,
                 ),
                 if (location != null) ...[
                   const SizedBox(height: AppDimensions.spacing12),
@@ -168,6 +188,48 @@ class _OfferImage extends StatelessWidget {
     }
 
     return trimmed;
+  }
+}
+
+class _LikeAction extends StatelessWidget {
+  const _LikeAction({
+    required this.liked,
+    required this.likesCount,
+    required this.isSubmitting,
+    required this.onPressed,
+  });
+
+  final bool liked;
+  final int likesCount;
+  final bool isSubmitting;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final safeCount = likesCount.clamp(0, 1 << 31);
+    final tooltip = liked ? 'Quitar me gusta' : 'Dar me gusta';
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Tooltip(
+          message: tooltip,
+          child: IconButton(
+            onPressed: isSubmitting ? null : onPressed,
+            icon: Icon(
+              liked ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+              color: liked ? AppColors.error : AppColors.textSecondary,
+            ),
+          ),
+        ),
+        Text(
+          '$safeCount',
+          style: AppTextStyles.bodySmall.copyWith(
+            color: AppColors.textSecondary,
+          ),
+        ),
+      ],
+    );
   }
 }
 

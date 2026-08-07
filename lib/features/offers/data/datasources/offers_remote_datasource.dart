@@ -4,10 +4,12 @@ import '../../domain/entities/apply_offer_answer.dart';
 import '../../domain/entities/apply_offer_result.dart';
 import '../../domain/entities/job_type.dart';
 import '../../domain/entities/offer.dart';
+import '../../domain/entities/offer_like_result.dart';
 import '../models/apply_offer_request_model.dart';
 import '../models/apply_offer_result_model.dart';
 import '../models/api_list_response.dart';
 import '../models/job_type_model.dart';
+import '../models/offer_like_result_model.dart';
 import '../models/offer_model.dart';
 
 abstract interface class OffersRemoteDataSource {
@@ -22,6 +24,12 @@ abstract interface class OffersRemoteDataSource {
     required String comment,
     required List<ApplyOfferAnswer> answers,
   });
+
+  Future<OfferLikeResult> likeOffer(String offerId);
+
+  Future<OfferLikeResult> unlikeOffer(String offerId);
+
+  Future<List<Offer>> getMyLikedOffers();
 }
 
 class OffersRemoteDataSourceImpl implements OffersRemoteDataSource {
@@ -88,6 +96,37 @@ class OffersRemoteDataSourceImpl implements OffersRemoteDataSource {
     );
 
     return ApplyOfferResultModel.fromApiResponse(response.data);
+  }
+
+  @override
+  Future<OfferLikeResult> likeOffer(String offerId) async {
+    final normalizedOfferId = _requiredId(offerId, 'offerId');
+    final response = await _apiClient.post<Object?>(
+      '$_offersPath/$normalizedOfferId/like',
+    );
+
+    return OfferLikeResultModel.fromApiResponse(response.data);
+  }
+
+  @override
+  Future<OfferLikeResult> unlikeOffer(String offerId) async {
+    final normalizedOfferId = _requiredId(offerId, 'offerId');
+    final response = await _apiClient.delete<Object?>(
+      '$_offersPath/$normalizedOfferId/like',
+    );
+
+    return OfferLikeResultModel.fromApiResponse(response.data);
+  }
+
+  @override
+  Future<List<Offer>> getMyLikedOffers() async {
+    final response = await _apiClient.get<Object?>('/me/likes');
+    final parsed = ApiListResponse<Offer>.fromJson(
+      response.data,
+      OfferModel.fromJson,
+    );
+
+    return parsed.data;
   }
 
   Map<String, dynamic>? _buildQueryParameters({

@@ -8,6 +8,7 @@ const _unset = Object();
 class AuthSessionState extends Equatable {
   const AuthSessionState({
     required this.isRestoring,
+    required this.isLoggingOut,
     required this.isAuthenticated,
     required this.profile,
     required this.error,
@@ -17,6 +18,7 @@ class AuthSessionState extends Equatable {
   factory AuthSessionState.initial() {
     return const AuthSessionState(
       isRestoring: false,
+      isLoggingOut: false,
       isAuthenticated: false,
       profile: null,
       error: null,
@@ -25,6 +27,7 @@ class AuthSessionState extends Equatable {
   }
 
   final bool isRestoring;
+  final bool isLoggingOut;
   final bool isAuthenticated;
   final Profile? profile;
   final AppException? error;
@@ -38,6 +41,7 @@ class AuthSessionState extends Equatable {
 
   AuthSessionState copyWith({
     bool? isRestoring,
+    bool? isLoggingOut,
     bool? isAuthenticated,
     Object? profile = _unset,
     Object? error = _unset,
@@ -45,6 +49,7 @@ class AuthSessionState extends Equatable {
   }) {
     return AuthSessionState(
       isRestoring: isRestoring ?? this.isRestoring,
+      isLoggingOut: isLoggingOut ?? this.isLoggingOut,
       isAuthenticated: isAuthenticated ?? this.isAuthenticated,
       profile: identical(profile, _unset) ? this.profile : profile as Profile?,
       error: identical(error, _unset) ? this.error : error as AppException?,
@@ -55,6 +60,7 @@ class AuthSessionState extends Equatable {
   @override
   List<Object?> get props => [
     isRestoring,
+    isLoggingOut,
     isAuthenticated,
     profile,
     error,

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/errors/error_mapper.dart';
 import '../../../../core/storage/secure_storage_provider.dart';
 import '../../../../core/storage/token_storage.dart';
+import '../../../offers/presentation/providers/offer_like_providers.dart';
 import '../../../profile/data/providers/profile_data_providers.dart';
 import '../../../profile/domain/entities/profile.dart';
 import '../../../profile/domain/repositories/profile_repository.dart';
@@ -64,5 +65,31 @@ class AuthSessionController extends Notifier<AuthSessionState> {
       error: null,
       hasCheckedSession: true,
     );
+  }
+
+  Future<void> logout() async {
+    if (state.isLoggingOut) {
+      return;
+    }
+
+    state = state.copyWith(isLoggingOut: true, error: null);
+
+    try {
+      await _tokenStorage.clearSession();
+      ref.invalidate(offerLikeControllerProvider);
+      state = state.copyWith(
+        isAuthenticated: false,
+        profile: null,
+        error: null,
+        hasCheckedSession: true,
+      );
+    } catch (error) {
+      state = state.copyWith(
+        error: ErrorMapper.fromObject(error),
+        hasCheckedSession: true,
+      );
+    } finally {
+      state = state.copyWith(isLoggingOut: false);
+    }
   }
 }

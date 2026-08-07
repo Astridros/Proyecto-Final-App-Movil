@@ -72,6 +72,60 @@ void main() {
     expect(taps, 1);
   });
 
+  testWidgets('muestra corazon vacio y contador', (tester) async {
+    await tester.pumpWidget(
+      _testApp(OfferCard(offer: _offer(), liked: false, likesCount: 8)),
+    );
+
+    expect(find.byIcon(Icons.favorite_border_rounded), findsOneWidget);
+    expect(find.text('8'), findsOneWidget);
+  });
+
+  testWidgets('muestra corazon lleno', (tester) async {
+    await tester.pumpWidget(
+      _testApp(OfferCard(offer: _offer(), liked: true, likesCount: 8)),
+    );
+
+    expect(find.byIcon(Icons.favorite_rounded), findsOneWidget);
+    expect(find.byTooltip('Quitar me gusta'), findsOneWidget);
+  });
+
+  testWidgets('pulsar corazon no ejecuta onTap de tarjeta', (tester) async {
+    var cardTaps = 0;
+    var likeTaps = 0;
+    await tester.pumpWidget(
+      _testApp(
+        OfferCard(
+          offer: _offer(),
+          onTap: () => cardTaps++,
+          onLikePressed: () => likeTaps++,
+        ),
+      ),
+    );
+
+    await tester.tap(find.byTooltip('Dar me gusta'));
+
+    expect(likeTaps, 1);
+    expect(cardTaps, 0);
+  });
+
+  testWidgets('loading deshabilita el corazon', (tester) async {
+    await tester.pumpWidget(
+      _testApp(
+        OfferCard(
+          offer: _offer(),
+          isLikeSubmitting: true,
+          onLikePressed: () {},
+        ),
+      ),
+    );
+
+    final button = tester.widget<IconButton>(
+      find.widgetWithIcon(IconButton, Icons.favorite_border_rounded),
+    );
+    expect(button.onPressed, isNull);
+  });
+
   testWidgets('salary ausente no se muestra', (tester) async {
     await tester.pumpWidget(
       _testApp(

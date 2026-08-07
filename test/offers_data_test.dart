@@ -11,6 +11,7 @@ import 'package:ocupa2/features/offers/data/models/apply_offer_result_model.dart
 import 'package:ocupa2/features/offers/data/models/api_list_response.dart';
 import 'package:ocupa2/features/offers/data/models/job_type_model.dart';
 import 'package:ocupa2/features/offers/data/models/offer_model.dart';
+import 'package:ocupa2/features/offers/data/models/offer_like_result_model.dart';
 import 'package:ocupa2/features/offers/data/models/offer_question_model.dart';
 import 'package:ocupa2/features/offers/data/providers/offers_data_providers.dart';
 import 'package:ocupa2/features/offers/data/repositories/offers_repository_impl.dart';
@@ -18,6 +19,7 @@ import 'package:ocupa2/features/offers/domain/entities/apply_offer_answer.dart';
 import 'package:ocupa2/features/offers/domain/entities/apply_offer_result.dart';
 import 'package:ocupa2/features/offers/domain/entities/job_type.dart';
 import 'package:ocupa2/features/offers/domain/entities/offer.dart';
+import 'package:ocupa2/features/offers/domain/entities/offer_like_result.dart';
 import 'package:ocupa2/features/offers/domain/repositories/offers_repository.dart';
 
 void main() {
@@ -289,6 +291,60 @@ void main() {
     });
   });
 
+  group('OfferLikeResultModel', () {
+    test('parseo liked true', () {
+      final result = OfferLikeResultModel.fromApiResponse(
+        _likeResultJson(liked: true, likesCount: 2),
+      );
+
+      expect(result.liked, isTrue);
+    });
+
+    test('parseo liked false', () {
+      final result = OfferLikeResultModel.fromApiResponse(
+        _likeResultJson(liked: false, likesCount: 2),
+      );
+
+      expect(result.liked, isFalse);
+    });
+
+    test('parseo likesCount entero', () {
+      final result = OfferLikeResultModel.fromApiResponse(
+        _likeResultJson(likesCount: 3),
+      );
+
+      expect(result.likesCount, 3);
+    });
+
+    test('parseo likesCount numerico convertido a int', () {
+      final result = OfferLikeResultModel.fromApiResponse(
+        _likeResultJson(likesCount: 3.8),
+      );
+
+      expect(result.likesCount, 3);
+    });
+
+    test('falta liked produce error controlado', () {
+      expect(
+        () => OfferLikeResultModel.fromApiResponse({
+          'ok': true,
+          'data': {'likesCount': 1},
+        }),
+        throwsA(isA<ApiException>()),
+      );
+    });
+
+    test('falta likesCount produce error controlado', () {
+      expect(
+        () => OfferLikeResultModel.fromApiResponse({
+          'ok': true,
+          'data': {'liked': true},
+        }),
+        throwsA(isA<ApiException>()),
+      );
+    });
+  });
+
   group('OffersRemoteDataSource', () {
     test('query sin filtros no envía parámetros vacíos', () async {
       final client = _TestApiClient({'ok': true, 'data': []});
@@ -422,6 +478,68 @@ void main() {
         ),
       );
     });
+
+    test('POST usa /offers/{id}/like', () async {
+      final client = _TestApiClient(_likeResultJson());
+      final dataSource = OffersRemoteDataSourceImpl(client.apiClient);
+
+      await dataSource.likeOffer(' offer-id ');
+
+      expect(client.lastOptions.method, 'POST');
+      expect(client.lastOptions.path, '/offers/offer-id/like');
+    });
+
+    test('DELETE usa /offers/{id}/like', () async {
+      final client = _TestApiClient(_likeResultJson(liked: false));
+      final dataSource = OffersRemoteDataSourceImpl(client.apiClient);
+
+      await dataSource.unlikeOffer(' offer-id ');
+
+      expect(client.lastOptions.method, 'DELETE');
+      expect(client.lastOptions.path, '/offers/offer-id/like');
+    });
+
+    test('GET usa /me/likes', () async {
+      final client = _TestApiClient({
+        'ok': true,
+        'data': [_offerJson()],
+      });
+      final dataSource = OffersRemoteDataSourceImpl(client.apiClient);
+
+      await dataSource.getMyLikedOffers();
+
+      expect(client.lastOptions.method, 'GET');
+      expect(client.lastOptions.path, '/me/likes');
+    });
+
+    test('ID vacio produce error al dar like', () {
+      final client = _TestApiClient(_likeResultJson());
+      final dataSource = OffersRemoteDataSourceImpl(client.apiClient);
+
+      expect(() => dataSource.likeOffer(' '), throwsA(isA<ApiException>()));
+    });
+
+    test('GET /me/likes reutiliza OfferModel', () async {
+      final client = _TestApiClient({
+        'ok': true,
+        'data': [_offerJson()],
+      });
+      final dataSource = OffersRemoteDataSourceImpl(client.apiClient);
+
+      final offers = await dataSource.getMyLikedOffers();
+
+      expect(offers.single, isA<Offer>());
+      expect(offers.single.jobTypeName, 'Chofer');
+    });
+
+    test('lista de favoritos vacia funciona', () async {
+      final client = _TestApiClient({'ok': true, 'data': []});
+      final dataSource = OffersRemoteDataSourceImpl(client.apiClient);
+
+      final offers = await dataSource.getMyLikedOffers();
+
+      expect(offers, isEmpty);
+    });
   });
 
   group('OffersRepository', () {
@@ -451,6 +569,19 @@ void main() {
         _ApplyCall(offerId: 'offer-id', comment: 'Ejemplo', answers: answers),
       );
       expect(result, same(dataSource.result));
+    });
+
+    test('Repository delega los tres metodos de likes', () async {
+      final dataSource = _FakeOffersRemoteDataSource();
+      final repository = OffersRepositoryImpl(dataSource);
+
+      await repository.likeOffer('offer-id');
+      await repository.unlikeOffer('offer-id');
+      await repository.getMyLikedOffers();
+
+      expect(dataSource.likeCalls, ['offer-id']);
+      expect(dataSource.unlikeCalls, ['offer-id']);
+      expect(dataSource.getMyLikedOffersCalls, 1);
     });
   });
 
@@ -542,6 +673,16 @@ Map<String, Object?> _applyResultJson() {
   };
 }
 
+Map<String, Object?> _likeResultJson({
+  bool liked = true,
+  Object likesCount = 1,
+}) {
+  return {
+    'ok': true,
+    'data': {'liked': liked, 'likesCount': likesCount},
+  };
+}
+
 class _TestApiClient {
   _TestApiClient(this.responseData) : conflictData = null {
     dio.interceptors.add(
@@ -592,8 +733,12 @@ class _TestApiClient {
 class _FakeOffersRemoteDataSource implements OffersRemoteDataSource {
   final offer = OfferModel.fromJson(_offerJson());
   final result = ApplyOfferResultModel.fromApiResponse(_applyResultJson());
+  final likeResult = OfferLikeResultModel.fromApiResponse(_likeResultJson());
   final getOfferByIdCalls = <String>[];
   final applyCalls = <_ApplyCall>[];
+  final likeCalls = <String>[];
+  final unlikeCalls = <String>[];
+  int getMyLikedOffersCalls = 0;
 
   @override
   Future<List<JobType>> getJobTypes() async {
@@ -621,6 +766,24 @@ class _FakeOffersRemoteDataSource implements OffersRemoteDataSource {
       _ApplyCall(offerId: offerId, comment: comment, answers: answers),
     );
     return result;
+  }
+
+  @override
+  Future<OfferLikeResult> likeOffer(String offerId) async {
+    likeCalls.add(offerId);
+    return likeResult;
+  }
+
+  @override
+  Future<OfferLikeResult> unlikeOffer(String offerId) async {
+    unlikeCalls.add(offerId);
+    return const OfferLikeResult(liked: false, likesCount: 0);
+  }
+
+  @override
+  Future<List<Offer>> getMyLikedOffers() async {
+    getMyLikedOffersCalls++;
+    return [offer];
   }
 }
 
@@ -687,5 +850,20 @@ class _FakeOffersRepository implements OffersRepository {
     required List<ApplyOfferAnswer> answers,
   }) async {
     return ApplyOfferResultModel.fromApiResponse(_applyResultJson());
+  }
+
+  @override
+  Future<OfferLikeResult> likeOffer(String offerId) async {
+    return OfferLikeResultModel.fromApiResponse(_likeResultJson());
+  }
+
+  @override
+  Future<OfferLikeResult> unlikeOffer(String offerId) async {
+    return OfferLikeResultModel.fromApiResponse(_likeResultJson(liked: false));
+  }
+
+  @override
+  Future<List<Offer>> getMyLikedOffers() async {
+    return const [];
   }
 }
