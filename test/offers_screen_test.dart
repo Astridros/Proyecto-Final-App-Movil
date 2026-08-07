@@ -14,6 +14,7 @@ import 'package:ocupa2/features/offers/domain/entities/apply_offer_result.dart';
 import 'package:ocupa2/features/offers/domain/entities/job_type.dart';
 import 'package:ocupa2/features/offers/domain/entities/offer.dart';
 import 'package:ocupa2/features/offers/domain/entities/offer_location.dart';
+import 'package:ocupa2/features/offers/domain/entities/offer_like_result.dart';
 import 'package:ocupa2/features/offers/domain/entities/offer_payment.dart';
 import 'package:ocupa2/features/offers/domain/repositories/offers_repository.dart';
 import 'package:ocupa2/features/offers/presentation/pages/offers_screen.dart';
@@ -103,6 +104,40 @@ void main() {
     expect(card.onTap, isNotNull);
   });
 
+  testWidgets('OffersScreen conecta estado correcto por oferta', (
+    tester,
+  ) async {
+    final repository = _FakeOffersRepository(
+      offers: [_offer('uno', likedByMe: true, likesCount: 4)],
+    );
+
+    await tester.pumpWidget(_testApp(repository));
+    await tester.pumpAndSettle();
+
+    expect(find.byIcon(Icons.favorite_rounded), findsOneWidget);
+    expect(find.text('4'), findsOneWidget);
+  });
+
+  testWidgets('OffersScreen permite alternar like sin recargar lista', (
+    tester,
+  ) async {
+    final repository = _FakeOffersRepository(offers: [_offer('uno')]);
+
+    await tester.pumpWidget(_testApp(repository));
+    await tester.pumpAndSettle();
+    await tester.drag(find.byType(ListView).last, const Offset(0, -320));
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.widgetWithIcon(IconButton, Icons.favorite_border_rounded),
+    );
+    await tester.pumpAndSettle();
+
+    expect(repository.likeCalls, ['uno']);
+    expect(repository.offerCalls, 1);
+    expect(find.byIcon(Icons.favorite_rounded), findsOneWidget);
+    expect(find.text('1'), findsOneWidget);
+  });
+
   testWidgets('OffersFilterBar siempre permanece visible', (tester) async {
     final repository = _FakeOffersRepository(offers: const []);
 
@@ -177,7 +212,12 @@ JobType _jobType(String key) {
   );
 }
 
-Offer _offer(String id, {String jobTypeName = 'Chofer'}) {
+Offer _offer(
+  String id, {
+  String jobTypeName = 'Chofer',
+  bool likedByMe = false,
+  int likesCount = 0,
+}) {
   return Offer(
     id: id,
     jobTypeKey: 'chofer',
@@ -197,11 +237,11 @@ Offer _offer(String id, {String jobTypeName = 'Chofer'}) {
     questions: const [],
     status: 'published',
     applicantsCount: 1,
-    likesCount: 0,
+    likesCount: likesCount,
     createdAt: DateTime(2026, 7, 9),
     updatedAt: DateTime(2026, 7, 9),
     isIdentityRevealed: false,
-    likedByMe: false,
+    likedByMe: likedByMe,
   );
 }
 
@@ -218,6 +258,8 @@ class _FakeOffersRepository implements OffersRepository {
   final Object? jobTypesError;
   Completer<List<JobType>>? jobTypesCompleter;
   Completer<List<Offer>>? offersCompleter;
+  final likeCalls = <String>[];
+  final unlikeCalls = <String>[];
   int jobTypeCalls = 0;
   int offerCalls = 0;
 
@@ -249,5 +291,22 @@ class _FakeOffersRepository implements OffersRepository {
     required List<ApplyOfferAnswer> answers,
   }) async {
     return const ApplyOfferResult(id: 'application-id', status: 'applied');
+  }
+
+  @override
+  Future<OfferLikeResult> likeOffer(String offerId) async {
+    likeCalls.add(offerId);
+    return const OfferLikeResult(liked: true, likesCount: 1);
+  }
+
+  @override
+  Future<OfferLikeResult> unlikeOffer(String offerId) async {
+    unlikeCalls.add(offerId);
+    return const OfferLikeResult(liked: false, likesCount: 0);
+  }
+
+  @override
+  Future<List<Offer>> getMyLikedOffers() async {
+    return const [];
   }
 }

@@ -14,6 +14,7 @@ import 'package:ocupa2/features/offers/domain/entities/apply_offer_result.dart';
 import 'package:ocupa2/features/offers/domain/entities/job_type.dart';
 import 'package:ocupa2/features/offers/domain/entities/offer.dart';
 import 'package:ocupa2/features/offers/domain/entities/offer_location.dart';
+import 'package:ocupa2/features/offers/domain/entities/offer_like_result.dart';
 import 'package:ocupa2/features/offers/domain/entities/offer_payment.dart';
 import 'package:ocupa2/features/offers/domain/repositories/offers_repository.dart';
 import 'package:ocupa2/features/offers/presentation/providers/offer_detail_controller.dart';
@@ -534,6 +535,21 @@ class _FakeOffersRepository implements OffersRepository {
     }
 
     return result;
+  }
+
+  @override
+  Future<OfferLikeResult> likeOffer(String offerId) async {
+    return const OfferLikeResult(liked: true, likesCount: 1);
+  }
+
+  @override
+  Future<OfferLikeResult> unlikeOffer(String offerId) async {
+    return const OfferLikeResult(liked: false, likesCount: 0);
+  }
+
+  @override
+  Future<List<Offer>> getMyLikedOffers() async {
+    return const [];
   }
 }
 

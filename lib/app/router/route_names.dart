@@ -33,4 +33,13 @@ class RouteNames {
   static const newsDetailPath = '/news/detail';
   static const videosPath = '/videos';
   static const videoDetailPath = '/videos/detail';
+
+  // Anthony Urbaez - 2023-1394 feature mi perfil / experiencia
+  static const experiences = 'experiences';
+  static const addExperience = 'addExperience';
+  static const editProfile = 'editProfile';
+  static const profile = 'profile';
+
+  static const experiencesPath = '/experiences';
+  static const addExperiencePath = '/add-experience';
 }

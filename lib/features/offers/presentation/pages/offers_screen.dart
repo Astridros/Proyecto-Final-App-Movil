@@ -7,8 +7,10 @@ import '../../../../app/theme/app_dimensions.dart';
 import '../../../../core/widgets/app_empty_state.dart';
 import '../../../../core/widgets/app_error_view.dart';
 import '../../../../core/widgets/app_loading.dart';
+import '../../domain/entities/offer.dart';
 import '../providers/offers_presentation_providers.dart';
 import '../providers/offers_state.dart';
+import '../providers/offer_like_providers.dart';
 import '../widgets/offer_card.dart';
 import '../widgets/offers_filter_bar.dart';
 
@@ -113,7 +115,7 @@ class _OffersContent extends StatelessWidget {
       itemCount: state.offers.length,
       itemBuilder: (context, index) {
         final offer = state.offers[index];
-        return OfferCard(
+        return _LikeAwareOfferCard(
           offer: offer,
           onTap: () {
             context.pushNamed(
@@ -123,6 +125,78 @@ class _OffersContent extends StatelessWidget {
           },
         );
       },
+    );
+  }
+}
+
+class _LikeAwareOfferCard extends ConsumerStatefulWidget {
+  const _LikeAwareOfferCard({required this.offer, required this.onTap});
+
+  final Offer offer;
+  final VoidCallback onTap;
+
+  @override
+  ConsumerState<_LikeAwareOfferCard> createState() =>
+      _LikeAwareOfferCardState();
+}
+
+class _LikeAwareOfferCardState extends ConsumerState<_LikeAwareOfferCard> {
+  @override
+  void initState() {
+    super.initState();
+    _syncFromOffer();
+  }
+
+  @override
+  void didUpdateWidget(covariant _LikeAwareOfferCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.offer.id != widget.offer.id ||
+        oldWidget.offer.likedByMe != widget.offer.likedByMe ||
+        oldWidget.offer.likesCount != widget.offer.likesCount) {
+      _syncFromOffer();
+    }
+  }
+
+  void _syncFromOffer() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+
+      ref
+          .read(offerLikeControllerProvider(widget.offer.id).notifier)
+          .syncFromOffer(
+            likedByMe: widget.offer.likedByMe,
+            likesCount: widget.offer.likesCount,
+          );
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final provider = offerLikeControllerProvider(widget.offer.id);
+    final likeState = ref.watch(provider);
+
+    ref.listen(provider, (previous, next) {
+      final error = next.error;
+      if (error == null || previous?.error == error) {
+        return;
+      }
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error.message)));
+    });
+
+    return OfferCard(
+      offer: widget.offer,
+      liked: likeState.liked,
+      likesCount: likeState.likesCount,
+      isLikeSubmitting: likeState.isSubmitting,
+      onLikePressed: () {
+        ref.read(provider.notifier).toggleLike();
+      },
+      onTap: widget.onTap,
     );
   }
 }

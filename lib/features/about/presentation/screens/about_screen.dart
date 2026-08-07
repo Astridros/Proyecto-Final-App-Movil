@@ -20,9 +20,9 @@ class AboutScreen extends StatelessWidget {
     TeamMember(
       name: 'Astrid Rondón',
       studentId: '2024-1277',
-      phone: '+8494782210',
-      telegramUrl: 'https://t.me/maria_ejemplo',
-      photoAsset: 'assets/images/team/maria.jpg',
+      phone: '+18494782210',
+      telegramUrl: 'https://web.telegram.org/a/#5026367095',
+      photoAsset: 'assets/images/team/astrid.jpeg',
     ),
     TeamMember(
       name: 'Dailyn Aastro',
@@ -58,6 +58,13 @@ class AboutScreen extends StatelessWidget {
       phone: '+18095550003',
       telegramUrl: 'https://t.me/carlos_ejemplo',
       photoAsset: 'assets/images/team/carlos.jpg',
+    ),
+    TeamMember(
+      name: 'Anthony Urbaez',
+      studentId: '2023-1394',
+      phone: '+18498627678',
+      telegramUrl: '',
+      photoAsset: 'assets/images/team/anthony-urbaez.jpeg',
     ),
   ];
 
