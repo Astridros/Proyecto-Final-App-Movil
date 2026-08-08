@@ -112,9 +112,9 @@ class InitialScreen extends ConsumerWidget {
               const SizedBox(height: AppDimensions.spacing24),
 
               // AppButton.outlined(
-              //   label: 'Mi Perfil',
+              //   label: 'Mis ofertas',
               //   icon: Icons.person,
-              //   onPressed: () => context.pushNamed(RouteNames.profile),
+              //   onPressed: () => context.pushNamed(RouteNames),
               //   width: double.infinity,
               // ),
               

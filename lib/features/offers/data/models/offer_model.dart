@@ -7,6 +7,7 @@ import 'offer_question_model.dart';
 class OfferModel extends Offer {
   const OfferModel({
     required super.id,
+    super.ownerId,
     required super.jobTypeKey,
     required super.jobTypeName,
     required super.contractType,
@@ -25,6 +26,7 @@ class OfferModel extends Offer {
     required super.isIdentityRevealed,
     required super.likedByMe,
     super.deadline,
+    super.paymentId,
   });
 
   factory OfferModel.fromJson(Object? json) {
@@ -32,6 +34,7 @@ class OfferModel extends Offer {
 
     return OfferModel(
       id: requiredString(map, 'id', 'La oferta'),
+      ownerId: _nullableString(map['ownerId']),
       jobTypeKey: requiredString(map, 'jobTypeKey', 'La oferta'),
       jobTypeName: requiredString(map, 'jobTypeName', 'La oferta'),
       contractType: optionalString(map, 'contractType'),
@@ -54,6 +57,15 @@ class OfferModel extends Offer {
       updatedAt: requiredDate(map, 'updatedAt', 'La oferta'),
       isIdentityRevealed: boolValue(map, 'isIdentityRevealed'),
       likedByMe: boolValue(map, 'likedByMe'),
+      paymentId: _nullableString(map['paymentId']),
     );
+  }
+
+  static String? _nullableString(Object? value) {
+    if (value is String && value.trim().isNotEmpty) {
+      return value.trim();
+    }
+
+    return null;
   }
 }

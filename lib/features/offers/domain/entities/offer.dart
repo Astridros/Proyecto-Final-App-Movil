@@ -7,6 +7,7 @@ import 'offer_question.dart';
 class Offer extends Equatable {
   const Offer({
     required this.id,
+    this.ownerId,
     required this.jobTypeKey,
     required this.jobTypeName,
     required this.contractType,
@@ -25,9 +26,11 @@ class Offer extends Equatable {
     required this.isIdentityRevealed,
     required this.likedByMe,
     this.deadline,
+    this.paymentId,
   });
 
   final String id;
+  final String? ownerId;
   final String jobTypeKey;
   final String jobTypeName;
   final String contractType;
@@ -46,10 +49,12 @@ class Offer extends Equatable {
   final DateTime updatedAt;
   final bool isIdentityRevealed;
   final bool likedByMe;
+  final String? paymentId;
 
   @override
   List<Object?> get props => [
     id,
+    ownerId,
     jobTypeKey,
     jobTypeName,
     contractType,
@@ -68,5 +73,6 @@ class Offer extends Equatable {
     updatedAt,
     isIdentityRevealed,
     likedByMe,
+    paymentId,
   ];
 }

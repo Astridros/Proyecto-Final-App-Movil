@@ -926,6 +926,11 @@ class _FakeOffersRepository implements OffersRepository {
   }
 
   @override
+  Future<Offer> createOffer(dynamic request) {
+    throw UnimplementedError();
+  }
+
+  @override
   Future<Offer> getOfferById(String id) async {
     lastDetailId = id;
     return _offer();
