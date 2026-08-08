@@ -39,6 +39,7 @@ class RouteNames {
   static const addExperience = 'addExperience';
   static const editProfile = 'editProfile';
   static const profile = 'profile';
+  static const payment = 'payment';
 
   static const experiencesPath = '/experiences';
   static const addExperiencePath = '/add-experience';
