@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:ocupa2/features/profile_experience/presentation/screens/add_experience_screen.dart';
 import 'package:ocupa2/features/profile_experience/presentation/screens/experience_screen.dart';
 import 'package:ocupa2/features/profile_experience/presentation/screens/profile_screen.dart';
+import 'package:ocupa2/payments/presentation/screens/payment_screen.dart';
 import '../../features/about/presentation/screens/about_screen.dart';
 import '../../features/auth/presentation/providers/auth_session_providers.dart';
 import '../../features/auth/presentation/pages/forgot_password_screen.dart';
@@ -192,6 +193,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           final profile = state.extra as Profile;
 
           return EditProfileScreen(profile: profile);
+        },
+      ),
+      GoRoute(
+        name: RouteNames.payment,
+        path: '/payment',
+        builder: (context, state) {
+          return const PaymentScreen();
         },
       ),
     ],
