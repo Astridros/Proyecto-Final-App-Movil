@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_dimensions.dart';
@@ -6,11 +7,12 @@ import '../../../../app/theme/app_text_styles.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/app_text_field.dart';
+import '../../data/providers/auth_data_providers.dart';
 
 typedef LoginSubmitCallback =
     Future<bool> Function({required String email, required String password});
 
-class LoginForm extends StatefulWidget {
+class LoginForm extends ConsumerStatefulWidget {
   const LoginForm({
     super.key,
     required this.isLoggingIn,
@@ -27,20 +29,39 @@ class LoginForm extends StatefulWidget {
   final VoidCallback? onRegister;
 
   @override
-  State<LoginForm> createState() => _LoginFormState();
+  ConsumerState<LoginForm> createState() => _LoginFormState();
 }
 
-class _LoginFormState extends State<LoginForm> {
+class _LoginFormState extends ConsumerState<LoginForm> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _emailController;
   late final TextEditingController _passwordController;
   bool _obscurePassword = true;
+  bool _rememberMe = false;
 
   @override
   void initState() {
     super.initState();
     _emailController = TextEditingController();
     _passwordController = TextEditingController();
+    _loadRememberedCredentials();
+  }
+
+  // Si la persona marco la casilla la vez anterior, los campos aparecen llenos
+  // y solo tiene que pulsar Entrar.
+  Future<void> _loadRememberedCredentials() async {
+    final storage = ref.read(rememberedCredentialsStorageProvider);
+    final credentials = await storage.read();
+
+    if (!mounted || credentials == null) {
+      return;
+    }
+
+    setState(() {
+      _emailController.text = credentials.email;
+      _passwordController.text = credentials.password;
+      _rememberMe = true;
+    });
   }
 
   @override
@@ -111,12 +132,43 @@ class _LoginFormState extends State<LoginForm> {
               ),
             ),
             const SizedBox(height: AppDimensions.spacing8),
-            Align(
-              alignment: Alignment.centerRight,
-              child: TextButton(
-                onPressed: widget.isLoggingIn ? null : widget.onForgotPassword,
-                child: const Text('¿Olvidaste tu contraseña?'),
-              ),
+            Row(
+              children: [
+                Expanded(
+                  child: InkWell(
+                    onTap: widget.isLoggingIn
+                        ? null
+                        : () => _toggleRememberMe(!_rememberMe),
+                    borderRadius: BorderRadius.circular(
+                      AppDimensions.radiusSmall,
+                    ),
+                    child: Row(
+                      children: [
+                        Checkbox(
+                          value: _rememberMe,
+                          onChanged: widget.isLoggingIn
+                              ? null
+                              : (value) => _toggleRememberMe(value ?? false),
+                        ),
+                        Flexible(
+                          child: Text(
+                            'Recordar mis datos',
+                            style: AppTextStyles.bodyMedium,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                Flexible(
+                  child: TextButton(
+                    onPressed: widget.isLoggingIn
+                        ? null
+                        : widget.onForgotPassword,
+                    child: const Text('¿Olvidaste tu contraseña?'),
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: AppDimensions.spacing12),
             AppButton(
@@ -144,10 +196,25 @@ class _LoginFormState extends State<LoginForm> {
       return;
     }
 
-    await widget.onSubmit(
-      email: _emailController.text.trim(),
-      password: _passwordController.text,
-    );
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
+    final storage = ref.read(rememberedCredentialsStorageProvider);
+
+    final loggedIn = await widget.onSubmit(email: email, password: password);
+
+    // Solo se guardan credenciales que el backend acepto: asi una clave mal
+    // escrita no queda recordada para siempre.
+    if (loggedIn && _rememberMe) {
+      await storage.save(email: email, password: password);
+    }
+  }
+
+  Future<void> _toggleRememberMe(bool value) async {
+    setState(() => _rememberMe = value);
+
+    if (!value) {
+      await ref.read(rememberedCredentialsStorageProvider).clear();
+    }
   }
 
   void _togglePassword() {
