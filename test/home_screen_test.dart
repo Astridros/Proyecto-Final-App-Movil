@@ -52,9 +52,10 @@ void main() {
     await tester.pumpWidget(_testApp(_sessionWith()));
     await tester.pumpAndSettle();
 
-    expect(find.byType(QuickAccessCard), findsNWidgets(5));
+    expect(find.byType(QuickAccessCard), findsNWidgets(6));
     expect(find.text('Explorar ofertas'), findsOneWidget);
     expect(find.text('Mapa de ofertas'), findsOneWidget);
+    expect(find.text('Publicar oferta'), findsOneWidget);
     expect(find.text('Noticias'), findsOneWidget);
     expect(find.text('Videos'), findsOneWidget);
     expect(find.text('Acerca de'), findsOneWidget);

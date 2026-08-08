@@ -40,6 +40,8 @@ class RouteNames {
   static const editProfile = 'editProfile';
   static const profile = 'profile';
   static const payment = 'payment';
+  static const publishOffer = 'publishOffer';
+  static const publishOfferPath = '/publish-offer';
 
   static const experiencesPath = '/experiences';
   static const addExperiencePath = '/add-experience';

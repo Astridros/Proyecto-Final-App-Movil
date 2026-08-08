@@ -202,6 +202,14 @@ class _QuickAccessList extends StatelessWidget {
         ),
         const SizedBox(height: AppDimensions.spacing12),
         QuickAccessCard(
+          label: 'Publicar oferta',
+          description: 'Publica un trabajo y recibe aplicantes',
+          icon: Icons.campaign_outlined,
+          color: AppColors.primaryDark,
+          onTap: () => context.pushNamed(RouteNames.publishOffer),
+        ),
+        const SizedBox(height: AppDimensions.spacing12),
+        QuickAccessCard(
           label: 'Noticias',
           description: 'Novedades sobre empleo y oficios',
           icon: Icons.newspaper_outlined,
