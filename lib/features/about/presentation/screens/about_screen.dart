@@ -25,11 +25,11 @@ class AboutScreen extends StatelessWidget {
       photoAsset: 'assets/images/team/astrid.jpeg',
     ),
     TeamMember(
-      name: 'Dailyn Aastro',
+      name: 'Dailyn Castro',
       studentId: '2024-41343',
       phone: '+18296632875',
       telegramUrl: 'https://t.me/carlos_ejemplo',
-      photoAsset: 'assets/images/team/carlos.jpg',
+      photoAsset: 'assets/images/team/dailyn_castro.jpeg',
     ),
     TeamMember(
       name: 'Yeison Rojas',
