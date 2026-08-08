@@ -24,7 +24,7 @@ import '../../features/videos/presentation/pages/videos_screen.dart';
 import 'route_names.dart';
 import '../../features/offer_map/presentation/screens/offers_map_screen.dart';
 import '../../features/profile_experience/presentation/screens/edit_profile_screen.dart';
-import '../../features/profile_experience/domain/entities/profile.dart';
+import '../../features/profile/domain/entities/profile.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   final refreshNotifier = _GoRouterRefreshNotifier(ref);
@@ -181,19 +181,17 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const AddExperienceScreen(),
       ),
       GoRoute(
-        path: '/profile',
+        path: RouteNames.profilePath,
         name: RouteNames.profile,
-        builder: (_, __) => const ProfileScreen(),
+        builder: (_, _) => const ProfileScreen(),
       ),
       GoRoute(
-        path: '/edit-profile',
+        path: RouteNames.editProfilePath,
         name: RouteNames.editProfile,
         builder: (context, state) {
           final profile = state.extra as Profile;
 
-          return EditProfileScreen(
-            profile: profile,
-          );
+          return EditProfileScreen(profile: profile);
         },
       ),
     ],

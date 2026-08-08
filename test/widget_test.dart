@@ -235,7 +235,7 @@ void main() {
       await tester.pumpWidget(_testApp(hasToken: true, profileCompleted: true));
       await tester.pumpAndSettle();
 
-      expect(find.text('Base provisional'), findsOneWidget);
+      expect(find.text('Encuentra tu próxima oportunidad'), findsOneWidget);
       expect(find.byType(LoginScreen), findsNothing);
       expect(find.text('Iniciar sesión'), findsNothing);
     },
@@ -295,7 +295,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(NavigationDrawer), findsNothing);
-    expect(find.text('Base provisional'), findsOneWidget);
+    expect(find.text('Encuentra tu próxima oportunidad'), findsOneWidget);
   });
 
   testWidgets('El encabezado del menú muestra datos reales si existen', (
@@ -328,7 +328,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(tokenStorage.clearSessionCalls, 0);
-    expect(find.text('Base provisional'), findsOneWidget);
+    expect(find.text('Encuentra tu próxima oportunidad'), findsOneWidget);
   });
 
   testWidgets('Confirmar ejecuta logout y muestra LoginScreen', (tester) async {
@@ -404,7 +404,7 @@ void main() {
     await tester.tap(find.text('Volver'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Base provisional'), findsOneWidget);
+    expect(find.text('Encuentra tu próxima oportunidad'), findsOneWidget);
     expect(find.byType(ChangePasswordScreen), findsNothing);
   });
 
@@ -446,17 +446,17 @@ void main() {
 
       router.go(RouteNames.loginPath);
       await tester.pumpAndSettle();
-      expect(find.text('Base provisional'), findsOneWidget);
+      expect(find.text('Encuentra tu próxima oportunidad'), findsOneWidget);
       expect(find.byType(LoginScreen), findsNothing);
 
       router.go(RouteNames.registerPath);
       await tester.pumpAndSettle();
-      expect(find.text('Base provisional'), findsOneWidget);
+      expect(find.text('Encuentra tu próxima oportunidad'), findsOneWidget);
       expect(find.byType(RegisterScreen), findsNothing);
 
       router.go(RouteNames.forgotPasswordPath);
       await tester.pumpAndSettle();
-      expect(find.text('Base provisional'), findsOneWidget);
+      expect(find.text('Encuentra tu próxima oportunidad'), findsOneWidget);
       expect(find.byType(ForgotPasswordScreen), findsNothing);
     },
   );
@@ -497,7 +497,7 @@ void main() {
       await tester.tap(find.text('Entrar'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Base provisional'), findsOneWidget);
+      expect(find.text('Encuentra tu próxima oportunidad'), findsOneWidget);
       expect(find.byType(LoginScreen), findsNothing);
     },
   );
@@ -529,7 +529,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(tester.takeException(), isNull);
-    expect(find.text('Base provisional'), findsOneWidget);
+    expect(find.text('Encuentra tu próxima oportunidad'), findsOneWidget);
   });
 
   testWidgets('No hay loops al abrir change-password', (tester) async {
@@ -1009,6 +1009,8 @@ class _FakeProfileRepository implements ProfileRepository {
     required String cedula,
     required String gender,
     required DateTime birthDate,
+    String? email,
+    String? referralMatricula,
   }) async {
     profile = Profile(
       id: profile.id,

@@ -110,6 +110,8 @@ void main() {
         cedula: '00112345678',
         gender: 'female',
         birthDate: DateTime.utc(1997, 5, 12),
+        email: 'astrid@example.com',
+        referralMatricula: '12345678',
       );
 
       expect(request.toJson(), {
@@ -118,6 +120,8 @@ void main() {
         'cedula': '00112345678',
         'gender': 'female',
         'birthDate': '1997-05-12T00:00:00.000Z',
+        'email': 'astrid@example.com',
+        'referralMatricula': '12345678',
       });
     });
   });
@@ -143,6 +147,8 @@ void main() {
         cedula: '00112345678',
         gender: 'female',
         birthDate: DateTime.utc(1997, 5, 12),
+        email: 'astrid@example.com',
+        referralMatricula: '12345678',
       );
 
       final profile = await dataSource.updateProfile(request);
@@ -176,6 +182,8 @@ void main() {
         cedula: '00112345678',
         gender: 'female',
         birthDate: birthDate,
+        email: 'astrid@example.com',
+        referralMatricula: '12345678',
       );
 
       expect(dataSource.updateProfileCalls, 1);
@@ -184,6 +192,8 @@ void main() {
       expect(dataSource.lastRequest?.cedula, '00112345678');
       expect(dataSource.lastRequest?.gender, 'female');
       expect(dataSource.lastRequest?.birthDate, birthDate);
+      expect(dataSource.lastRequest?.email, 'astrid@example.com');
+      expect(dataSource.lastRequest?.referralMatricula, '12345678');
     });
   });
 
@@ -294,6 +304,8 @@ class _FakeProfileRepository implements ProfileRepository {
     required String cedula,
     required String gender,
     required DateTime birthDate,
+    String? email,
+    String? referralMatricula,
   }) async {
     return ProfileModel.fromJson(_profileJson());
   }

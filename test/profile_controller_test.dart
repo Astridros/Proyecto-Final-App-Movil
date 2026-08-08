@@ -101,6 +101,8 @@ void main() {
       cedula: '00112345678',
       gender: 'female',
       birthDate: birthDate,
+      email: 'astrid@example.com',
+      referralMatricula: '12345678',
     );
 
     expect(
@@ -111,6 +113,8 @@ void main() {
         cedula: '00112345678',
         gender: 'female',
         birthDate: birthDate,
+        email: 'astrid@example.com',
+        referralMatricula: '12345678',
       ),
     );
   });
@@ -341,6 +345,8 @@ class _FakeProfileRepository implements ProfileRepository {
     required String cedula,
     required String gender,
     required DateTime birthDate,
+    String? email,
+    String? referralMatricula,
   }) async {
     updateCalls.add(
       _UpdateCall(
@@ -349,6 +355,8 @@ class _FakeProfileRepository implements ProfileRepository {
         cedula: cedula,
         gender: gender,
         birthDate: birthDate,
+        email: email,
+        referralMatricula: referralMatricula,
       ),
     );
 
@@ -371,6 +379,8 @@ class _UpdateCall {
     required this.cedula,
     required this.gender,
     required this.birthDate,
+    this.email,
+    this.referralMatricula,
   });
 
   final String firstName;
@@ -378,6 +388,8 @@ class _UpdateCall {
   final String cedula;
   final String gender;
   final DateTime birthDate;
+  final String? email;
+  final String? referralMatricula;
 
   @override
   bool operator ==(Object other) {
@@ -386,17 +398,28 @@ class _UpdateCall {
         other.lastName == lastName &&
         other.cedula == cedula &&
         other.gender == gender &&
-        other.birthDate == birthDate;
+        other.birthDate == birthDate &&
+        other.email == email &&
+        other.referralMatricula == referralMatricula;
   }
 
   @override
   int get hashCode {
-    return Object.hash(firstName, lastName, cedula, gender, birthDate);
+    return Object.hash(
+      firstName,
+      lastName,
+      cedula,
+      gender,
+      birthDate,
+      email,
+      referralMatricula,
+    );
   }
 
   @override
   String toString() {
     return 'UpdateCall(firstName: $firstName, lastName: $lastName, '
-        'cedula: $cedula, gender: $gender, birthDate: $birthDate)';
+        'cedula: $cedula, gender: $gender, birthDate: $birthDate, '
+        'email: $email, referralMatricula: $referralMatricula)';
   }
 }

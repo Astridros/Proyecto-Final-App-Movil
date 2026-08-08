@@ -20,6 +20,8 @@ class ProfileRepositoryImpl implements ProfileRepository {
     required String cedula,
     required String gender,
     required DateTime birthDate,
+    String? email,
+    String? referralMatricula,
   }) {
     return _remoteDataSource.updateProfile(
       UpdateProfileRequestModel(
@@ -28,6 +30,8 @@ class ProfileRepositoryImpl implements ProfileRepository {
         cedula: cedula,
         gender: gender,
         birthDate: birthDate,
+        email: email,
+        referralMatricula: referralMatricula,
       ),
     );
   }

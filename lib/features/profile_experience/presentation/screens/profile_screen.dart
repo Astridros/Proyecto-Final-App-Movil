@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../app/router/route_names.dart';
 
-import '../../../profile_experience/presentation/providers/profile_presentation_providers.dart';
+import '../../../profile/presentation/providers/profile_presentation_providers.dart';
 import '../../../profile_experience/presentation/widgets/profile_header.dart';
 
 import '../providers/experience_presentation_providers.dart';
@@ -18,43 +18,29 @@ class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
 
   @override
-  ConsumerState<ProfileScreen> createState() =>
-      _ProfileScreenState();
+  ConsumerState<ProfileScreen> createState() => _ProfileScreenState();
 }
 
-class _ProfileScreenState
-    extends ConsumerState<ProfileScreen> {
-
+class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   @override
   void initState() {
     super.initState();
 
     Future.microtask(() async {
-      await ref
-          .read(profileControllerProvider.notifier)
-          .loadProfile();
+      await ref.read(profileControllerProvider.notifier).loadProfile();
 
-      await ref
-          .read(experienceControllerProvider.notifier)
-          .loadInitial();
+      await ref.read(experienceControllerProvider.notifier).loadInitial();
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    final profileState = ref.watch(profileControllerProvider);
 
-    final profileState =
-        ref.watch(profileControllerProvider);
+    final experienceState = ref.watch(experienceControllerProvider);
 
-    final experienceState =
-        ref.watch(experienceControllerProvider);
-
-    if (profileState.isLoading) {
-      return const Scaffold(
-        body: AppLoading(
-          message: "Cargando perfil...",
-        ),
-      );
+    if (profileState.isInitialLoading) {
+      return const Scaffold(body: AppLoading(message: "Cargando perfil..."));
     }
 
     if (profileState.error != null) {
@@ -80,83 +66,86 @@ class _ProfileScreenState
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Mi perfil"),
+        leading: IconButton(
+          tooltip: 'Volver',
+          icon: const Icon(Icons.arrow_back_rounded),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+              return;
+            }
+
+            context.goNamed(RouteNames.initial);
+          },
+        ),
+        title: const Text('Mi perfil'),
       ),
 
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          context.pushNamed(RouteNames.addExperience);
-        },
-        child: const Icon(Icons.add),
-      ),
-
+      // floatingActionButton: FloatingActionButton(
+      //   onPressed: () {
+      //     context.pushNamed(RouteNames.addExperience);
+      //   },
+      //   child: const Icon(Icons.add),
+      // ),
       body: RefreshIndicator(
         onRefresh: () async {
-          await ref
-              .read(profileControllerProvider.notifier)
-              .loadProfile();
+          await ref.read(profileControllerProvider.notifier).loadProfile();
 
-          await ref
-              .read(experienceControllerProvider.notifier)
-              .refresh();
+          await ref.read(experienceControllerProvider.notifier).refresh();
         },
 
         child: ListView(
           children: [
-
-            ProfileHeader(
-              profile: profileState.profile!,
-            ),
+            ProfileHeader(profile: profile),
 
             const SizedBox(height: 24),
 
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  "Experiencias",
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        "Experiencias",
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.add),
+                        onPressed: () {
+                          context.pushNamed(RouteNames.addExperience);
+                        },
+                      ),
+                    ],
+                  ),
 
-                // IconButton(
-                //   icon: const Icon(Icons.add),
-                //   onPressed: () {
-                //     context.pushNamed(RouteNames.addExperience);
-                //   },
-                // ),
-                
-              ],
-            ),
+                  const SizedBox(height: 16),
 
-            const SizedBox(height: 16),
-
-            if (experienceState.isInitialLoading)
-              const Center(
-                child: Padding(
-                  padding: EdgeInsets.all(20),
-                  child: CircularProgressIndicator(),
-                ),
-              )
-            else if (experienceState.items.isEmpty)
-              const Card(
-                child: Padding(
-                  padding: EdgeInsets.all(20),
-                  child: Center(
-                    child: Text(
-                      "No tienes experiencias registradas.",
+                  if (experienceState.isInitialLoading)
+                    const Padding(
+                      padding: EdgeInsets.all(20),
+                      child: Center(child: CircularProgressIndicator()),
+                    )
+                  else if (experienceState.items.isEmpty)
+                    const Card(
+                      child: Padding(
+                        padding: EdgeInsets.all(20),
+                        child: Center(
+                          child: Text("No tienes experiencias registradas."),
+                        ),
+                      ),
+                    )
+                  else
+                    ...experienceState.items.map(
+                      (experience) => Padding(
+                        padding: const EdgeInsets.only(bottom: 16),
+                        child: ExperienceCard(experience: experience),
+                      ),
                     ),
-                  ),
-                ),
-              )
-            else
-              ...experienceState.items.map(
-                (experience) => Padding(
-                  padding: const EdgeInsets.only(bottom: 16),
-                  child: ExperienceCard(
-                    experience: experience,
-                  ),
-                ),
+                ],
               ),
+            ),
           ],
         ),
       ),

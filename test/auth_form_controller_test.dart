@@ -481,6 +481,8 @@ class _FakeProfileRepository implements ProfileRepository {
     required String cedula,
     required String gender,
     required DateTime birthDate,
+    String? email,
+    String? referralMatricula,
   }) async {
     return _result(profileCompleted: true).user;
   }
