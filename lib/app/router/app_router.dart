@@ -17,6 +17,7 @@ import '../../features/news/domain/entities/news_item.dart';
 import '../../features/news/presentation/pages/news_detail_screen.dart';
 import '../../features/news/presentation/pages/news_screen.dart';
 import '../../features/offers/presentation/pages/offer_detail_screen.dart';
+import '../../features/offers/presentation/screens/create_offer_screen.dart';
 import '../../features/offers/presentation/pages/offers_screen.dart';
 import '../../features/profile/presentation/pages/complete_profile_screen.dart';
 import '../../features/videos/domain/entities/video.dart';
@@ -201,6 +202,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) {
           return const PaymentScreen();
         },
+      ),
+      // La pantalla de publicar oferta existia sin ruta registrada, asi que no
+      // se podia alcanzar desde ningun lado. Se registra para engancharla al
+      // Inicio.
+      GoRoute(
+        name: RouteNames.publishOffer,
+        path: RouteNames.publishOfferPath,
+        builder: (context, state) => const CreateOfferScreen(),
       ),
     ],
   );
