@@ -6,7 +6,7 @@ import '../../../../core/widgets/app_error_view.dart';
 import '../../../../core/widgets/app_loading.dart';
 import '../providers/experience_presentation_providers.dart';
 import '../widgets/experience_card.dart';
-import '../providers/profile_presentation_providers.dart';
+import '../../../profile/presentation/providers/profile_presentation_providers.dart';
 import '../widgets/profile_header.dart';
 
 class ExperienceScreen extends ConsumerStatefulWidget {
@@ -16,35 +16,26 @@ class ExperienceScreen extends ConsumerStatefulWidget {
   ConsumerState<ExperienceScreen> createState() => _ExperienceScreenState();
 }
 
-class _ExperienceScreenState extends ConsumerState<ExperienceScreen>{
-
+class _ExperienceScreenState extends ConsumerState<ExperienceScreen> {
   @override
-  void initState(){
+  void initState() {
     super.initState();
 
     Future.microtask(() {
-      ref
-          .read(profileControllerProvider.notifier)
-          .loadProfile();
+      ref.read(profileControllerProvider.notifier).loadProfile();
 
-      ref
-          .read(experienceControllerProvider.notifier)
-          .loadInitial();
+      ref.read(experienceControllerProvider.notifier).loadInitial();
     });
   }
 
   @override
-  Widget build(BuildContext context){
-    final state = ref.watch(
-      experienceControllerProvider,
-    );
+  Widget build(BuildContext context) {
+    final state = ref.watch(experienceControllerProvider);
 
     final profileState = ref.watch(profileControllerProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Mis experiencias'),
-      ),
+      appBar: AppBar(title: const Text('Mis experiencias')),
 
       // floatingActionButton: FloatingActionButton(
       //   onPressed: (){
@@ -53,23 +44,21 @@ class _ExperienceScreenState extends ConsumerState<ExperienceScreen>{
 
       //   child: const Icon(Icons.add),
       // ),
-
       body: RefreshIndicator(
-        onRefresh: () => ref.read(experienceControllerProvider.notifier).refresh(),
+        onRefresh: () =>
+            ref.read(experienceControllerProvider.notifier).refresh(),
 
         child: Builder(
-          builder: (_){
-            if (state.isInitialLoading){
-              return const AppLoading(
-                message: "Cargando experiencias...",
-              );
+          builder: (_) {
+            if (state.isInitialLoading) {
+              return const AppLoading(message: "Cargando experiencias...");
             }
 
-            if (state.hasError){
+            if (state.hasError) {
               return AppErrorView(
                 title: 'Error',
                 message: state.error!.message,
-                onRetry: (){
+                onRetry: () {
                   ref.read(experienceControllerProvider.notifier).retry();
                 },
               );
@@ -86,18 +75,12 @@ class _ExperienceScreenState extends ConsumerState<ExperienceScreen>{
             return ListView(
               padding: const EdgeInsets.all(16),
               children: [
-
                 if (profileState.profile != null)
-                  ProfileHeader(
-                    profile: profileState.profile!,
-                  ),
-                
+                  ProfileHeader(profile: profileState.profile!),
+
                 const Text(
                   "Experiencias",
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
                 ),
 
                 const SizedBox(height: 20),
@@ -105,9 +88,7 @@ class _ExperienceScreenState extends ConsumerState<ExperienceScreen>{
                 ...state.items.map(
                   (experience) => Padding(
                     padding: const EdgeInsets.only(bottom: 16),
-                    child: ExperienceCard(
-                      experience: experience,
-                    ),
+                    child: ExperienceCard(experience: experience),
                   ),
                 ),
               ],

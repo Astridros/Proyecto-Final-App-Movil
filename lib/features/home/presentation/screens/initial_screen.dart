@@ -47,6 +47,7 @@ class InitialScreen extends ConsumerWidget {
         userName: session.profile?.nombre,
         userEmail: session.profile?.email,
         onHome: () => context.goNamed(RouteNames.initial),
+        onMiPerfil: () => context.goNamed(RouteNames.profile),
         onChangePassword: () {
           final path = GoRouterState.of(context).uri.path;
           if (path != RouteNames.changePasswordPath) {
@@ -110,12 +111,12 @@ class InitialScreen extends ConsumerWidget {
               ),
               const SizedBox(height: AppDimensions.spacing24),
 
-              AppButton.outlined(
-                label: 'Mi Perfil',
-                icon: Icons.person,
-                onPressed: () => context.pushNamed(RouteNames.profile),
-                width: double.infinity,
-              ),
+              // AppButton.outlined(
+              //   label: 'Mi Perfil',
+              //   icon: Icons.person,
+              //   onPressed: () => context.pushNamed(RouteNames.profile),
+              //   width: double.infinity,
+              // ),
               
               const SizedBox(height: AppDimensions.spacing24),
               const SizedBox(height: AppDimensions.spacing16),
@@ -188,6 +189,7 @@ class _MainDrawer extends StatelessWidget {
     required this.userName,
     required this.userEmail,
     required this.onHome,
+    required this.onMiPerfil,
     required this.onChangePassword,
     required this.onLogout,
   });
@@ -196,6 +198,7 @@ class _MainDrawer extends StatelessWidget {
   final String? userName;
   final String? userEmail;
   final VoidCallback onHome;
+  final VoidCallback onMiPerfil;
   final VoidCallback onChangePassword;
   final VoidCallback onLogout;
 
@@ -212,6 +215,14 @@ class _MainDrawer extends StatelessWidget {
             Navigator.of(context).pop();
             onHome();
           },
+        ),
+        _DrawerItem(
+          icon: Icons.person,
+          label: 'Mi perfil',
+          onTap: (){
+            Navigator.of(context).pop();
+            onMiPerfil();
+          }
         ),
         _DrawerItem(
           icon: Icons.lock_reset_outlined,

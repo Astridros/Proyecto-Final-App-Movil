@@ -139,7 +139,7 @@ class _OffersMapScreenState extends ConsumerState<OffersMapScreen> {
           options: MapOptions(
             initialCenter: _initialCenter(offersWithLocation),
             initialZoom: 12,
-            onTap: (_, __) {
+            onTap: (_, _) {
               if (_selectedOffer == null) {
                 return;
               }

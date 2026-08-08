@@ -15,6 +15,8 @@ typedef ProfileSubmitCallback =
       required String cedula,
       required String gender,
       required DateTime birthDate,
+      String? email,
+      String? referralMatricula,
     });
 
 class ProfileForm extends StatefulWidget {
@@ -24,12 +26,14 @@ class ProfileForm extends StatefulWidget {
     required this.isSubmitting,
     required this.onSubmit,
     this.errorMessage,
+    this.showAccountFields = false,
   });
 
   final Profile profile;
   final bool isSubmitting;
   final ProfileSubmitCallback onSubmit;
   final String? errorMessage;
+  final bool showAccountFields;
 
   @override
   State<ProfileForm> createState() => _ProfileFormState();
@@ -40,6 +44,8 @@ class _ProfileFormState extends State<ProfileForm> {
   late final TextEditingController _firstNameController;
   late final TextEditingController _lastNameController;
   late final TextEditingController _cedulaController;
+  late final TextEditingController _emailController;
+  late final TextEditingController _referralMatriculaController;
   late final TextEditingController _birthDateController;
   String? _gender;
   DateTime? _birthDate;
@@ -50,6 +56,8 @@ class _ProfileFormState extends State<ProfileForm> {
     _firstNameController = TextEditingController();
     _lastNameController = TextEditingController();
     _cedulaController = TextEditingController();
+    _emailController = TextEditingController();
+    _referralMatriculaController = TextEditingController();
     _birthDateController = TextEditingController();
     _applyProfile(widget.profile);
   }
@@ -67,6 +75,8 @@ class _ProfileFormState extends State<ProfileForm> {
     _firstNameController.dispose();
     _lastNameController.dispose();
     _cedulaController.dispose();
+    _emailController.dispose();
+    _referralMatriculaController.dispose();
     _birthDateController.dispose();
     super.dispose();
   }
@@ -113,6 +123,26 @@ class _ProfileFormState extends State<ProfileForm> {
               validator: _requiredText('Apellido requerido'),
             ),
             const SizedBox(height: AppDimensions.spacing16),
+            if (widget.showAccountFields) ...[
+              AppTextField(
+                label: 'Correo',
+                prefixIcon: Icons.mail_outline,
+                keyboardType: TextInputType.emailAddress,
+                controller: _emailController,
+                enabled: !widget.isSubmitting,
+                validator: _validateEmail,
+              ),
+              const SizedBox(height: AppDimensions.spacing16),
+              AppTextField(
+                label: 'Matrícula de referido',
+                prefixIcon: Icons.confirmation_number_outlined,
+                keyboardType: TextInputType.number,
+                controller: _referralMatriculaController,
+                enabled: !widget.isSubmitting,
+                validator: _validateReferralMatricula,
+              ),
+              const SizedBox(height: AppDimensions.spacing16),
+            ],
             AppTextField(
               label: 'Cédula',
               prefixIcon: Icons.credit_card_outlined,
@@ -167,6 +197,8 @@ class _ProfileFormState extends State<ProfileForm> {
     _firstNameController.text = profile.firstName ?? '';
     _lastNameController.text = profile.lastName ?? '';
     _cedulaController.text = profile.cedula ?? '';
+    _emailController.text = profile.email;
+    _referralMatriculaController.text = profile.referralMatricula ?? '';
     _gender = _normalizeGender(profile.gender);
     _birthDate = profile.birthDate;
     _birthDateController.text = _formatDate(_birthDate);
@@ -202,6 +234,10 @@ class _ProfileFormState extends State<ProfileForm> {
       cedula: _cedulaController.text.trim(),
       gender: _gender!,
       birthDate: _birthDate!,
+      email: widget.showAccountFields ? _emailController.text.trim() : null,
+      referralMatricula: widget.showAccountFields
+          ? _referralMatriculaController.text.trim()
+          : null,
     );
   }
 
@@ -230,6 +266,26 @@ class _ProfileFormState extends State<ProfileForm> {
       return 'Cédula debe tener 11 dígitos';
     }
 
+    return null;
+  }
+
+  String? _validateEmail(String? value) {
+    final normalized = value?.trim();
+    if (normalized == null || normalized.isEmpty) return 'Correo requerido';
+    if (!RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(normalized)) {
+      return 'Correo inválido';
+    }
+    return null;
+  }
+
+  String? _validateReferralMatricula(String? value) {
+    final normalized = value?.trim();
+    if (normalized == null || normalized.isEmpty) {
+      return 'Matrícula requerida';
+    }
+    if (!RegExp(r'^\d{8}$').hasMatch(normalized)) {
+      return 'Matrícula debe tener 8 dígitos numéricos';
+    }
     return null;
   }
 
