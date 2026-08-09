@@ -63,7 +63,7 @@ class AboutScreen extends StatelessWidget {
       name: 'Anthony Urbaez',
       studentId: '2023-1394',
       phone: '+18498627678',
-      telegramUrl: '',
+      telegramUrl: 'https://t.me/+18298572510',
       photoAsset: 'assets/images/team/anthony-urbaez.jpeg',
     ),
   ];

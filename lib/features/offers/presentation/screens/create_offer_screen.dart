@@ -1,17 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/app_text_field.dart';
+import '../../../../payments/presentation/screens/payment_screen.dart';
+import '../../domain/entities/create_offer_request.dart';
+import '../../domain/entities/offer_question.dart';
+import '../providers/offers_presentation_providers.dart';
 
-class CreateOfferScreen extends StatefulWidget {
+class CreateOfferScreen extends ConsumerStatefulWidget {
   const CreateOfferScreen({super.key});
 
   @override
-  State<CreateOfferScreen> createState() => _CreateOfferScreenState();
+  ConsumerState<CreateOfferScreen> createState() => _CreateOfferScreenState();
 }
 
-class _CreateOfferScreenState extends State<CreateOfferScreen> {
+class _CreateOfferScreenState extends ConsumerState<CreateOfferScreen> {
   final _formKey = GlobalKey<FormState>();
   final _jobTypeKeyController = TextEditingController();
   final _contractTypeController = TextEditingController();
@@ -48,8 +53,9 @@ class _CreateOfferScreenState extends State<CreateOfferScreen> {
     super.dispose();
   }
 
-  @override
+   @override
   Widget build(BuildContext context) {
+    final createOfferState = ref.watch(createOfferControllerProvider);
     return Scaffold(
       appBar: AppBar(title: const Text('Publicar oferta')),
       body: SafeArea(
@@ -89,7 +95,7 @@ class _CreateOfferScreenState extends State<CreateOfferScreen> {
                   ),
                   const SizedBox(height: 12),
                   AppTextField(
-                    label: 'Foto (URL opcional)',
+                    label: 'URL Imagen',
                     controller: _photoController,
                     keyboardType: TextInputType.url,
                   ),
@@ -190,7 +196,11 @@ class _CreateOfferScreenState extends State<CreateOfferScreen> {
               const SizedBox(height: 16),
               _buildQuestionsSection(),
               const SizedBox(height: 24),
-              AppButton(label: 'Continuar al pago', onPressed: _validateForm),
+                            AppButton(
+                label: 'Continuar al pago',
+                isLoading: createOfferState.isSubmitting,
+                onPressed: _continueToPayment,
+              ),
             ],
           ),
         ),
@@ -327,8 +337,92 @@ class _CreateOfferScreenState extends State<CreateOfferScreen> {
     });
   }
 
-  void _validateForm() {
-    _formKey.currentState?.validate();
+  Future<void> _continueToPayment() async {
+    if (!(_formKey.currentState?.validate() ?? false)) {
+      return;
+    }
+
+    final deadline = _deadline;
+    if (deadline == null) {
+      return;
+    }
+
+    final paymentId = await Navigator.of(context).push<String>(
+      MaterialPageRoute(builder: (_) => const PaymentScreen()),
+    );
+
+    if (!mounted || paymentId == null || paymentId.trim().isEmpty) {
+      return;
+    }
+
+    final created = await ref
+        .read(createOfferControllerProvider.notifier)
+        .createOffer(
+          CreateOfferRequest(
+            jobTypeKey: _jobTypeKeyController.text.trim(),
+            contractType: _contractTypeController.text.trim(),
+            description: _descriptionController.text.trim(),
+            address: _addressController.text.trim(),
+            photo: _photoController.text.trim(),
+            // Los campos de ubicaciÃ³n estÃ¡n ocultos temporalmente en el UI.
+            latitude: 0,
+            longitude: 0,
+            amount: double.parse(_amountController.text.trim()),
+            currency: _currencyController.text.trim(),
+            deadline: deadline,
+            paymentId: paymentId.trim(),
+            customAnswers: _customAnswers(),
+            questions: _questions
+                .map(
+                  (question) => OfferQuestion(
+                    id: '',
+                    label: question.labelController.text.trim(),
+                    type: question.type,
+                    required: question.required,
+                    options: question.type == 'select'
+                        ? question.optionsController.text
+                              .split(',')
+                              .map((option) => option.trim())
+                              .where((option) => option.isNotEmpty)
+                              .toList(growable: false)
+                        : const [],
+                  ),
+                )
+                .toList(growable: false),
+          ),
+        );
+
+    if (!mounted) {
+      return;
+    }
+
+    final state = ref.read(createOfferControllerProvider);
+    final messenger = ScaffoldMessenger.of(context);
+    if (!created) {
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            state.error?.message ?? 'No fue posible publicar la oferta.',
+          ),
+        ),
+      );
+      return;
+    }
+
+    messenger.showSnackBar(
+      const SnackBar(content: Text('Oferta publicada correctamente.')),
+    );
+    Navigator.of(context).pop();
+  }
+
+  Map<String, Object?> _customAnswers() {
+    final key = _customAnswerKeyController.text.trim();
+    final value = _customAnswerValueController.text.trim();
+    if (key.isEmpty || value.isEmpty) {
+      return const {};
+    }
+
+    return {key: value};
   }
 }
 
