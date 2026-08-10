@@ -13,11 +13,13 @@ import '../../features/auth/presentation/pages/register_screen.dart';
 import '../../features/auth/presentation/screens/session_loading_screen.dart';
 import '../../features/change_password/presentation/pages/change_password_screen.dart';
 import '../../features/home/presentation/screens/initial_screen.dart';
+import '../../features/home/presentation/screens/panel_screen.dart';
 import '../../features/news/domain/entities/news_item.dart';
 import '../../features/news/presentation/pages/news_detail_screen.dart';
 import '../../features/news/presentation/pages/news_screen.dart';
 import '../../features/offers/presentation/pages/offer_detail_screen.dart';
 import '../../features/offers/presentation/screens/create_offer_screen.dart';
+import '../../features/payments/presentation/pages/my_payments_screen.dart';
 import '../../features/offers/presentation/pages/offers_screen.dart';
 import '../../features/profile/presentation/pages/complete_profile_screen.dart';
 import '../../features/videos/domain/entities/video.dart';
@@ -69,6 +71,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: RouteNames.initialPath,
         name: RouteNames.initial,
         builder: (context, state) => const InitialScreen(),
+      ),
+      GoRoute(
+        path: RouteNames.panelPath,
+        name: RouteNames.panel,
+        builder: (context, state) => const PanelScreen(),
       ),
       GoRoute(
         path: RouteNames.loginPath,
@@ -210,6 +217,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         name: RouteNames.publishOffer,
         path: RouteNames.publishOfferPath,
         builder: (context, state) => const CreateOfferScreen(),
+      ),
+      GoRoute(
+        name: RouteNames.myPayments,
+        path: RouteNames.myPaymentsPath,
+        builder: (context, state) => const MyPaymentsScreen(),
       ),
     ],
   );
