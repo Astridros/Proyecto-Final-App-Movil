@@ -5,9 +5,9 @@ import '../../../../app/theme/app_dimensions.dart';
 import '../../../../app/theme/app_text_styles.dart';
 
 // Yeison Familia - modulo Inicio.
-// Menu lateral de la app. Se saco de initial_screen.dart a su propio archivo
-// porque es el punto de entrada a los modulos del resto del equipo y asi cada
-// quien agrega su entrada sin pelear con el resto de la pantalla.
+// Menu lateral de la app. Solo lleva lo de la cuenta y la sesion; los accesos
+// a los modulos viven en "Mas secciones" del panel, para no tener la misma
+// entrada repetida en dos lugares.
 class MainDrawer extends StatelessWidget {
   const MainDrawer({
     super.key,
@@ -16,12 +16,8 @@ class MainDrawer extends StatelessWidget {
     required this.userEmail,
     required this.onHome,
     required this.onMiPerfil,
-    required this.onMisPagos,
-    required this.onMyOffers,
     required this.onChangePassword,
-    required this.onAcercaDe,
     required this.onLogout,
-    required this.onMyApplications,
   });
 
   final bool isLoggingOut;
@@ -29,12 +25,8 @@ class MainDrawer extends StatelessWidget {
   final String? userEmail;
   final VoidCallback onHome;
   final VoidCallback onMiPerfil;
-  final VoidCallback onMisPagos;
-  final VoidCallback onMyOffers;
   final VoidCallback onChangePassword;
-  final VoidCallback onAcercaDe;
   final VoidCallback onLogout;
-  final VoidCallback onMyApplications;
 
   @override
   Widget build(BuildContext context) {
@@ -53,29 +45,9 @@ class MainDrawer extends StatelessWidget {
           onTap: () => _closeAndRun(context, onMiPerfil),
         ),
         _DrawerItem(
-          icon: Icons.receipt_long_outlined,
-          label: 'Mis pagos',
-          onTap: () => _closeAndRun(context, onMisPagos),
-        ),
-        _DrawerItem(
-          icon: Icons.campaign_outlined,
-          label: 'Mis ofertas publicadas ',
-          onTap: () => _closeAndRun(context, onMyOffers),
-        ),
-        _DrawerItem(
-          icon: Icons.assignment_outlined,
-          label: 'Mis aplicaciones',
-          onTap: () => _closeAndRun(context, onMyApplications),
-        ),
-        _DrawerItem(
           icon: Icons.lock_reset_outlined,
           label: 'Cambiar contraseña',
           onTap: () => _closeAndRun(context, onChangePassword),
-        ),
-        _DrawerItem(
-          icon: Icons.info_outline_rounded,
-          label: 'Acerca de',
-          onTap: () => _closeAndRun(context, onAcercaDe),
         ),
         const Divider(height: AppDimensions.spacing24),
         _DrawerItem(
@@ -85,7 +57,6 @@ class MainDrawer extends StatelessWidget {
           enabled: !isLoggingOut,
           onTap: () => _closeAndRun(context, onLogout),
         ),
-        
       ],
     );
   }

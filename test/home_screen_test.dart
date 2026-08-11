@@ -102,11 +102,13 @@ void main() {
       await tester.pumpWidget(_panelApp(session: _sessionWith()));
       await tester.pumpAndSettle();
 
-      expect(find.byType(QuickAccessCard), findsNWidgets(7));
+      expect(find.byType(QuickAccessCard), findsNWidgets(9));
       expect(find.text('Explorar ofertas'), findsOneWidget);
       expect(find.text('Mapa de ofertas'), findsOneWidget);
       expect(find.text('Publicar oferta'), findsOneWidget);
       expect(find.text('Mis ofertas publicadas'), findsOneWidget);
+      expect(find.text('Mis aplicaciones'), findsOneWidget);
+      expect(find.text('Mis pagos'), findsOneWidget);
       expect(find.text('Acerca de'), findsOneWidget);
       expect(find.text('Videos'), findsOneWidget);
       expect(find.text('Noticias'), findsOneWidget);
@@ -128,12 +130,29 @@ void main() {
       expect(find.byType(MainDrawer), findsOneWidget);
       expect(find.text('yeison@itla.edu.do'), findsOneWidget);
       expect(find.text('Mi perfil'), findsOneWidget);
-      expect(find.text('Mis pagos'), findsOneWidget);
       expect(find.text('Cambiar contraseña'), findsOneWidget);
-      // "Acerca de" tambien vive como QuickAccessCard en el panel, detras del
-      // drawer, asi que aparece dos veces mientras el menu esta abierto.
-      expect(find.text('Acerca de'), findsNWidgets(2));
       expect(find.text('Cerrar sesión'), findsOneWidget);
+    });
+
+    testWidgets('El menu lateral no repite los accesos de Mas secciones', (
+      tester,
+    ) async {
+      await tester.pumpWidget(_panelApp(session: _sessionWith()));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byTooltip('Abrir menú'));
+      await tester.pumpAndSettle();
+
+      // Estos viven solo en "Mas secciones". Si alguno vuelve al drawer
+      // apareceria dos veces (la tarjeta detras y la entrada del menu).
+      for (final label in const [
+        'Mis pagos',
+        'Mis ofertas publicadas',
+        'Mis aplicaciones',
+        'Acerca de',
+      ]) {
+        expect(find.text(label), findsOneWidget, reason: '$label duplicado');
+      }
     });
   });
 }
