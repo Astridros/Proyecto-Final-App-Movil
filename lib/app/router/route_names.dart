@@ -48,6 +48,8 @@ class RouteNames {
   static const myPaymentsPath = '/my-payments';
   static const myOffers = 'myOffers';
   static const myOffersPath = '/my-offers';
+  static const offerApplications = 'offerApplications';
+  static const offerApplicationsPath = '/offers/:id/applications';
 
   static const experiencesPath = '/experiences';
   static const addExperiencePath = '/add-experience';

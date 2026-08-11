@@ -18,9 +18,10 @@ import '../../features/news/domain/entities/news_item.dart';
 import '../../features/news/presentation/pages/news_detail_screen.dart';
 import '../../features/news/presentation/pages/news_screen.dart';
 import '../../features/offers/presentation/pages/offer_detail_screen.dart';
+import '../../features/applications/presentation/pages/offer_applications_screen.dart';
 import '../../features/offers/presentation/screens/create_offer_screen.dart';
 import '../../features/payments/presentation/pages/my_payments_screen.dart';
-import '../../features/offers/presentation/screens/my_offers_screen.dart';
+import '../../features/offers/presentation/pages/my_offers_screen.dart';
 import '../../features/offers/presentation/pages/offers_screen.dart';
 import '../../features/profile/presentation/pages/complete_profile_screen.dart';
 import '../../features/videos/domain/entities/video.dart';
@@ -228,6 +229,16 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         name: RouteNames.myOffers,
         path: RouteNames.myOffersPath,
         builder: (context, state) => const MyOffersScreen(),
+      ),
+      GoRoute(
+        name: RouteNames.offerApplications,
+        path: RouteNames.offerApplicationsPath,
+        builder: (context, state) {
+          final offerId = state.pathParameters['id'] ?? '';
+          return OfferApplicationsScreen(
+            offerId: offerId,
+          );
+        },
       ),
     ],
   );
