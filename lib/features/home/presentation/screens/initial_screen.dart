@@ -85,6 +85,7 @@ const _welcomeSlides = <WelcomeSlide>[
         'Explora ofertas por tipo de empleo o búscalas en el mapa y aplica '
         'a las que van contigo.',
     icon: Icons.travel_explore_outlined,
+    imageAsset: 'assets/images/home/slide_encuentra_trabajo.jpg',
   ),
   WelcomeSlide(
     title: 'Publica lo que necesitas',
@@ -92,6 +93,7 @@ const _welcomeSlides = <WelcomeSlide>[
         'Crea tu oferta, revisa a los aplicantes, califícalos y elige a tu '
         'ganador.',
     icon: Icons.campaign_outlined,
+    imageAsset: 'assets/images/home/slide_publica_oferta.jpg',
   ),
   WelcomeSlide(
     title: 'Haz valer tu experiencia',
@@ -99,5 +101,6 @@ const _welcomeSlides = <WelcomeSlide>[
         'Suma tus experiencias y certificados al perfil para destacar entre '
         'los demás aplicantes.',
     icon: Icons.workspace_premium_outlined,
+    imageAsset: 'assets/images/home/slide_experiencia.jpg',
   ),
 ];
