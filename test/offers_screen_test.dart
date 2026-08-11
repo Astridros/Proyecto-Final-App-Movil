@@ -105,8 +105,8 @@ void main() {
   });
 
   testWidgets('OffersScreen conecta estado correcto por oferta', (
-      tester,
-      ) async {
+    tester,
+  ) async {
     final repository = _FakeOffersRepository(
       offers: [_offer('uno', likedByMe: true, likesCount: 4)],
     );
@@ -119,8 +119,8 @@ void main() {
   });
 
   testWidgets('OffersScreen permite alternar like sin recargar lista', (
-      tester,
-      ) async {
+    tester,
+  ) async {
     final repository = _FakeOffersRepository(offers: [_offer('uno')]);
 
     await tester.pumpWidget(_testApp(repository));
@@ -149,8 +149,8 @@ void main() {
   });
 
   testWidgets('ActiveFiltersSummary aparece cuando existen filtros', (
-      tester,
-      ) async {
+    tester,
+  ) async {
     final container = ProviderContainer(
       overrides: [
         offersRepositoryProvider.overrideWithValue(
@@ -213,11 +213,11 @@ JobType _jobType(String key) {
 }
 
 Offer _offer(
-    String id, {
-      String jobTypeName = 'Chofer',
-      bool likedByMe = false,
-      int likesCount = 0,
-    }) {
+  String id, {
+  String jobTypeName = 'Chofer',
+  bool likedByMe = false,
+  int likesCount = 0,
+}) {
   return Offer(
     id: id,
     jobTypeKey: 'chofer',
@@ -251,7 +251,7 @@ class _FakeOffersRepository implements OffersRepository {
     List<Offer>? offers,
     this.jobTypesError,
   }) : jobTypes = jobTypes ?? [_jobType('chofer')],
-        offers = offers ?? [_offer('uno')];
+       offers = offers ?? [_offer('uno')];
 
   final List<JobType> jobTypes;
   final List<Offer> offers;
@@ -312,11 +312,6 @@ class _FakeOffersRepository implements OffersRepository {
 
   @override
   Future<List<Offer>> getMyLikedOffers() async {
-    return const [];
-  }
-
-  @override
-  Future<List<Offer>> getMyOffers() async {
     return const [];
   }
 }

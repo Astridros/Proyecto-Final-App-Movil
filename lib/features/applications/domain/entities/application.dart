@@ -1,6 +1,5 @@
 import 'package:equatable/equatable.dart';
 
-import '../../../offers/domain/entities/offer.dart';
 import 'application_answer.dart';
 
 class Application extends Equatable {
@@ -13,8 +12,6 @@ class Application extends Equatable {
     required this.status,
     required this.createdAt,
     required this.updatedAt,
-    this.rating,
-    this.offer,
   });
 
   final String id;
@@ -22,15 +19,9 @@ class Application extends Equatable {
   final String applicantId;
   final String comment;
   final List<ApplicationAnswer> answers;
-
-  final Object? rating;
-
   final String status;
-
   final DateTime? createdAt;
   final DateTime? updatedAt;
-
-  final Offer? offer;
 
   @override
   List<Object?> get props => [
@@ -39,10 +30,8 @@ class Application extends Equatable {
     applicantId,
     comment,
     answers,
-    rating,
     status,
     createdAt,
     updatedAt,
-    offer,
   ];
 }

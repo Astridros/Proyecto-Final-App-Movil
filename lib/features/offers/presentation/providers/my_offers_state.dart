@@ -7,60 +7,39 @@ const _unset = Object();
 
 class MyOffersState extends Equatable {
   MyOffersState({
-    required this.isInitialLoading,
-    required this.isRefreshing,
+    required this.isLoading,
     required List<Offer> offers,
+    required Set<String> deactivatingIds,
     required this.error,
-  }) : offers = List.unmodifiable(offers);
+  }) : offers = List.unmodifiable(offers),
+       deactivatingIds = Set.unmodifiable(deactivatingIds);
 
-  factory MyOffersState.initial() {
-    return MyOffersState(
-      isInitialLoading: false,
-      isRefreshing: false,
-      offers: const [],
-      error: null,
-    );
-  }
+  factory MyOffersState.initial() => MyOffersState(
+    isLoading: false,
+    offers: const [],
+    deactivatingIds: const {},
+    error: null,
+  );
 
-  final bool isInitialLoading;
-  final bool isRefreshing;
+  final bool isLoading;
   final List<Offer> offers;
+  final Set<String> deactivatingIds;
   final AppException? error;
 
-  bool get hasError => error != null;
-
-  bool get isEmpty =>
-      !isInitialLoading &&
-          !isRefreshing &&
-          offers.isEmpty;
-
-  bool get hasOffers => offers.isNotEmpty;
-
   MyOffersState copyWith({
-    bool? isInitialLoading,
-    bool? isRefreshing,
+    bool? isLoading,
     List<Offer>? offers,
+    Set<String>? deactivatingIds,
     Object? error = _unset,
   }) {
     return MyOffersState(
-      isInitialLoading:
-      isInitialLoading ??
-          this.isInitialLoading,
-      isRefreshing:
-      isRefreshing ??
-          this.isRefreshing,
+      isLoading: isLoading ?? this.isLoading,
       offers: offers ?? this.offers,
-      error: identical(error, _unset)
-          ? this.error
-          : error as AppException?,
+      deactivatingIds: deactivatingIds ?? this.deactivatingIds,
+      error: identical(error, _unset) ? this.error : error as AppException?,
     );
   }
 
   @override
-  List<Object?> get props => [
-    isInitialLoading,
-    isRefreshing,
-    offers,
-    error,
-  ];
+  List<Object?> get props => [isLoading, offers, deactivatingIds, error];
 }
