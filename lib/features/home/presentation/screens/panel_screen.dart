@@ -8,34 +8,18 @@ import '../../../../app/theme/app_dimensions.dart';
 import '../../../../app/theme/app_text_styles.dart';
 import '../../../auth/presentation/providers/auth_session_providers.dart';
 import '../../../profile/domain/entities/profile.dart';
-import '../providers/panel_presentation_providers.dart';
-import '../providers/panel_state.dart';
 import '../widgets/main_drawer.dart';
-import '../widgets/offer_preview_card.dart';
 import '../widgets/panel_promo_banner.dart';
+import '../widgets/quick_access_card.dart';
 
 // Yeison Familia - modulo Inicio.
 // Panel principal: a donde se llega tras el slider de Inicio. Saludo, banner
-// de bienvenida, vista previa de ofertas y noticias (leyendo los repositorios
-// de Astrid y Angel, sin repetir su logica), y accesos al resto de modulos.
-class PanelScreen extends ConsumerStatefulWidget {
+// de bienvenida y accesos al resto de modulos.
+class PanelScreen extends ConsumerWidget {
   const PanelScreen({super.key});
 
   @override
-  ConsumerState<PanelScreen> createState() => _PanelScreenState();
-}
-
-class _PanelScreenState extends ConsumerState<PanelScreen> {
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(panelControllerProvider.notifier).loadPreviews();
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     ref.listen(authSessionControllerProvider, (previous, next) {
       final message = next.error?.message;
       if (message == null || previous?.error == next.error) {
@@ -48,7 +32,6 @@ class _PanelScreenState extends ConsumerState<PanelScreen> {
     });
 
     final session = ref.watch(authSessionControllerProvider);
-    final panel = ref.watch(panelControllerProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -99,14 +82,20 @@ class _PanelScreenState extends ConsumerState<PanelScreen> {
                 onExploreOffers: () => context.pushNamed(RouteNames.offers),
               ),
               const SizedBox(height: AppDimensions.spacing32),
-              Text('Ofertas recomendadas', style: AppTextStyles.headingSmall),
+              Text('Más secciones', style: AppTextStyles.headingSmall),
+              const SizedBox(height: AppDimensions.spacing4),
+              Text(
+                'El resto de la plataforma, a un toque.',
+                style: AppTextStyles.bodyMedium.copyWith(
+                  color: AppColors.textSecondary,
+                ),
+              ),
               const SizedBox(height: AppDimensions.spacing16),
-              _OffersSection(panel: panel),
+              const _QuickAccessList(),
             ],
           ),
         ),
       ),
-      bottomNavigationBar: const _QuickAccessBottomBar(),
     );
   }
 
@@ -196,147 +185,72 @@ class _Greeting extends StatelessWidget {
 }
 
 // Yeison Familia - modulo Inicio.
-// Lista vertical, sin carrusel ni "Ver todas": todo el contenido del panel
-// se ve bajando con el dedo. Para explorar el listado completo esta el
-// buscador de arriba y el acceso "Explorar ofertas" de la barra inferior.
-class _OffersSection extends StatelessWidget {
-  const _OffersSection({required this.panel});
-
-  final PanelState panel;
+// Accesos al resto de los modulos, dentro del scroll del Panel: con varios
+// modulos una barra fija de iconos quedaba apretada, asi que se ven como
+// tarjetas (icono, titulo y descripcion) bajando con el dedo.
+class _QuickAccessList extends StatelessWidget {
+  const _QuickAccessList();
 
   @override
   Widget build(BuildContext context) {
-    if (panel.isLoadingOffers && panel.offers.isEmpty) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(vertical: AppDimensions.spacing24),
-        child: Center(child: CircularProgressIndicator()),
-      );
-    }
-
-    // Un fallo aqui no debe tumbar el resto del panel: el acceso completo a
-    // ofertas sigue disponible desde el buscador y la barra inferior.
-    if (panel.offersError && panel.offers.isEmpty) {
-      return const SizedBox.shrink();
-    }
-
-    if (panel.offers.isEmpty) {
-      return Text(
-        'Todavía no hay ofertas activas.',
-        style: AppTextStyles.bodyMedium.copyWith(
-          color: AppColors.textSecondary,
-        ),
-      );
-    }
-
     return Column(
       children: [
-        for (final offer in panel.offers) ...[
-          OfferPreviewCard(
-            offer: offer,
-            onTap: () => context.pushNamed(
-              RouteNames.offerDetail,
-              pathParameters: {'id': offer.id},
-            ),
-          ),
-          if (offer != panel.offers.last)
-            const SizedBox(height: AppDimensions.spacing12),
-        ],
+        QuickAccessCard(
+          label: 'Explorar ofertas',
+          description: 'Trabajos disponibles y filtros por tipo de empleo',
+          icon: Icons.work_outline_rounded,
+          color: AppColors.primary,
+          onTap: () => context.pushNamed(RouteNames.offers),
+        ),
+        const SizedBox(height: AppDimensions.spacing12),
+        QuickAccessCard(
+          label: 'Mapa de ofertas',
+          description: 'Mira las ofertas ubicadas en el mapa',
+          icon: Icons.map_outlined,
+          color: AppColors.secondary,
+          onTap: () => context.pushNamed(RouteNames.offersMap),
+        ),
+        const SizedBox(height: AppDimensions.spacing12),
+        QuickAccessCard(
+          label: 'Publicar oferta',
+          description: 'Publica un trabajo y recibe aplicantes',
+          icon: Icons.campaign_outlined,
+          color: AppColors.primaryDark,
+          onTap: () => context.pushNamed(RouteNames.publishOffer),
+        ),
+        const SizedBox(height: AppDimensions.spacing12),
+        QuickAccessCard(
+          label: 'Mis ofertas publicadas',
+          description: 'Revisa y administra lo que has publicado',
+          icon: Icons.storefront_outlined,
+          color: AppColors.accent,
+          onTap: () => context.pushNamed(RouteNames.myOffers),
+        ),
+        const SizedBox(height: AppDimensions.spacing12),
+        QuickAccessCard(
+          label: 'Acerca de',
+          description: 'Conoce más sobre Ocupa2 y el equipo',
+          icon: Icons.info_outline_rounded,
+          color: AppColors.secondary,
+          onTap: () => context.pushNamed(RouteNames.about),
+        ),
+        const SizedBox(height: AppDimensions.spacing12),
+        QuickAccessCard(
+          label: 'Videos',
+          description: 'Tutoriales y capacitación',
+          icon: Icons.smart_display_outlined,
+          color: AppColors.warning,
+          onTap: () => context.pushNamed(RouteNames.videos),
+        ),
+        const SizedBox(height: AppDimensions.spacing12),
+        QuickAccessCard(
+          label: 'Noticias',
+          description: 'Novedades sobre empleo y oficios',
+          icon: Icons.newspaper_outlined,
+          color: AppColors.success,
+          onTap: () => context.pushNamed(RouteNames.news),
+        ),
       ],
-    );
-  }
-}
-
-// Yeison Familia - modulo Inicio.
-// Barra fija con los accesos al resto de los modulos. Solo vive en el Panel,
-// no envuelve el resto de la app: cada boton navega hacia una pantalla
-// separada, no cambia una pestana dentro de esta misma pantalla, asi que no
-// se marca ningun boton como "seleccionado".
-class _QuickAccessBottomBar extends StatelessWidget {
-  const _QuickAccessBottomBar();
-
-  @override
-  Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: const BoxDecoration(
-        color: AppColors.surface,
-        border: Border(top: BorderSide(color: AppColors.border, width: 0.5)),
-      ),
-      child: SafeArea(
-        top: false,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppDimensions.spacing4,
-            vertical: AppDimensions.spacing8,
-          ),
-          child: Row(
-            children: [
-              _BottomBarItem(
-                label: 'Noticias',
-                icon: Icons.newspaper_outlined,
-                onTap: () => context.pushNamed(RouteNames.news),
-              ),
-              _BottomBarItem(
-                label: 'Mapa',
-                icon: Icons.map_outlined,
-                onTap: () => context.pushNamed(RouteNames.offersMap),
-              ),
-              _BottomBarItem(
-                label: 'Publicar',
-                icon: Icons.campaign_outlined,
-                onTap: () => context.pushNamed(RouteNames.publishOffer),
-              ),
-              _BottomBarItem(
-                label: 'Videos',
-                icon: Icons.smart_display_outlined,
-                onTap: () => context.pushNamed(RouteNames.videos),
-              ),
-              _BottomBarItem(
-                label: 'Explorar ofertas',
-                icon: Icons.work_outline_rounded,
-                onTap: () => context.pushNamed(RouteNames.offers),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _BottomBarItem extends StatelessWidget {
-  const _BottomBarItem({
-    required this.label,
-    required this.icon,
-    required this.onTap,
-  });
-
-  final String label;
-  final IconData icon;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusMedium),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: AppDimensions.spacing4),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, color: AppColors.textSecondary, size: AppDimensions.iconMedium),
-              const SizedBox(height: AppDimensions.spacing4),
-              Text(
-                label,
-                style: AppTextStyles.caption,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 }
