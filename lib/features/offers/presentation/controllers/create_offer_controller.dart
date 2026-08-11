@@ -68,11 +68,18 @@ class CreateOfferController extends Notifier<CreateOfferState> {
     if (request.paymentId.trim().isEmpty) {
       return 'Debes completar el pago antes de publicar la oferta.';
     }
-    if (request.latitude < -90 || request.latitude > 90) {
+    if (!request.location.lat.isFinite ||
+        request.location.lat < -90 ||
+        request.location.lat > 90) {
       return 'La latitud debe estar entre -90 y 90.';
     }
-    if (request.longitude < -180 || request.longitude > 180) {
+    if (!request.location.lng.isFinite ||
+        request.location.lng < -180 ||
+        request.location.lng > 180) {
       return 'La longitud debe estar entre -180 y 180.';
+    }
+    if (request.location.lat == 0 && request.location.lng == 0) {
+      return 'La ubicación de la oferta no es válida.';
     }
     return null;
   }
