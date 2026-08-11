@@ -17,6 +17,7 @@ class MainDrawer extends StatelessWidget {
     required this.onHome,
     required this.onMiPerfil,
     required this.onMisPagos,
+    required this.onMyOffers,
     required this.onChangePassword,
     required this.onAcercaDe,
     required this.onLogout,
@@ -28,6 +29,7 @@ class MainDrawer extends StatelessWidget {
   final VoidCallback onHome;
   final VoidCallback onMiPerfil;
   final VoidCallback onMisPagos;
+  final VoidCallback onMyOffers;
   final VoidCallback onChangePassword;
   final VoidCallback onAcercaDe;
   final VoidCallback onLogout;
@@ -52,6 +54,11 @@ class MainDrawer extends StatelessWidget {
           icon: Icons.receipt_long_outlined,
           label: 'Mis pagos',
           onTap: () => _closeAndRun(context, onMisPagos),
+        ),
+        _DrawerItem(
+          icon: Icons.campaign_outlined,
+          label: 'Mis ofertas',
+          onTap: () => _closeAndRun(context, onMyOffers),
         ),
         _DrawerItem(
           icon: Icons.lock_reset_outlined,
@@ -195,7 +202,10 @@ class _DrawerItem extends StatelessWidget {
     return ListTile(
       enabled: enabled,
       leading: Icon(icon, color: color),
-      title: Text(label, style: AppTextStyles.bodyMedium.copyWith(color: color)),
+      title: Text(
+        label,
+        style: AppTextStyles.bodyMedium.copyWith(color: color),
+      ),
       onTap: enabled ? onTap : null,
     );
   }

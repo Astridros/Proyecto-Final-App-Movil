@@ -20,6 +20,7 @@ import '../../features/news/presentation/pages/news_screen.dart';
 import '../../features/offers/presentation/pages/offer_detail_screen.dart';
 import '../../features/offers/presentation/screens/create_offer_screen.dart';
 import '../../features/payments/presentation/pages/my_payments_screen.dart';
+import '../../features/offers/presentation/screens/my_offers_screen.dart';
 import '../../features/offers/presentation/pages/offers_screen.dart';
 import '../../features/profile/presentation/pages/complete_profile_screen.dart';
 import '../../features/videos/domain/entities/video.dart';
@@ -222,6 +223,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         name: RouteNames.myPayments,
         path: RouteNames.myPaymentsPath,
         builder: (context, state) => const MyPaymentsScreen(),
+      ),
+      GoRoute(
+        name: RouteNames.myOffers,
+        path: RouteNames.myOffersPath,
+        builder: (context, state) => const MyOffersScreen(),
       ),
     ],
   );

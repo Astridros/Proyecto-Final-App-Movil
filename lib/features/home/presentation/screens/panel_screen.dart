@@ -74,6 +74,7 @@ class _PanelScreenState extends ConsumerState<PanelScreen> {
         onHome: () => context.goNamed(RouteNames.initial),
         onMiPerfil: () => context.goNamed(RouteNames.profile),
         onMisPagos: () => context.pushNamed(RouteNames.myPayments),
+        onMyOffers: () => context.pushNamed(RouteNames.myOffers),
         onChangePassword: () {
           final path = GoRouterState.of(context).uri.path;
           if (path != RouteNames.changePasswordPath) {
