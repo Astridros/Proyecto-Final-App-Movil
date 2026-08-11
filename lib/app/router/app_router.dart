@@ -31,6 +31,7 @@ import 'route_names.dart';
 import '../../features/offer_map/presentation/screens/offers_map_screen.dart';
 import '../../features/profile_experience/presentation/screens/edit_profile_screen.dart';
 import '../../features/profile/domain/entities/profile.dart';
+import '../../features/applications/presentation/pages/my_applications_screen.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   final refreshNotifier = _GoRouterRefreshNotifier(ref);
@@ -229,6 +230,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         name: RouteNames.myOffers,
         path: RouteNames.myOffersPath,
         builder: (context, state) => const MyOffersScreen(),
+      ),
+      GoRoute(
+        name: RouteNames.myApplications,
+        path: RouteNames.myApplicationsPath,
+        builder: (context, state) => const MyApplicationsScreen(),
       ),
       GoRoute(
         name: RouteNames.offerApplications,

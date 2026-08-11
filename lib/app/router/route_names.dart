@@ -30,6 +30,8 @@ class RouteNames {
   static const completeProfilePath = '/complete-profile';
   static const offersPath = '/offers';
   static const offerDetailPath = '/offers/:id';
+  static const myApplications = 'myApplications';
+  static const myApplicationsPath = '/my-applications';
   static const changePasswordPath = '/change-password';
   static const newsPath = '/news';
   static const newsDetailPath = '/news/detail';
