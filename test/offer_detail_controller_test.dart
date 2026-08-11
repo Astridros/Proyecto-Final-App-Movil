@@ -225,7 +225,7 @@ void main() {
 
   test(
     'Aplicar correctamente a oferta A establece estado aplicado para A',
-    () async {
+        () async {
       final setup = _setup(offerId: 'offer-a', offer: _offer('offer-a'));
       await setup.notifier.loadOffer();
 
@@ -283,7 +283,7 @@ void main() {
 
   test(
     'Volver a oferta A conserva su estado aplicado en la misma instancia',
-    () async {
+        () async {
       final setup = _setup(offerId: 'offer-a', offer: _offer('offer-a'));
       await setup.notifier.loadOffer();
       await setup.notifier.apply(comment: 'Comentario', answers: const []);
@@ -300,7 +300,7 @@ void main() {
 
   test(
     'Providers family con ids diferentes mantienen estados independientes',
-    () async {
+        () async {
       final setup = _setup(offerId: 'offer-a', offer: _offer('offer-a'));
       await setup.notifier.loadOffer();
       await setup.notifier.apply(comment: 'Comentario', answers: const []);
@@ -344,7 +344,7 @@ void main() {
 
   test(
     'error al cargar aplicaciones conserva detalle sin asumir aplicado',
-    () async {
+        () async {
       final setup = _setup();
       setup.applicationsRepository.error = const ApiException(
         message: 'Fallo aplicaciones',
@@ -360,7 +360,7 @@ void main() {
 
   test(
     'al recibir 409 se marca permanentemente como ya aplicada en ese estado',
-    () async {
+        () async {
       final setup = _setup();
       await setup.notifier.loadOffer();
       setup.repository.applyError = const ConflictException(
@@ -478,17 +478,28 @@ class _Setup {
 }
 
 class _FakeOffersRepository implements OffersRepository {
-  _FakeOffersRepository({Offer? offer, ApplyOfferResult? result})
-    : offer = offer ?? _offer('offer-id'),
-      result =
-          result ?? const ApplyOfferResult(id: 'app-id', status: 'applied');
+  _FakeOffersRepository({
+    Offer? offer,
+    ApplyOfferResult? result,
+  })  : offer = offer ?? _offer('offer-id'),
+        result = result ??
+            const ApplyOfferResult(
+              id: 'app-id',
+              status: 'applied',
+            );
 
   final Offer offer;
   final ApplyOfferResult result;
-  final offerCompleters = Queue<Completer<Offer>>();
-  final applyCompleters = Queue<Completer<ApplyOfferResult>>();
+
+  final offerCompleters =
+  Queue<Completer<Offer>>();
+
+  final applyCompleters =
+  Queue<Completer<ApplyOfferResult>>();
+
   final getOfferByIdCalls = <String>[];
   final applyCalls = <_ApplyCall>[];
+
   Object? getOfferError;
   Object? applyError;
 
@@ -498,24 +509,27 @@ class _FakeOffersRepository implements OffersRepository {
   }
 
   @override
-  Future<List<Offer>> getOffers({String? jobTypeKey, String? contractType}) {
+  Future<List<Offer>> getOffers({
+    String? jobTypeKey,
+    String? contractType,
+  }) {
     return Future.value(const []);
   }
 
   @override
-  Future<Offer> createOffer(dynamic request) {
-    throw UnimplementedError();
-  }
-
-  @override
-  Future<Offer> getOfferById(String id) async {
+  Future<Offer> getOfferById(
+      String id,
+      ) async {
     getOfferByIdCalls.add(id);
+
     if (getOfferError != null) {
       throw getOfferError!;
     }
 
     if (offerCompleters.isNotEmpty) {
-      return offerCompleters.removeFirst().future;
+      return offerCompleters
+          .removeFirst()
+          .future;
     }
 
     return offer;
@@ -528,7 +542,11 @@ class _FakeOffersRepository implements OffersRepository {
     required List<ApplyOfferAnswer> answers,
   }) async {
     applyCalls.add(
-      _ApplyCall(offerId: offerId, comment: comment, answers: answers),
+      _ApplyCall(
+        offerId: offerId,
+        comment: comment,
+        answers: answers,
+      ),
     );
 
     if (applyError != null) {
@@ -536,43 +554,97 @@ class _FakeOffersRepository implements OffersRepository {
     }
 
     if (applyCompleters.isNotEmpty) {
-      return applyCompleters.removeFirst().future;
+      return applyCompleters
+          .removeFirst()
+          .future;
     }
 
     return result;
   }
 
   @override
-  Future<OfferLikeResult> likeOffer(String offerId) async {
-    return const OfferLikeResult(liked: true, likesCount: 1);
+  Future<OfferLikeResult> likeOffer(
+      String offerId,
+      ) async {
+    return const OfferLikeResult(
+      liked: true,
+      likesCount: 1,
+    );
   }
 
   @override
-  Future<OfferLikeResult> unlikeOffer(String offerId) async {
-    return const OfferLikeResult(liked: false, likesCount: 0);
+  Future<OfferLikeResult> unlikeOffer(
+      String offerId,
+      ) async {
+    return const OfferLikeResult(
+      liked: false,
+      likesCount: 0,
+    );
   }
 
   @override
   Future<List<Offer>> getMyLikedOffers() async {
     return const [];
   }
+
+  @override
+  Future<List<Offer>> getMyOffers() async {
+    return const [];
+  }
 }
 
-class _FakeApplicationsRepository implements ApplicationsRepository {
+class _FakeApplicationsRepository
+    implements ApplicationsRepository {
   List<Application> applications = const [];
   Object? error;
   int calls = 0;
 
   @override
-  Future<List<Application>> getMyApplications() async {
+  Future<List<Application>>
+  getMyApplications() async {
     calls++;
+
     if (error != null) {
       throw error!;
     }
 
     return applications;
   }
+
+  @override
+  Future<List<Application>> getOfferApplications(
+      String offerId,
+      ) async {
+    if (error != null) {
+      throw error!;
+    }
+
+    return applications
+        .where(
+          (application) =>
+      application.offerId == offerId,
+    )
+        .toList();
+  }
+
+  @override
+  Future<Application> updateApplication({
+    required String applicationId,
+    int? rating,
+    String? status,
+    double? salary,
+    String? currency,
+    DateTime? startDate,
+    String? duration,
+  }) {
+    throw UnimplementedError();
+  }
 }
+
+
+
+
+
 
 class _ApplyCall {
   const _ApplyCall({

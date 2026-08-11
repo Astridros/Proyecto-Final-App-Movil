@@ -7,39 +7,60 @@ const _unset = Object();
 
 class MyOffersState extends Equatable {
   MyOffersState({
-    required this.isLoading,
+    required this.isInitialLoading,
+    required this.isRefreshing,
     required List<Offer> offers,
-    required Set<String> deactivatingIds,
     required this.error,
-  }) : offers = List.unmodifiable(offers),
-       deactivatingIds = Set.unmodifiable(deactivatingIds);
+  }) : offers = List.unmodifiable(offers);
 
-  factory MyOffersState.initial() => MyOffersState(
-    isLoading: false,
-    offers: const [],
-    deactivatingIds: const {},
-    error: null,
-  );
+  factory MyOffersState.initial() {
+    return MyOffersState(
+      isInitialLoading: false,
+      isRefreshing: false,
+      offers: const [],
+      error: null,
+    );
+  }
 
-  final bool isLoading;
+  final bool isInitialLoading;
+  final bool isRefreshing;
   final List<Offer> offers;
-  final Set<String> deactivatingIds;
   final AppException? error;
 
+  bool get hasError => error != null;
+
+  bool get isEmpty =>
+      !isInitialLoading &&
+          !isRefreshing &&
+          offers.isEmpty;
+
+  bool get hasOffers => offers.isNotEmpty;
+
   MyOffersState copyWith({
-    bool? isLoading,
+    bool? isInitialLoading,
+    bool? isRefreshing,
     List<Offer>? offers,
-    Set<String>? deactivatingIds,
     Object? error = _unset,
   }) {
     return MyOffersState(
-      isLoading: isLoading ?? this.isLoading,
+      isInitialLoading:
+      isInitialLoading ??
+          this.isInitialLoading,
+      isRefreshing:
+      isRefreshing ??
+          this.isRefreshing,
       offers: offers ?? this.offers,
-      deactivatingIds: deactivatingIds ?? this.deactivatingIds,
-      error: identical(error, _unset) ? this.error : error as AppException?,
+      error: identical(error, _unset)
+          ? this.error
+          : error as AppException?,
     );
   }
 
   @override
-  List<Object?> get props => [isLoading, offers, deactivatingIds, error];
+  List<Object?> get props => [
+    isInitialLoading,
+    isRefreshing,
+    offers,
+    error,
+  ];
 }

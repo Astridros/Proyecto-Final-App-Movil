@@ -262,7 +262,7 @@ void main() {
 
   test(
     'dos cambios rápidos no permiten respuesta vieja sobrescriba la nueva',
-    () async {
+        () async {
       final setup = _setup();
       final firstCompleter = Completer<List<Offer>>();
       final secondCompleter = Completer<List<Offer>>();
@@ -320,7 +320,7 @@ void main() {
 
     expect(() => setup.state.offers.add(_offer('dos')), throwsUnsupportedError);
     expect(
-      () => setup.state.jobTypes.add(_jobType('nuevo')),
+          () => setup.state.jobTypes.add(_jobType('nuevo')),
       throwsUnsupportedError,
     );
   });
@@ -462,6 +462,11 @@ class _FakeOffersRepository implements OffersRepository {
 
   @override
   Future<List<Offer>> getMyLikedOffers() async {
+    return const [];
+  }
+
+  @override
+  Future<List<Offer>> getMyOffers() async {
     return const [];
   }
 }

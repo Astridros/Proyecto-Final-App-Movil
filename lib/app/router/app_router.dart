@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../features/offers/presentation/pages/my_offers_screen.dart';
 import 'package:ocupa2/features/profile_experience/presentation/screens/add_experience_screen.dart';
 import 'package:ocupa2/features/profile_experience/presentation/screens/experience_screen.dart';
 import 'package:ocupa2/features/profile_experience/presentation/screens/profile_screen.dart';
@@ -27,8 +28,9 @@ import '../../features/videos/presentation/pages/videos_screen.dart';
 import 'route_names.dart';
 import '../../features/offer_map/presentation/screens/offers_map_screen.dart';
 import '../../features/profile_experience/presentation/screens/edit_profile_screen.dart';
-import '../../features/profile/domain/entities/profile.dart';
-
+import '../../features/profile_experience/domain/entities/profile.dart';
+import '../../features/applications/presentation/pages/my_applications_screen.dart';
+import '../../features/applications/presentation/pages/offer_applications_screen.dart';
 final appRouterProvider = Provider<GoRouter>((ref) {
   final refreshNotifier = _GoRouterRefreshNotifier(ref);
   ref.onDispose(refreshNotifier.dispose);
@@ -121,6 +123,37 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: RouteNames.offersPath,
         name: RouteNames.offers,
         builder: (context, state) => const OffersScreen(),
+      ),
+      GoRoute(
+        path: RouteNames.myOffersPath,
+        name: RouteNames.myOffers,
+        builder: (context, state) =>
+        const MyOffersScreen(),
+      ),
+      GoRoute(
+        path:
+        RouteNames.offerApplicationsPath,
+        name:
+        RouteNames.offerApplications,
+        builder: (
+            context,
+            state,
+            ) {
+          final offerId =
+              state.pathParameters['id'] ??
+                  '';
+
+          return OfferApplicationsScreen(
+            offerId: offerId,
+          );
+        },
+      ),
+
+      GoRoute(
+        path: RouteNames.myApplicationsPath,
+        name: RouteNames.myApplications,
+        builder: (context, state) =>
+        const MyApplicationsScreen(),
       ),
       GoRoute(
         path: RouteNames.offersMapPath,

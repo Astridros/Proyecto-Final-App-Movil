@@ -1,70 +1,95 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/errors/app_exception.dart';
 import '../../../../core/errors/error_mapper.dart';
 import '../../data/providers/offers_data_providers.dart';
-import '../../domain/entities/offer.dart';
-import '../../domain/repositories/my_offers_repository.dart';
+import '../../domain/repositories/offers_repository.dart';
 import 'my_offers_state.dart';
 
-class MyOffersController extends Notifier<MyOffersState> {
-  late final MyOffersRepository _repository;
+class MyOffersController
+    extends Notifier<MyOffersState> {
+  late final OffersRepository _repository;
 
   @override
   MyOffersState build() {
-    _repository = ref.watch(myOffersRepositoryProvider);
+    _repository = ref.watch(
+      offersRepositoryProvider,
+    );
+
     return MyOffersState.initial();
   }
 
-  Future<void> load() async {
-    if (state.isLoading) return;
-    state = state.copyWith(isLoading: true, error: null);
+  Future<void> loadInitial() async {
+    if (state.isInitialLoading) {
+      return;
+    }
+
+    state = state.copyWith(
+      isInitialLoading: true,
+      error: null,
+    );
+
     try {
-      final offers = await _repository.getMyOffers();
-      state = state.copyWith(offers: _mergeWithCurrent(offers));
+      final offers =
+      await _repository.getMyOffers();
+
+      state = state.copyWith(
+        offers: offers,
+        error: null,
+      );
     } catch (error) {
-      state = state.copyWith(error: ErrorMapper.fromObject(error));
+      state = state.copyWith(
+        error: _toAppException(error),
+      );
     } finally {
-      state = state.copyWith(isLoading: false);
+      state = state.copyWith(
+        isInitialLoading: false,
+      );
     }
   }
 
-  void addCreatedOffer(Offer offer) {
+  Future<void> refresh() async {
+    if (state.isRefreshing) {
+      return;
+    }
+
     state = state.copyWith(
-      offers: [offer, ...state.offers.where((item) => item.id != offer.id)],
+      isRefreshing: true,
+      error: null,
+    );
+
+    try {
+      final offers =
+      await _repository.getMyOffers();
+
+      state = state.copyWith(
+        offers: offers,
+        error: null,
+      );
+    } catch (error) {
+      state = state.copyWith(
+        error: _toAppException(error),
+      );
+    } finally {
+      state = state.copyWith(
+        isRefreshing: false,
+      );
+    }
+  }
+
+  void clearError() {
+    if (state.error == null) {
+      return;
+    }
+
+    state = state.copyWith(
       error: null,
     );
   }
 
-  List<Offer> _mergeWithCurrent(List<Offer> remoteOffers) {
-    final remoteIds = remoteOffers.map((offer) => offer.id).toSet();
-    return [
-      ...remoteOffers,
-      ...state.offers.where((offer) => !remoteIds.contains(offer.id)),
-    ];
-  }
-
-  Future<bool> deactivate(String offerId) async {
-    if (state.deactivatingIds.contains(offerId)) return false;
-    state = state.copyWith(
-      deactivatingIds: {...state.deactivatingIds, offerId},
-      error: null,
-    );
-    try {
-      final updated = await _repository.deactivateOffer(offerId);
-      state = state.copyWith(
-        offers: [
-          for (final offer in state.offers)
-            if (offer.id == updated.id) updated else offer,
-        ],
-      );
-      return true;
-    } catch (error) {
-      state = state.copyWith(error: ErrorMapper.fromObject(error));
-      return false;
-    } finally {
-      state = state.copyWith(
-        deactivatingIds: {...state.deactivatingIds}..remove(offerId),
-      );
-    }
+  AppException _toAppException(
+      Object error,
+      ) {
+    return ErrorMapper.fromObject(error);
   }
 }
