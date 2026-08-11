@@ -2,6 +2,8 @@ class RouteNames {
   const RouteNames._();
 
   static const initial = 'initial';
+  static const panel = 'panel';
+  static const panelPath = '/panel';
   static const login = 'login';
   static const register = 'register';
   static const forgotPassword = 'forgotPassword';
@@ -42,6 +44,8 @@ class RouteNames {
   static const payment = 'payment';
   static const publishOffer = 'publishOffer';
   static const publishOfferPath = '/publish-offer';
+  static const myPayments = 'myPayments';
+  static const myPaymentsPath = '/my-payments';
   static const myOffers = 'myOffers';
   static const myOffersPath = '/my-offers';
 

@@ -15,12 +15,15 @@ class WelcomeSlider extends StatefulWidget {
   const WelcomeSlider({
     super.key,
     required this.slides,
-    this.height = 220,
+    this.height,
     this.autoPlayInterval = const Duration(seconds: 5),
   });
 
   final List<WelcomeSlide> slides;
-  final double height;
+
+  // Alto fijo del carrusel. Si viene nulo, ocupa todo el espacio disponible;
+  // en ese caso el padre debe darle una altura acotada.
+  final double? height;
   final Duration autoPlayInterval;
 
   @override
@@ -100,24 +103,25 @@ class _WelcomeSliderState extends State<WelcomeSlider> {
       return const SizedBox.shrink();
     }
 
+    final pageView = PageView.builder(
+      controller: _controller,
+      onPageChanged: _onPageChanged,
+      itemCount: widget.slides.length,
+      itemBuilder: (context, index) {
+        return _SlideCard(
+          slide: widget.slides[index],
+          gradient: _slideGradients[index % _slideGradients.length],
+          position: index + 1,
+          total: widget.slides.length,
+        );
+      },
+    );
+
     return Column(
       children: [
-        SizedBox(
-          height: widget.height,
-          child: PageView.builder(
-            controller: _controller,
-            onPageChanged: _onPageChanged,
-            itemCount: widget.slides.length,
-            itemBuilder: (context, index) {
-              return _SlideCard(
-                slide: widget.slides[index],
-                gradient: _slideGradients[index % _slideGradients.length],
-                position: index + 1,
-                total: widget.slides.length,
-              );
-            },
-          ),
-        ),
+        widget.height == null
+            ? Expanded(child: pageView)
+            : SizedBox(height: widget.height, child: pageView),
         const SizedBox(height: AppDimensions.spacing12),
         _SlideIndicator(
           length: widget.slides.length,
@@ -128,6 +132,9 @@ class _WelcomeSliderState extends State<WelcomeSlider> {
   }
 }
 
+// Icono circular con degradado y el texto centrado debajo, en vez de una
+// tarjeta de color solido con todo encima. Si la lamina trae foto, esta
+// ocupa el circulo en lugar del icono.
 class _SlideCard extends StatelessWidget {
   const _SlideCard({
     required this.slide,
@@ -149,65 +156,47 @@ class _SlideCard extends StatelessWidget {
       label: 'Bienvenida $position de $total. ${slide.title}. ${slide.message}',
       excludeSemantics: true,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: AppDimensions.spacing4),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(AppDimensions.radiusExtraLarge),
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              if (imageAsset == null)
-                DecoratedBox(decoration: BoxDecoration(gradient: gradient))
-              else ...[
-                Image.asset(imageAsset, fit: BoxFit.cover),
-                // Velo oscuro para que el texto blanco siga siendo legible por
-                // encima de cualquier foto.
-                DecoratedBox(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.bottomLeft,
-                      end: Alignment.topRight,
-                      colors: [
-                        Colors.black.withValues(alpha: 0.66),
-                        Colors.black.withValues(alpha: 0.24),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-              Padding(
-                padding: const EdgeInsets.all(AppDimensions.spacing20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    Icon(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppDimensions.spacing20,
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 96,
+              height: 96,
+              decoration: BoxDecoration(
+                gradient: imageAsset == null ? gradient : null,
+                shape: BoxShape.circle,
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: imageAsset == null
+                  ? Icon(
                       slide.icon,
                       color: AppColors.surface,
                       size: AppDimensions.iconLarge,
-                    ),
-                    const SizedBox(height: AppDimensions.spacing12),
-                    Text(
-                      slide.title,
-                      style: AppTextStyles.headingMedium.copyWith(
-                        color: AppColors.surface,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: AppDimensions.spacing8),
-                    Text(
-                      slide.message,
-                      style: AppTextStyles.bodyMedium.copyWith(
-                        color: AppColors.surface.withValues(alpha: 0.92),
-                      ),
-                      maxLines: 3,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
+                    )
+                  : Image.asset(imageAsset, fit: BoxFit.cover),
+            ),
+            const SizedBox(height: AppDimensions.spacing20),
+            Text(
+              slide.title,
+              textAlign: TextAlign.center,
+              style: AppTextStyles.headingMedium,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: AppDimensions.spacing8),
+            Text(
+              slide.message,
+              textAlign: TextAlign.center,
+              style: AppTextStyles.bodyMedium.copyWith(
+                color: AppColors.textSecondary,
               ),
-            ],
-          ),
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
         ),
       ),
     );

@@ -256,9 +256,10 @@ void main() {
     expect(find.text('Cambiar contraseña'), findsWidgets);
   });
 
-  testWidgets('InitialScreen muestra icono hamburguesa', (tester) async {
+  testWidgets('PanelScreen muestra icono hamburguesa', (tester) async {
     await tester.pumpWidget(_testApp(hasToken: true, profileCompleted: true));
     await tester.pumpAndSettle();
+    await _goToPanel(tester);
 
     expect(find.byTooltip('Abrir menú'), findsOneWidget);
   });
@@ -266,6 +267,7 @@ void main() {
   testWidgets('El menú muestra opciones privadas', (tester) async {
     await tester.pumpWidget(_testApp(hasToken: true, profileCompleted: true));
     await tester.pumpAndSettle();
+    await _goToPanel(tester);
     await _openDrawer(tester);
 
     expect(find.text('Inicio'), findsWidgets);
@@ -278,6 +280,7 @@ void main() {
   ) async {
     await tester.pumpWidget(_testApp(hasToken: true, profileCompleted: true));
     await tester.pumpAndSettle();
+    await _goToPanel(tester);
 
     expect(find.text('Cambiar contraseña'), findsNothing);
     expect(find.text('Cerrar sesión'), findsNothing);
@@ -289,6 +292,7 @@ void main() {
   ) async {
     await tester.pumpWidget(_testApp(hasToken: true, profileCompleted: true));
     await tester.pumpAndSettle();
+    await _goToPanel(tester);
     await _openDrawer(tester);
 
     await tester.tap(find.text('Inicio').last);
@@ -303,6 +307,7 @@ void main() {
   ) async {
     await tester.pumpWidget(_testApp(hasToken: true, profileCompleted: true));
     await tester.pumpAndSettle();
+    await _goToPanel(tester);
     await _openDrawer(tester);
 
     expect(find.text('Ocupa2'), findsWidgets);
@@ -320,6 +325,7 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+    await _goToPanel(tester);
 
     await _openDrawer(tester);
     await tester.tap(find.text('Cerrar sesión'));
@@ -328,7 +334,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(tokenStorage.clearSessionCalls, 0);
-    expect(find.text('Encuentra tu próxima oportunidad'), findsOneWidget);
+    expect(find.text('Explorar ofertas'), findsOneWidget);
   });
 
   testWidgets('Confirmar ejecuta logout y muestra LoginScreen', (tester) async {
@@ -341,6 +347,7 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+    await _goToPanel(tester);
 
     await _openDrawer(tester);
     await tester.tap(find.text('Cerrar sesión'));
@@ -364,6 +371,7 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+    await _goToPanel(tester);
 
     await _openDrawer(tester);
     await tester.tap(find.text('Cerrar sesión'));
@@ -385,6 +393,7 @@ void main() {
   ) async {
     await tester.pumpWidget(_testApp(hasToken: true, profileCompleted: true));
     await tester.pumpAndSettle();
+    await _goToPanel(tester);
 
     await _openDrawer(tester);
     await tester.tap(find.text('Cambiar contraseña'));
@@ -397,6 +406,7 @@ void main() {
   testWidgets('El botón de regreso funciona', (tester) async {
     await tester.pumpWidget(_testApp(hasToken: true, profileCompleted: true));
     await tester.pumpAndSettle();
+    await _goToPanel(tester);
 
     await _openDrawer(tester);
     await tester.tap(find.text('Cambiar contraseña'));
@@ -404,13 +414,14 @@ void main() {
     await tester.tap(find.text('Volver'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Encuentra tu próxima oportunidad'), findsOneWidget);
+    expect(find.text('Explorar ofertas'), findsOneWidget);
     expect(find.byType(ChangePasswordScreen), findsNothing);
   });
 
   testWidgets('Un cambio exitoso mantiene la sesión activa', (tester) async {
     await tester.pumpWidget(_testApp(hasToken: true, profileCompleted: true));
     await tester.pumpAndSettle();
+    await _goToPanel(tester);
 
     await _openDrawer(tester);
     await tester.tap(find.text('Cambiar contraseña'));
@@ -771,6 +782,17 @@ Widget _testApp({
 
 Future<void> _openDrawer(WidgetTester tester) async {
   await tester.tap(find.byTooltip('Abrir menú'));
+  await tester.pumpAndSettle();
+}
+
+// El menu lateral y los accesos privados viven en el Panel, no en Inicio
+// (Inicio es solo el slider de bienvenida, con boton "Entrar" hacia el
+// Panel). Se navega alli con el router en vez de tocar el boton para no
+// depender de su texto.
+Future<void> _goToPanel(WidgetTester tester) async {
+  GoRouter.of(
+    tester.element(find.text('Ocupa2')),
+  ).goNamed(RouteNames.panel);
   await tester.pumpAndSettle();
 }
 

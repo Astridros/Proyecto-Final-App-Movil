@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_dimensions.dart';
 import '../../../../app/theme/app_text_styles.dart';
-import '../../../../core/widgets/ocupa2_logo.dart';
 
 // Yeison Familia - modulo Inicio.
 // Menu lateral de la app. Se saco de initial_screen.dart a su propio archivo
@@ -17,8 +16,10 @@ class MainDrawer extends StatelessWidget {
     required this.userEmail,
     required this.onHome,
     required this.onMiPerfil,
+    required this.onMisPagos,
     required this.onMyOffers,
     required this.onChangePassword,
+    required this.onAcercaDe,
     required this.onLogout,
   });
 
@@ -27,8 +28,10 @@ class MainDrawer extends StatelessWidget {
   final String? userEmail;
   final VoidCallback onHome;
   final VoidCallback onMiPerfil;
+  final VoidCallback onMisPagos;
   final VoidCallback onMyOffers;
   final VoidCallback onChangePassword;
+  final VoidCallback onAcercaDe;
   final VoidCallback onLogout;
 
   @override
@@ -48,6 +51,11 @@ class MainDrawer extends StatelessWidget {
           onTap: () => _closeAndRun(context, onMiPerfil),
         ),
         _DrawerItem(
+          icon: Icons.receipt_long_outlined,
+          label: 'Mis pagos',
+          onTap: () => _closeAndRun(context, onMisPagos),
+        ),
+        _DrawerItem(
           icon: Icons.campaign_outlined,
           label: 'Mis ofertas',
           onTap: () => _closeAndRun(context, onMyOffers),
@@ -56,6 +64,11 @@ class MainDrawer extends StatelessWidget {
           icon: Icons.lock_reset_outlined,
           label: 'Cambiar contraseña',
           onTap: () => _closeAndRun(context, onChangePassword),
+        ),
+        _DrawerItem(
+          icon: Icons.info_outline_rounded,
+          label: 'Acerca de',
+          onTap: () => _closeAndRun(context, onAcercaDe),
         ),
         const Divider(height: AppDimensions.spacing24),
         _DrawerItem(
@@ -100,16 +113,14 @@ class _DrawerHeader extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                DecoratedBox(
-                  decoration: BoxDecoration(
-                    color: AppColors.surface.withValues(alpha: 0.92),
-                    borderRadius: BorderRadius.circular(
-                      AppDimensions.radiusMedium,
+                CircleAvatar(
+                  radius: 26,
+                  backgroundColor: AppColors.surface.withValues(alpha: 0.92),
+                  child: Text(
+                    _initialsFor(name),
+                    style: AppTextStyles.headingSmall.copyWith(
+                      color: AppColors.primaryDark,
                     ),
-                  ),
-                  child: const Padding(
-                    padding: EdgeInsets.all(AppDimensions.spacing12),
-                    child: Ocupa2Logo(),
                   ),
                 ),
                 if (name != null || email != null) ...[
@@ -150,6 +161,22 @@ class _DrawerHeader extends StatelessWidget {
     }
 
     return trimmed;
+  }
+
+  // Mismo criterio que el avatar de la barra superior: primera letra del
+  // nombre y del apellido, para que el circulo se vea igual en toda la app.
+  String _initialsFor(String? name) {
+    if (name == null || name.isEmpty) {
+      return '?';
+    }
+
+    final parts = name.split(RegExp(r'\s+'));
+    final first = parts.first.characters.first.toUpperCase();
+    final second = parts.length > 1
+        ? parts.last.characters.first.toUpperCase()
+        : '';
+
+    return '$first$second';
   }
 }
 
