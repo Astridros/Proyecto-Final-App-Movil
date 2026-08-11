@@ -76,7 +76,7 @@ class _CreateOfferScreenState extends ConsumerState<CreateOfferScreen> {
                   const SizedBox(height: 12),
                   AppTextField(
                     label: 'Tipo de contrato',
-                    hint: 'Ej.: temporal',
+                    hint: "Ej.: 'temporal, fijo u horas'",
                     controller: _contractTypeController,
                     validator: _required('El tipo de contrato es obligatorio.'),
                   ),
@@ -98,6 +98,7 @@ class _CreateOfferScreenState extends ConsumerState<CreateOfferScreen> {
                     label: 'URL Imagen',
                     controller: _photoController,
                     keyboardType: TextInputType.url,
+                    validator: _required('La imagen es obligatoria'),
                   ),
                 ],
               ),
@@ -412,6 +413,12 @@ class _CreateOfferScreenState extends ConsumerState<CreateOfferScreen> {
     messenger.showSnackBar(
       const SnackBar(content: Text('Oferta publicada correctamente.')),
     );
+    final createdOffer = state.createdOffer;
+    if (createdOffer != null) {
+      ref
+          .read(myOffersControllerProvider.notifier)
+          .addCreatedOffer(createdOffer);
+    }
     Navigator.of(context).pop();
   }
 

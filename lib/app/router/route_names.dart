@@ -42,6 +42,8 @@ class RouteNames {
   static const payment = 'payment';
   static const publishOffer = 'publishOffer';
   static const publishOfferPath = '/publish-offer';
+  static const myOffers = 'myOffers';
+  static const myOffersPath = '/my-offers';
 
   static const experiencesPath = '/experiences';
   static const addExperiencePath = '/add-experience';
