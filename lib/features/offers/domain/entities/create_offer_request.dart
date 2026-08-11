@@ -1,5 +1,5 @@
 import 'package:equatable/equatable.dart';
-
+import 'package:ocupa2/features/offers/domain/entities/offer_location.dart';
 import 'offer_question.dart';
 
 class CreateOfferRequest extends Equatable {
@@ -9,8 +9,7 @@ class CreateOfferRequest extends Equatable {
     required this.description,
     required this.address,
     required this.photo,
-    required this.latitude,
-    required this.longitude,
+    required this.location,
     required this.amount,
     required this.currency,
     required this.deadline,
@@ -24,8 +23,7 @@ class CreateOfferRequest extends Equatable {
   final String description;
   final String address;
   final String photo;
-  final double latitude;
-  final double longitude;
+  final OfferLocation location;
   final double amount;
   final String currency;
   final DateTime deadline;
@@ -40,8 +38,7 @@ class CreateOfferRequest extends Equatable {
     description,
     address,
     photo,
-    latitude,
-    longitude,
+    location,
     amount,
     currency,
     deadline,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:ocupa2/features/offers/domain/entities/offer_location.dart';
 
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_card.dart';
@@ -348,9 +349,9 @@ class _CreateOfferScreenState extends ConsumerState<CreateOfferScreen> {
       return;
     }
 
-    final paymentId = await Navigator.of(context).push<String>(
-      MaterialPageRoute(builder: (_) => const PaymentScreen()),
-    );
+    final paymentId = await Navigator.of(
+      context,
+    ).push<String>(MaterialPageRoute(builder: (_) => const PaymentScreen()));
 
     if (!mounted || paymentId == null || paymentId.trim().isEmpty) {
       return;
@@ -365,9 +366,10 @@ class _CreateOfferScreenState extends ConsumerState<CreateOfferScreen> {
             description: _descriptionController.text.trim(),
             address: _addressController.text.trim(),
             photo: _photoController.text.trim(),
-            // Los campos de ubicaciÃ³n estÃ¡n ocultos temporalmente en el UI.
-            latitude: 0,
-            longitude: 0,
+            location: OfferLocation(
+              lat: double.parse(_latitudeController.text.trim()),
+              lng: double.parse(_longitudeController.text.trim()),
+            ),
             amount: double.parse(_amountController.text.trim()),
             currency: _currencyController.text.trim(),
             deadline: deadline,

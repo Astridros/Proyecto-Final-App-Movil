@@ -20,6 +20,7 @@ import 'package:ocupa2/features/offers/domain/entities/apply_offer_answer.dart';
 import 'package:ocupa2/features/offers/domain/entities/apply_offer_result.dart';
 import 'package:ocupa2/features/offers/domain/entities/job_type.dart';
 import 'package:ocupa2/features/offers/domain/entities/offer.dart';
+import 'package:ocupa2/features/offers/domain/entities/offer_location.dart';
 import 'package:ocupa2/features/offers/domain/entities/offer_question.dart';
 import 'package:ocupa2/features/offers/domain/entities/offer_like_result.dart';
 import 'package:ocupa2/features/offers/domain/repositories/offers_repository.dart';
@@ -110,6 +111,7 @@ void main() {
       expect(offer.jobTypeName, 'Chofer');
       expect(offer.contractType, 'temporal');
       expect(offer.location.lat, 18.4861);
+      expect(offer.location.lng, -69.9312);
       expect(offer.payment.amount, 35000);
       expect(offer.questions, hasLength(1));
       expect(offer.isIdentityRevealed, isFalse);
@@ -218,8 +220,7 @@ void main() {
         description: 'Se necesita chofer.',
         address: 'Santo Domingo',
         photo: 'https://example.test/photo.png',
-        latitude: 18.4861,
-        longitude: -69.9312,
+        location: const OfferLocation(lat: 18.4861, lng: -69.9312),
         amount: 1500,
         currency: 'DOP',
         deadline: DateTime(2026, 8, 30),
@@ -470,8 +471,7 @@ void main() {
         description: 'Se necesita chofer.',
         address: 'Santo Domingo',
         photo: 'https://example.test/photo.png',
-        latitude: 18.4861,
-        longitude: -69.9312,
+        location: const OfferLocation(lat: 18.4861, lng: -69.9312),
         amount: 1500,
         currency: 'DOP',
         deadline: DateTime(2026, 8, 30),
@@ -642,8 +642,7 @@ void main() {
         description: 'Se necesita chofer.',
         address: 'Santo Domingo',
         photo: '',
-        latitude: 0,
-        longitude: 0,
+        location: const OfferLocation(lat: 0, lng: 0),
         amount: 1500,
         currency: 'DOP',
         deadline: DateTime(2026, 8, 30),
