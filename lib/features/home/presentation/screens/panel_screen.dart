@@ -54,20 +54,14 @@ class PanelScreen extends ConsumerWidget {
         isLoggingOut: session.isLoggingOut,
         userName: session.profile?.nombre,
         userEmail: session.profile?.email,
-        onMyApplications: () => context.pushNamed(
-          RouteNames.myApplications,
-        ),
         onHome: () => context.goNamed(RouteNames.initial),
         onMiPerfil: () => context.goNamed(RouteNames.profile),
-        onMisPagos: () => context.pushNamed(RouteNames.myPayments),
-        onMyOffers: () => context.pushNamed(RouteNames.myOffers),
         onChangePassword: () {
           final path = GoRouterState.of(context).uri.path;
           if (path != RouteNames.changePasswordPath) {
             context.pushNamed(RouteNames.changePassword);
           }
         },
-        onAcercaDe: () => context.pushNamed(RouteNames.about),
         onLogout: () => _confirmLogout(context, ref),
       ),
       body: SafeArea(
@@ -228,6 +222,22 @@ class _QuickAccessList extends StatelessWidget {
           icon: Icons.storefront_outlined,
           color: AppColors.accent,
           onTap: () => context.pushNamed(RouteNames.myOffers),
+        ),
+        const SizedBox(height: AppDimensions.spacing12),
+        QuickAccessCard(
+          label: 'Mis aplicaciones',
+          description: 'Sigue el estado de las ofertas a las que aplicaste',
+          icon: Icons.assignment_outlined,
+          color: AppColors.primaryDark,
+          onTap: () => context.pushNamed(RouteNames.myApplications),
+        ),
+        const SizedBox(height: AppDimensions.spacing12),
+        QuickAccessCard(
+          label: 'Mis pagos',
+          description: 'Historial de tus pagos en la plataforma',
+          icon: Icons.receipt_long_outlined,
+          color: AppColors.success,
+          onTap: () => context.pushNamed(RouteNames.myPayments),
         ),
         const SizedBox(height: AppDimensions.spacing12),
         QuickAccessCard(
