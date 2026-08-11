@@ -17,53 +17,98 @@ class MyOffersController extends Notifier<MyOffersState> {
 
   Future<void> load() async {
     if (state.isLoading) return;
-    state = state.copyWith(isLoading: true, error: null);
+
+    state = state.copyWith(
+      isLoading: true,
+      error: null,
+    );
+
     try {
       final offers = await _repository.getMyOffers();
-      state = state.copyWith(offers: _mergeWithCurrent(offers));
+
+      state = state.copyWith(
+        offers: _mergeWithCurrent(offers),
+        error: null,
+      );
     } catch (error) {
-      state = state.copyWith(error: ErrorMapper.fromObject(error));
+      state = state.copyWith(
+        error: ErrorMapper.fromObject(error),
+      );
     } finally {
-      state = state.copyWith(isLoading: false);
+      state = state.copyWith(
+        isLoading: false,
+      );
     }
   }
 
   void addCreatedOffer(Offer offer) {
     state = state.copyWith(
-      offers: [offer, ...state.offers.where((item) => item.id != offer.id)],
+      offers: [
+        offer,
+        ...state.offers.where(
+              (item) => item.id != offer.id,
+        ),
+      ],
       error: null,
     );
   }
 
-  List<Offer> _mergeWithCurrent(List<Offer> remoteOffers) {
-    final remoteIds = remoteOffers.map((offer) => offer.id).toSet();
+  List<Offer> _mergeWithCurrent(
+      List<Offer> remoteOffers,
+      ) {
+    final remoteIds = remoteOffers
+        .map((offer) => offer.id)
+        .toSet();
+
     return [
       ...remoteOffers,
-      ...state.offers.where((offer) => !remoteIds.contains(offer.id)),
+      ...state.offers.where(
+            (offer) => !remoteIds.contains(offer.id),
+      ),
     ];
   }
 
   Future<bool> deactivate(String offerId) async {
-    if (state.deactivatingIds.contains(offerId)) return false;
+    if (state.deactivatingIds.contains(offerId)) {
+      return false;
+    }
+
     state = state.copyWith(
-      deactivatingIds: {...state.deactivatingIds, offerId},
+      deactivatingIds: {
+        ...state.deactivatingIds,
+        offerId,
+      },
       error: null,
     );
+
     try {
-      final updated = await _repository.deactivateOffer(offerId);
+      final updated = await _repository.deactivateOffer(
+        offerId,
+      );
+
       state = state.copyWith(
         offers: [
           for (final offer in state.offers)
-            if (offer.id == updated.id) updated else offer,
+            if (offer.id == updated.id)
+              updated
+            else
+              offer,
         ],
+        error: null,
       );
+
       return true;
     } catch (error) {
-      state = state.copyWith(error: ErrorMapper.fromObject(error));
+      state = state.copyWith(
+        error: ErrorMapper.fromObject(error),
+      );
+
       return false;
     } finally {
       state = state.copyWith(
-        deactivatingIds: {...state.deactivatingIds}..remove(offerId),
+        deactivatingIds: {
+          ...state.deactivatingIds,
+        }..remove(offerId),
       );
     }
   }

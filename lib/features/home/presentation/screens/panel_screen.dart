@@ -54,6 +54,9 @@ class PanelScreen extends ConsumerWidget {
         isLoggingOut: session.isLoggingOut,
         userName: session.profile?.nombre,
         userEmail: session.profile?.email,
+        onMyApplications: () => context.pushNamed(
+          RouteNames.myApplications,
+        ),
         onHome: () => context.goNamed(RouteNames.initial),
         onMiPerfil: () => context.goNamed(RouteNames.profile),
         onMisPagos: () => context.pushNamed(RouteNames.myPayments),

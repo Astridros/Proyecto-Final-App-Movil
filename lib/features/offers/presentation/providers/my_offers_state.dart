@@ -11,15 +11,17 @@ class MyOffersState extends Equatable {
     required List<Offer> offers,
     required Set<String> deactivatingIds,
     required this.error,
-  }) : offers = List.unmodifiable(offers),
-       deactivatingIds = Set.unmodifiable(deactivatingIds);
+  })  : offers = List.unmodifiable(offers),
+        deactivatingIds = Set.unmodifiable(deactivatingIds);
 
-  factory MyOffersState.initial() => MyOffersState(
-    isLoading: false,
-    offers: const [],
-    deactivatingIds: const {},
-    error: null,
-  );
+  factory MyOffersState.initial() {
+    return MyOffersState(
+      isLoading: false,
+      offers: const [],
+      deactivatingIds: const {},
+      error: null,
+    );
+  }
 
   final bool isLoading;
   final List<Offer> offers;
@@ -35,11 +37,19 @@ class MyOffersState extends Equatable {
     return MyOffersState(
       isLoading: isLoading ?? this.isLoading,
       offers: offers ?? this.offers,
-      deactivatingIds: deactivatingIds ?? this.deactivatingIds,
-      error: identical(error, _unset) ? this.error : error as AppException?,
+      deactivatingIds:
+      deactivatingIds ?? this.deactivatingIds,
+      error: identical(error, _unset)
+          ? this.error
+          : error as AppException?,
     );
   }
 
   @override
-  List<Object?> get props => [isLoading, offers, deactivatingIds, error];
+  List<Object?> get props => [
+    isLoading,
+    offers,
+    deactivatingIds,
+    error,
+  ];
 }

@@ -21,6 +21,7 @@ class MainDrawer extends StatelessWidget {
     required this.onChangePassword,
     required this.onAcercaDe,
     required this.onLogout,
+    required this.onMyApplications,
   });
 
   final bool isLoggingOut;
@@ -33,6 +34,7 @@ class MainDrawer extends StatelessWidget {
   final VoidCallback onChangePassword;
   final VoidCallback onAcercaDe;
   final VoidCallback onLogout;
+  final VoidCallback onMyApplications;
 
   @override
   Widget build(BuildContext context) {
@@ -57,8 +59,13 @@ class MainDrawer extends StatelessWidget {
         ),
         _DrawerItem(
           icon: Icons.campaign_outlined,
-          label: 'Mis ofertas',
+          label: 'Mis ofertas publicadas ',
           onTap: () => _closeAndRun(context, onMyOffers),
+        ),
+        _DrawerItem(
+          icon: Icons.assignment_outlined,
+          label: 'Mis aplicaciones',
+          onTap: () => _closeAndRun(context, onMyApplications),
         ),
         _DrawerItem(
           icon: Icons.lock_reset_outlined,
@@ -78,6 +85,7 @@ class MainDrawer extends StatelessWidget {
           enabled: !isLoggingOut,
           onTap: () => _closeAndRun(context, onLogout),
         ),
+        
       ],
     );
   }

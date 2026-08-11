@@ -982,11 +982,62 @@ class _FakeOffersRepository implements OffersRepository {
     return const [];
   }
 }
-
 class _FakeApplicationsRepository implements ApplicationsRepository {
+  List<Application> applications = const [];
+  Object? error;
+  int calls = 0;
+
   @override
   Future<List<Application>> getMyApplications() async {
-    return const [];
+    calls++;
+
+    if (error != null) {
+      throw error!;
+    }
+
+    return applications;
+  }
+
+  @override
+  Future<List<Application>> getOfferApplications(
+      String offerId,
+      ) async {
+    if (error != null) {
+      throw error!;
+    }
+
+    return applications
+        .where(
+          (application) => application.offerId == offerId,
+    )
+        .toList();
+  }
+
+  @override
+  Future<Application> updateApplication({
+    required String applicationId,
+    int? rating,
+    String? status,
+    double? salary,
+    String? currency,
+    DateTime? startDate,
+    String? duration,
+  }) async {
+    if (error != null) {
+      throw error!;
+    }
+
+    final index = applications.indexWhere(
+          (application) => application.id == applicationId,
+    );
+
+    if (index == -1) {
+      throw StateError(
+        'Aplicación no encontrada: $applicationId',
+      );
+    }
+
+    return applications[index];
   }
 }
 

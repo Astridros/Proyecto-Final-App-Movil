@@ -45,6 +45,7 @@ void main() {
     final future = setup.notifier.loadOffer('offer-id');
 
     expect(setup.state.isInitialLoading, isTrue);
+
     completer.complete(_offer('offer-id'));
     await future;
 
@@ -79,7 +80,9 @@ void main() {
     final secondFuture = setup.notifier.loadOffer('other-id');
 
     expect(setup.repository.getOfferByIdCalls, ['offer-id']);
+
     completer.complete(_offer('offer-id'));
+
     await Future.wait([firstFuture, secondFuture]);
   });
 
@@ -98,10 +101,20 @@ void main() {
 
   test('apply envía comment y answers', () async {
     final setup = _setup();
-    await setup.notifier.loadOffer('offer-id');
-    const answers = [ApplyOfferAnswer(questionId: 'q1', value: 'Sí')];
 
-    await setup.notifier.apply(comment: 'Comentario', answers: answers);
+    await setup.notifier.loadOffer('offer-id');
+
+    const answers = [
+      ApplyOfferAnswer(
+        questionId: 'q1',
+        value: 'Sí',
+      ),
+    ];
+
+    await setup.notifier.apply(
+      comment: 'Comentario',
+      answers: answers,
+    );
 
     expect(
       setup.repository.applyCalls.single,
@@ -115,18 +128,33 @@ void main() {
 
   test('apply guarda resultado', () async {
     final setup = _setup(
-      result: const ApplyOfferResult(id: 'application-id', status: 'applied'),
+      result: const ApplyOfferResult(
+        id: 'application-id',
+        status: 'applied',
+      ),
     );
+
     await setup.notifier.loadOffer('offer-id');
 
-    await setup.notifier.apply(comment: 'Comentario', answers: const []);
+    await setup.notifier.apply(
+      comment: 'Comentario',
+      answers: const [],
+    );
 
-    expect(setup.state.applicationResult?.id, 'application-id');
-    expect(setup.state.hasAppliedSuccessfully, isTrue);
+    expect(
+      setup.state.applicationResult?.id,
+      'application-id',
+    );
+
+    expect(
+      setup.state.hasAppliedSuccessfully,
+      isTrue,
+    );
   });
 
   test('apply devuelve true en éxito', () async {
     final setup = _setup();
+
     await setup.notifier.loadOffer('offer-id');
 
     final result = await setup.notifier.apply(
@@ -135,13 +163,20 @@ void main() {
     );
 
     expect(result, isTrue);
-    expect(setup.state.successMessage, 'Aplicación enviada correctamente.');
+    expect(
+      setup.state.successMessage,
+      'Aplicación enviada correctamente.',
+    );
   });
 
   test('apply devuelve false en error', () async {
     final setup = _setup();
+
     await setup.notifier.loadOffer('offer-id');
-    setup.repository.applyError = const ApiException(message: 'Fallo');
+
+    setup.repository.applyError = const ApiException(
+      message: 'Fallo',
+    );
 
     final result = await setup.notifier.apply(
       comment: 'Comentario',
@@ -154,224 +189,456 @@ void main() {
 
   test('Error 409 conserva mensaje', () async {
     final setup = _setup();
+
     await setup.notifier.loadOffer('offer-id');
+
     setup.repository.applyError = const ConflictException(
       message: 'Ya aplicaste a esta oferta.',
       statusCode: 409,
     );
 
-    await setup.notifier.apply(comment: 'Comentario', answers: const []);
+    await setup.notifier.apply(
+      comment: 'Comentario',
+      answers: const [],
+    );
 
-    expect(setup.state.error?.message, 'Ya aplicaste a esta oferta.');
+    expect(
+      setup.state.error?.message,
+      'Ya aplicaste a esta oferta.',
+    );
   });
 
   test('Evita doble submit', () async {
     final setup = _setup();
+
     await setup.notifier.loadOffer('offer-id');
+
     final completer = Completer<ApplyOfferResult>();
+
     setup.repository.applyCompleters.add(completer);
 
-    final firstFuture = setup.notifier.apply(comment: 'Uno', answers: const []);
+    final firstFuture = setup.notifier.apply(
+      comment: 'Uno',
+      answers: const [],
+    );
+
     final secondFuture = setup.notifier.apply(
       comment: 'Dos',
       answers: const [],
     );
 
-    expect(setup.repository.applyCalls, hasLength(1));
-    completer.complete(const ApplyOfferResult(id: 'app-id', status: 'applied'));
-    final results = await Future.wait([firstFuture, secondFuture]);
+    expect(
+      setup.repository.applyCalls,
+      hasLength(1),
+    );
+
+    completer.complete(
+      const ApplyOfferResult(
+        id: 'app-id',
+        status: 'applied',
+      ),
+    );
+
+    final results = await Future.wait([
+      firstFuture,
+      secondFuture,
+    ]);
 
     expect(results, [true, false]);
   });
 
   test('isSubmitting vuelve a false', () async {
     final setup = _setup();
+
     await setup.notifier.loadOffer('offer-id');
 
-    await setup.notifier.apply(comment: 'Comentario', answers: const []);
+    await setup.notifier.apply(
+      comment: 'Comentario',
+      answers: const [],
+    );
 
-    expect(setup.state.isSubmitting, isFalse);
+    expect(
+      setup.state.isSubmitting,
+      isFalse,
+    );
   });
 
   test('clearError', () async {
     final setup = _setup();
-    setup.repository.getOfferError = const ApiException(message: 'Fallo');
+
+    setup.repository.getOfferError = const ApiException(
+      message: 'Fallo',
+    );
+
     await setup.notifier.loadOffer('offer-id');
 
     setup.notifier.clearError();
 
-    expect(setup.state.error, isNull);
+    expect(
+      setup.state.error,
+      isNull,
+    );
   });
 
   test('clearSuccessMessage', () async {
     final setup = _setup();
+
     await setup.notifier.loadOffer('offer-id');
-    await setup.notifier.apply(comment: 'Comentario', answers: const []);
+
+    await setup.notifier.apply(
+      comment: 'Comentario',
+      answers: const [],
+    );
 
     setup.notifier.clearSuccessMessage();
 
-    expect(setup.state.successMessage, isNull);
+    expect(
+      setup.state.successMessage,
+      isNull,
+    );
   });
 
   test('Provider override', () {
     final repository = _FakeOffersRepository();
+
     final container = ProviderContainer(
-      overrides: [offersRepositoryProvider.overrideWithValue(repository)],
+      overrides: [
+        offersRepositoryProvider.overrideWithValue(repository),
+      ],
     );
+
     addTearDown(container.dispose);
 
-    expect(container.read(offersRepositoryProvider), same(repository));
+    expect(
+      container.read(offersRepositoryProvider),
+      same(repository),
+    );
   });
 
   test(
     'Aplicar correctamente a oferta A establece estado aplicado para A',
-    () async {
-      final setup = _setup(offerId: 'offer-a', offer: _offer('offer-a'));
+        () async {
+      final setup = _setup(
+        offerId: 'offer-a',
+        offer: _offer('offer-a'),
+      );
+
       await setup.notifier.loadOffer();
 
-      await setup.notifier.apply(comment: 'Comentario', answers: const []);
+      await setup.notifier.apply(
+        comment: 'Comentario',
+        answers: const [],
+      );
 
-      expect(setup.state.applicationResult?.id, 'app-id');
-      expect(setup.state.hasAppliedSuccessfully, isTrue);
+      expect(
+        setup.state.applicationResult?.id,
+        'app-id',
+      );
+
+      expect(
+        setup.state.hasAppliedSuccessfully,
+        isTrue,
+      );
     },
   );
 
-  test('Abrir oferta B no conserva applicationResult de A', () async {
-    final setup = _setup(offerId: 'offer-a', offer: _offer('offer-a'));
-    await setup.notifier.loadOffer();
-    await setup.notifier.apply(comment: 'Comentario', answers: const []);
+  test(
+    'Abrir oferta B no conserva applicationResult de A',
+        () async {
+      final setup = _setup(
+        offerId: 'offer-a',
+        offer: _offer('offer-a'),
+      );
 
-    final bState = setup.container.read(
-      offerDetailControllerProvider('offer-b'),
-    );
+      await setup.notifier.loadOffer();
 
-    expect(bState.applicationResult, isNull);
-    expect(bState.hasAppliedSuccessfully, isFalse);
-  });
+      await setup.notifier.apply(
+        comment: 'Comentario',
+        answers: const [],
+      );
 
-  test('Abrir oferta B no conserva successMessage de A', () async {
-    final setup = _setup(offerId: 'offer-a', offer: _offer('offer-a'));
-    await setup.notifier.loadOffer();
-    await setup.notifier.apply(comment: 'Comentario', answers: const []);
+      final bState = setup.container.read(
+        offerDetailControllerProvider('offer-b'),
+      );
 
-    final bState = setup.container.read(
-      offerDetailControllerProvider('offer-b'),
-    );
+      expect(
+        bState.applicationResult,
+        isNull,
+      );
 
-    expect(bState.successMessage, isNull);
-  });
+      expect(
+        bState.hasAppliedSuccessfully,
+        isFalse,
+      );
+    },
+  );
 
-  test('Error 409 en oferta A no bloquea oferta B', () async {
-    final setup = _setup(offerId: 'offer-a', offer: _offer('offer-a'));
-    await setup.notifier.loadOffer();
-    setup.repository.applyError = const ConflictException(
-      message: 'Ya aplicaste a esta oferta.',
-      statusCode: 409,
-    );
+  test(
+    'Abrir oferta B no conserva successMessage de A',
+        () async {
+      final setup = _setup(
+        offerId: 'offer-a',
+        offer: _offer('offer-a'),
+      );
 
-    await setup.notifier.apply(comment: 'Comentario', answers: const []);
+      await setup.notifier.loadOffer();
 
-    final bState = setup.container.read(
-      offerDetailControllerProvider('offer-b'),
-    );
+      await setup.notifier.apply(
+        comment: 'Comentario',
+        answers: const [],
+      );
 
-    expect(setup.state.error?.message, 'Ya aplicaste a esta oferta.');
-    expect(bState.error, isNull);
-    expect(bState.applicationResult, isNull);
-    expect(bState.successMessage, isNull);
-  });
+      final bState = setup.container.read(
+        offerDetailControllerProvider('offer-b'),
+      );
+
+      expect(
+        bState.successMessage,
+        isNull,
+      );
+    },
+  );
+
+  test(
+    'Error 409 en oferta A no bloquea oferta B',
+        () async {
+      final setup = _setup(
+        offerId: 'offer-a',
+        offer: _offer('offer-a'),
+      );
+
+      await setup.notifier.loadOffer();
+
+      setup.repository.applyError = const ConflictException(
+        message: 'Ya aplicaste a esta oferta.',
+        statusCode: 409,
+      );
+
+      await setup.notifier.apply(
+        comment: 'Comentario',
+        answers: const [],
+      );
+
+      final bState = setup.container.read(
+        offerDetailControllerProvider('offer-b'),
+      );
+
+      expect(
+        setup.state.error?.message,
+        'Ya aplicaste a esta oferta.',
+      );
+
+      expect(
+        bState.error,
+        isNull,
+      );
+
+      expect(
+        bState.applicationResult,
+        isNull,
+      );
+
+      expect(
+        bState.successMessage,
+        isNull,
+      );
+    },
+  );
 
   test(
     'Volver a oferta A conserva su estado aplicado en la misma instancia',
-    () async {
-      final setup = _setup(offerId: 'offer-a', offer: _offer('offer-a'));
+        () async {
+      final setup = _setup(
+        offerId: 'offer-a',
+        offer: _offer('offer-a'),
+      );
+
       await setup.notifier.loadOffer();
-      await setup.notifier.apply(comment: 'Comentario', answers: const []);
-      setup.container.read(offerDetailControllerProvider('offer-b'));
+
+      await setup.notifier.apply(
+        comment: 'Comentario',
+        answers: const [],
+      );
+
+      setup.container.read(
+        offerDetailControllerProvider('offer-b'),
+      );
 
       final aState = setup.container.read(
         offerDetailControllerProvider('offer-a'),
       );
 
-      expect(aState.applicationResult?.id, 'app-id');
-      expect(aState.hasAppliedSuccessfully, isTrue);
+      expect(
+        aState.applicationResult?.id,
+        'app-id',
+      );
+
+      expect(
+        aState.hasAppliedSuccessfully,
+        isTrue,
+      );
     },
   );
 
   test(
     'Providers family con ids diferentes mantienen estados independientes',
-    () async {
-      final setup = _setup(offerId: 'offer-a', offer: _offer('offer-a'));
+        () async {
+      final setup = _setup(
+        offerId: 'offer-a',
+        offer: _offer('offer-a'),
+      );
+
       await setup.notifier.loadOffer();
-      await setup.notifier.apply(comment: 'Comentario', answers: const []);
+
+      await setup.notifier.apply(
+        comment: 'Comentario',
+        answers: const [],
+      );
 
       final aState = setup.container.read(
         offerDetailControllerProvider('offer-a'),
       );
+
       final bState = setup.container.read(
         offerDetailControllerProvider('offer-b'),
       );
 
-      expect(aState.applicationResult, isNotNull);
-      expect(bState.applicationResult, isNull);
-      expect(bState.hasAlreadyApplied, isFalse);
-      expect(bState.successMessage, isNull);
-      expect(bState.error, isNull);
+      expect(
+        aState.applicationResult,
+        isNotNull,
+      );
+
+      expect(
+        bState.applicationResult,
+        isNull,
+      );
+
+      expect(
+        bState.hasAlreadyApplied,
+        isFalse,
+      );
+
+      expect(
+        bState.successMessage,
+        isNull,
+      );
+
+      expect(
+        bState.error,
+        isNull,
+      );
     },
   );
 
-  test('loadOffer detecta aplicacion existente por offerId exacto', () async {
-    final setup = _setup(offerId: 'offer-a', offer: _offer('offer-a'));
-    setup.applicationsRepository.applications = [
-      _application('offer-a', status: 'applied'),
-    ];
+  test(
+    'loadOffer detecta aplicacion existente por offerId exacto',
+        () async {
+      final setup = _setup(
+        offerId: 'offer-a',
+        offer: _offer('offer-a'),
+      );
 
-    await setup.notifier.loadOffer();
+      setup.applicationsRepository.applications = [
+        _application(
+          'offer-a',
+          status: 'applied',
+        ),
+      ];
 
-    expect(setup.state.hasAlreadyApplied, isTrue);
-    expect(setup.state.existingApplication?.offerId, 'offer-a');
-  });
+      await setup.notifier.loadOffer();
 
-  test('aplicaciones de otras ofertas no bloquean la actual', () async {
-    final setup = _setup(offerId: 'offer-b', offer: _offer('offer-b'));
-    setup.applicationsRepository.applications = [_application('offer-a')];
+      expect(
+        setup.state.hasAlreadyApplied,
+        isTrue,
+      );
 
-    await setup.notifier.loadOffer();
+      expect(
+        setup.state.existingApplication?.offerId,
+        'offer-a',
+      );
+    },
+  );
 
-    expect(setup.state.hasAlreadyApplied, isFalse);
-    expect(setup.state.existingApplication, isNull);
-  });
+  test(
+    'aplicaciones de otras ofertas no bloquean la actual',
+        () async {
+      final setup = _setup(
+        offerId: 'offer-b',
+        offer: _offer('offer-b'),
+      );
+
+      setup.applicationsRepository.applications = [
+        _application('offer-a'),
+      ];
+
+      await setup.notifier.loadOffer();
+
+      expect(
+        setup.state.hasAlreadyApplied,
+        isFalse,
+      );
+
+      expect(
+        setup.state.existingApplication,
+        isNull,
+      );
+    },
+  );
 
   test(
     'error al cargar aplicaciones conserva detalle sin asumir aplicado',
-    () async {
+        () async {
       final setup = _setup();
+
       setup.applicationsRepository.error = const ApiException(
         message: 'Fallo aplicaciones',
       );
 
       await setup.notifier.loadOffer();
 
-      expect(setup.state.offer?.id, 'offer-id');
-      expect(setup.state.hasAlreadyApplied, isFalse);
-      expect(setup.state.error?.message, 'Fallo aplicaciones');
+      expect(
+        setup.state.offer?.id,
+        'offer-id',
+      );
+
+      expect(
+        setup.state.hasAlreadyApplied,
+        isFalse,
+      );
+
+      expect(
+        setup.state.error?.message,
+        'Fallo aplicaciones',
+      );
     },
   );
 
   test(
     'al recibir 409 se marca permanentemente como ya aplicada en ese estado',
-    () async {
+        () async {
       final setup = _setup();
+
       await setup.notifier.loadOffer();
+
       setup.repository.applyError = const ConflictException(
         message: 'Ya aplicaste a esta oferta.',
         statusCode: 409,
       );
 
-      await setup.notifier.apply(comment: 'Comentario', answers: const []);
+      await setup.notifier.apply(
+        comment: 'Comentario',
+        answers: const [],
+      );
 
-      expect(setup.state.hasAlreadyApplied, isTrue);
-      expect(setup.state.error?.message, 'Ya aplicaste a esta oferta.');
+      expect(
+        setup.state.hasAlreadyApplied,
+        isTrue,
+      );
+
+      expect(
+        setup.state.error?.message,
+        'Ya aplicaste a esta oferta.',
+      );
     },
   );
 
@@ -386,7 +653,9 @@ void main() {
       ),
       hasAlreadyApplied: true,
       existingApplication: _application('offer-id'),
-      error: const ApiException(message: 'Fallo'),
+      error: const ApiException(
+        message: 'Fallo',
+      ),
       successMessage: 'Listo',
     );
 
@@ -399,12 +668,35 @@ void main() {
       successMessage: null,
     );
 
-    expect(next.offer, isNull);
-    expect(next.applicationResult, isNull);
-    expect(next.hasAlreadyApplied, isFalse);
-    expect(next.existingApplication, isNull);
-    expect(next.error, isNull);
-    expect(next.successMessage, isNull);
+    expect(
+      next.offer,
+      isNull,
+    );
+
+    expect(
+      next.applicationResult,
+      isNull,
+    );
+
+    expect(
+      next.hasAlreadyApplied,
+      isFalse,
+    );
+
+    expect(
+      next.existingApplication,
+      isNull,
+    );
+
+    expect(
+      next.error,
+      isNull,
+    );
+
+    expect(
+      next.successMessage,
+      isNull,
+    );
   });
 }
 
@@ -414,16 +706,25 @@ _Setup _setup({
   ApplyOfferResult? result,
 }) {
   final repository = _FakeOffersRepository(
-    offer: offer ?? _offer('offer-id'),
-    result: result ?? const ApplyOfferResult(id: 'app-id', status: 'applied'),
+    offer: offer ?? _offer(offerId),
+    result: result ??
+        const ApplyOfferResult(
+          id: 'app-id',
+          status: 'applied',
+        ),
   );
+
   final applicationsRepository = _FakeApplicationsRepository();
+
   final container = ProviderContainer(
     overrides: [
       offersRepositoryProvider.overrideWithValue(repository),
-      applicationsRepositoryProvider.overrideWithValue(applicationsRepository),
+      applicationsRepositoryProvider.overrideWithValue(
+        applicationsRepository,
+      ),
     ],
   );
+
   addTearDown(container.dispose);
 
   return _Setup(
@@ -442,8 +743,15 @@ Offer _offer(String id) {
     contractType: 'temporal',
     description: 'Oferta de prueba',
     address: 'Santo Domingo',
-    location: const OfferLocation(lat: 18.4, lng: -69.9),
-    payment: const OfferPayment(amount: 50, currency: 'USD', period: 'total'),
+    location: const OfferLocation(
+      lat: 18.4,
+      lng: -69.9,
+    ),
+    payment: const OfferPayment(
+      amount: 50,
+      currency: 'USD',
+      period: 'total',
+    ),
     photo: 'string',
     customAnswers: const {},
     questions: const [],
@@ -471,24 +779,36 @@ class _Setup {
   final String offerId;
 
   OfferDetailState get state =>
-      container.read(offerDetailControllerProvider(offerId));
+      container.read(
+        offerDetailControllerProvider(offerId),
+      );
 
   OfferDetailController get notifier =>
-      container.read(offerDetailControllerProvider(offerId).notifier);
+      container.read(
+        offerDetailControllerProvider(offerId).notifier,
+      );
 }
 
 class _FakeOffersRepository implements OffersRepository {
-  _FakeOffersRepository({Offer? offer, ApplyOfferResult? result})
-    : offer = offer ?? _offer('offer-id'),
-      result =
-          result ?? const ApplyOfferResult(id: 'app-id', status: 'applied');
+  _FakeOffersRepository({
+    Offer? offer,
+    ApplyOfferResult? result,
+  })  : offer = offer ?? _offer('offer-id'),
+        result = result ??
+            const ApplyOfferResult(
+              id: 'app-id',
+              status: 'applied',
+            );
 
   final Offer offer;
   final ApplyOfferResult result;
+
   final offerCompleters = Queue<Completer<Offer>>();
   final applyCompleters = Queue<Completer<ApplyOfferResult>>();
+
   final getOfferByIdCalls = <String>[];
   final applyCalls = <_ApplyCall>[];
+
   Object? getOfferError;
   Object? applyError;
 
@@ -498,7 +818,10 @@ class _FakeOffersRepository implements OffersRepository {
   }
 
   @override
-  Future<List<Offer>> getOffers({String? jobTypeKey, String? contractType}) {
+  Future<List<Offer>> getOffers({
+    String? jobTypeKey,
+    String? contractType,
+  }) {
     return Future.value(const []);
   }
 
@@ -510,6 +833,7 @@ class _FakeOffersRepository implements OffersRepository {
   @override
   Future<Offer> getOfferById(String id) async {
     getOfferByIdCalls.add(id);
+
     if (getOfferError != null) {
       throw getOfferError!;
     }
@@ -528,7 +852,11 @@ class _FakeOffersRepository implements OffersRepository {
     required List<ApplyOfferAnswer> answers,
   }) async {
     applyCalls.add(
-      _ApplyCall(offerId: offerId, comment: comment, answers: answers),
+      _ApplyCall(
+        offerId: offerId,
+        comment: comment,
+        answers: answers,
+      ),
     );
 
     if (applyError != null) {
@@ -544,12 +872,18 @@ class _FakeOffersRepository implements OffersRepository {
 
   @override
   Future<OfferLikeResult> likeOffer(String offerId) async {
-    return const OfferLikeResult(liked: true, likesCount: 1);
+    return const OfferLikeResult(
+      liked: true,
+      likesCount: 1,
+    );
   }
 
   @override
   Future<OfferLikeResult> unlikeOffer(String offerId) async {
-    return const OfferLikeResult(liked: false, likesCount: 0);
+    return const OfferLikeResult(
+      liked: false,
+      likesCount: 0,
+    );
   }
 
   @override
@@ -566,11 +900,54 @@ class _FakeApplicationsRepository implements ApplicationsRepository {
   @override
   Future<List<Application>> getMyApplications() async {
     calls++;
+
     if (error != null) {
       throw error!;
     }
 
     return applications;
+  }
+
+  @override
+  Future<List<Application>> getOfferApplications(
+      String offerId,
+      ) async {
+    if (error != null) {
+      throw error!;
+    }
+
+    return applications
+        .where(
+          (application) => application.offerId == offerId,
+    )
+        .toList();
+  }
+
+  @override
+  Future<Application> updateApplication({
+    required String applicationId,
+    int? rating,
+    String? status,
+    double? salary,
+    String? currency,
+    DateTime? startDate,
+    String? duration,
+  }) async {
+    if (error != null) {
+      throw error!;
+    }
+
+    final index = applications.indexWhere(
+          (application) => application.id == applicationId,
+    );
+
+    if (index == -1) {
+      throw StateError(
+        'Aplicación no encontrada: $applicationId',
+      );
+    }
+
+    return applications[index];
   }
 }
 
@@ -594,10 +971,19 @@ class _ApplyCall {
   }
 
   @override
-  int get hashCode => Object.hash(offerId, comment, Object.hashAll(answers));
+  int get hashCode {
+    return Object.hash(
+      offerId,
+      comment,
+      Object.hashAll(answers),
+    );
+  }
 }
 
-Application _application(String offerId, {String status = 'applied'}) {
+Application _application(
+    String offerId, {
+      String status = 'applied',
+    }) {
   return Application(
     id: 'application-$offerId',
     offerId: offerId,
@@ -610,7 +996,10 @@ Application _application(String offerId, {String status = 'applied'}) {
   );
 }
 
-bool _listEquals<T>(List<T> a, List<T> b) {
+bool _listEquals<T>(
+    List<T> a,
+    List<T> b,
+    ) {
   if (a.length != b.length) {
     return false;
   }

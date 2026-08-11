@@ -68,19 +68,20 @@ void main() {
     expect(find.text('turno: nocturno'), findsOneWidget);
   });
 
-  testWidgets('OfferDetailScreen conecta estado de like por offerId', (
-    tester,
-  ) async {
-    final repository = _FakeOffersRepository(
-      offer: _offer(likedByMe: true, likesCount: 6),
-    );
+  testWidgets(
+    'OfferDetailScreen conecta estado de like por offerId',
+        (tester) async {
+      final repository = _FakeOffersRepository(
+        offer: _offer(likedByMe: true, likesCount: 6),
+      );
 
-    await tester.pumpWidget(_testDetail(repository));
-    await tester.pumpAndSettle();
+      await tester.pumpWidget(_testDetail(repository));
+      await tester.pumpAndSettle();
 
-    expect(find.byIcon(Icons.favorite_rounded), findsOneWidget);
-    expect(find.text('6 me gusta'), findsOneWidget);
-  });
+      expect(find.byIcon(Icons.favorite_rounded), findsOneWidget);
+      expect(find.text('6 me gusta'), findsOneWidget);
+    },
+  );
 
   testWidgets('Like en detalle actualiza contador', (tester) async {
     final repository = _FakeOffersRepository(
@@ -89,6 +90,7 @@ void main() {
 
     await tester.pumpWidget(_testDetail(repository));
     await tester.pumpAndSettle();
+
     await tester.ensureVisible(find.byTooltip('Dar me gusta'));
     await tester.tap(find.byTooltip('Dar me gusta'));
     await tester.pumpAndSettle();
@@ -100,7 +102,11 @@ void main() {
 
   testWidgets('Imagen invalida muestra placeholder', (tester) async {
     await tester.pumpWidget(
-      _testDetail(_FakeOffersRepository(offer: _offer(photo: 'string'))),
+      _testDetail(
+        _FakeOffersRepository(
+          offer: _offer(photo: 'string'),
+        ),
+      ),
     );
     await tester.pumpAndSettle();
 
@@ -109,7 +115,11 @@ void main() {
 
   testWidgets('Deadline null no renderiza fecha limite', (tester) async {
     await tester.pumpWidget(
-      _testDetail(_FakeOffersRepository(offer: _offer(deadline: null))),
+      _testDetail(
+        _FakeOffersRepository(
+          offer: _offer(deadline: null),
+        ),
+      ),
     );
     await tester.pumpAndSettle();
 
@@ -119,7 +129,9 @@ void main() {
   testWidgets('Deadline vencida muestra advertencia', (tester) async {
     await tester.pumpWidget(
       _testDetail(
-        _FakeOffersRepository(offer: _offer(deadline: DateTime(2024))),
+        _FakeOffersRepository(
+          offer: _offer(deadline: DateTime(2024)),
+        ),
       ),
     );
     await tester.pumpAndSettle();
@@ -142,6 +154,7 @@ void main() {
   testWidgets('Pantalla pequena sin overflow', (tester) async {
     tester.view.physicalSize = const Size(320, 760);
     tester.view.devicePixelRatio = 1;
+
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
@@ -155,6 +168,7 @@ void main() {
     final repository = _FakeOffersRepository(
       offer: _offer(questions: const []),
     );
+
     await tester.pumpWidget(_testDetail(repository));
     await tester.pumpAndSettle();
 
@@ -167,10 +181,11 @@ void main() {
 
   testWidgets(
     'Al abrir oferta A con aplicacion existente no aparece formulario',
-    (tester) async {
+        (tester) async {
       final repository = _FakeOffersRepository(
         offer: _offer(questions: const []),
       );
+
       repository.applicationsRepository.applications = [
         _application('offer-id'),
       ];
@@ -187,6 +202,7 @@ void main() {
     final repository = _FakeOffersRepository(
       offer: _offer(questions: const []),
     );
+
     repository.applicationsRepository.applications = [
       _application('offer-id', status: 'applied'),
     ];
@@ -200,25 +216,30 @@ void main() {
     );
   });
 
-  testWidgets('Oferta B sin aplicacion existente muestra formulario', (
-    tester,
-  ) async {
-    final repository = _FakeOffersRepository(
-      offer: _offer(questions: const []),
-    );
-    repository.applicationsRepository.applications = [_application('offer-a')];
+  testWidgets(
+    'Oferta B sin aplicacion existente muestra formulario',
+        (tester) async {
+      final repository = _FakeOffersRepository(
+        offer: _offer(questions: const []),
+      );
 
-    await tester.pumpWidget(_testDetail(repository));
-    await tester.pumpAndSettle();
+      repository.applicationsRepository.applications = [
+        _application('offer-a'),
+      ];
 
-    expect(find.text('Comentario'), findsOneWidget);
-    expect(find.text('Enviar aplicacion'), findsOneWidget);
-  });
+      await tester.pumpWidget(_testDetail(repository));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Comentario'), findsOneWidget);
+      expect(find.text('Enviar aplicacion'), findsOneWidget);
+    },
+  );
 
   testWidgets('La comparacion usa offerId exacto', (tester) async {
     final repository = _FakeOffersRepository(
       offer: _offer(questions: const []),
     );
+
     repository.applicationsRepository.applications = [
       _application('offer-id-extra'),
     ];
@@ -229,380 +250,586 @@ void main() {
     expect(find.text('Enviar aplicacion'), findsOneWidget);
   });
 
-  testWidgets('Aplicaciones de otras ofertas no bloquean la actual', (
-    tester,
-  ) async {
-    final repository = _FakeOffersRepository(
-      offer: _offer(questions: const []),
-    );
-    repository.applicationsRepository.applications = [
-      _application('other-offer'),
-    ];
+  testWidgets(
+    'Aplicaciones de otras ofertas no bloquean la actual',
+        (tester) async {
+      final repository = _FakeOffersRepository(
+        offer: _offer(questions: const []),
+      );
 
-    await tester.pumpWidget(_testDetail(repository));
-    await tester.pumpAndSettle();
+      repository.applicationsRepository.applications = [
+        _application('other-offer'),
+      ];
 
-    expect(find.text('Enviar aplicacion'), findsOneWidget);
-  });
+      await tester.pumpWidget(_testDetail(repository));
+      await tester.pumpAndSettle();
 
-  testWidgets('Error al cargar aplicaciones no rompe el detalle', (
-    tester,
-  ) async {
-    final repository = _FakeOffersRepository(
-      offer: _offer(questions: const []),
-    );
-    repository.applicationsRepository.error = const ApiException(
-      message: 'No fue posible cargar aplicaciones',
-    );
+      expect(find.text('Enviar aplicacion'), findsOneWidget);
+    },
+  );
 
-    await tester.pumpWidget(_testDetail(repository));
-    await tester.pumpAndSettle();
+  testWidgets(
+    'Error al cargar aplicaciones no rompe el detalle',
+        (tester) async {
+      final repository = _FakeOffersRepository(
+        offer: _offer(questions: const []),
+      );
 
-    expect(find.text('Programador'), findsWidgets);
-    expect(find.text('No fue posible cargar aplicaciones'), findsOneWidget);
-    expect(find.text('Enviar aplicacion'), findsOneWidget);
-  });
+      repository.applicationsRepository.error = const ApiException(
+        message: 'No fue posible cargar aplicaciones',
+      );
 
-  testWidgets('Pregunta text requerida muestra error y luego envia id', (
-    tester,
-  ) async {
-    final repository = _FakeOffersRepository(
-      offer: _offer(
-        questions: const [
-          OfferQuestion(
-            id: 'q1',
-            label: 'Experiencia',
-            type: 'text',
-            required: true,
-            options: [],
+      await tester.pumpWidget(_testDetail(repository));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Programador'), findsWidgets);
+      expect(
+        find.text('No fue posible cargar aplicaciones'),
+        findsOneWidget,
+      );
+      expect(find.text('Enviar aplicacion'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'Pregunta text requerida muestra error y luego envia id',
+        (tester) async {
+      final repository = _FakeOffersRepository(
+        offer: _offer(
+          questions: const [
+            OfferQuestion(
+              id: 'q1',
+              label: 'Experiencia',
+              type: 'text',
+              required: true,
+              options: [],
+            ),
+          ],
+        ),
+      );
+
+      await tester.pumpWidget(_testDetail(repository));
+      await tester.pumpAndSettle();
+
+      await _tapSubmit(tester);
+      await tester.pump();
+
+      expect(
+        find.text('Esta pregunta es obligatoria'),
+        findsOneWidget,
+      );
+
+      await tester.ensureVisible(
+        find.widgetWithText(
+          TextFormField,
+          'Experiencia *',
+        ),
+      );
+
+      await tester.enterText(
+        find.widgetWithText(
+          TextFormField,
+          'Experiencia *',
+        ),
+        'Uno',
+      );
+
+      await _tapSubmit(tester);
+      await tester.pumpAndSettle();
+
+      expect(
+        repository.lastAnswers.single.questionId,
+        'q1',
+      );
+
+      expect(
+        repository.lastAnswers.single.value,
+        'Uno',
+      );
+    },
+  );
+
+  testWidgets(
+    'Pregunta date se envia yyyy-MM-dd',
+        (tester) async {
+      final repository = _FakeOffersRepository(
+        offer: _offer(
+          questions: const [
+            OfferQuestion(
+              id: 'q-date',
+              label: 'Fecha disponible',
+              type: 'date',
+              required: true,
+              options: [],
+            ),
+          ],
+        ),
+      );
+
+      await tester.pumpWidget(_testDetail(repository));
+      await tester.pumpAndSettle();
+
+      await tester.ensureVisible(
+        find.widgetWithText(
+          TextFormField,
+          'Fecha disponible *',
+        ),
+      );
+
+      await tester.tap(
+        find.widgetWithText(
+          TextFormField,
+          'Fecha disponible *',
+        ),
+      );
+
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('OK'));
+      await tester.pumpAndSettle();
+
+      await _tapSubmit(tester);
+      await tester.pumpAndSettle();
+
+      expect(
+        repository.lastAnswers.single.questionId,
+        'q-date',
+      );
+
+      expect(
+        repository.lastAnswers.single.value,
+        matches(r'^\d{4}-\d{2}-\d{2}$'),
+      );
+    },
+  );
+
+  testWidgets(
+    'Pregunta select con options envia opcion',
+        (tester) async {
+      final repository = _FakeOffersRepository(
+        offer: _offer(
+          questions: const [
+            OfferQuestion(
+              id: 'q-select',
+              label: 'Turno',
+              type: 'select',
+              required: true,
+              options: ['Dia', 'Noche'],
+            ),
+          ],
+        ),
+      );
+
+      await tester.pumpWidget(_testDetail(repository));
+      await tester.pumpAndSettle();
+
+      await tester.ensureVisible(
+        find.byType(DropdownButtonFormField<String>),
+      );
+
+      await tester.tap(
+        find.byType(DropdownButtonFormField<String>),
+      );
+
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Noche').last);
+      await tester.pumpAndSettle();
+
+      await _tapSubmit(tester);
+      await tester.pumpAndSettle();
+
+      expect(
+        repository.lastAnswers.single.value,
+        'Noche',
+      );
+    },
+  );
+
+  testWidgets(
+    'Select sin options no rompe e impide enviar si es requerida',
+        (tester) async {
+      final repository = _FakeOffersRepository(
+        offer: _offer(
+          questions: const [
+            OfferQuestion(
+              id: 'q-select',
+              label: 'Turno',
+              type: 'select',
+              required: true,
+              options: [],
+            ),
+          ],
+        ),
+      );
+
+      await tester.pumpWidget(_testDetail(repository));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text('Sin opciones disponibles'),
+        findsOneWidget,
+      );
+
+      await _tapSubmit(tester);
+      await tester.pump();
+
+      expect(
+        find.text(
+          'No hay opciones disponibles para esta pregunta requerida',
+        ),
+        findsOneWidget,
+      );
+
+      expect(repository.applyCalls, 0);
+    },
+  );
+
+  testWidgets(
+    'Pregunta check false se considera respuesta valida',
+        (tester) async {
+      final repository = _FakeOffersRepository(
+        offer: _offer(
+          questions: const [
+            OfferQuestion(
+              id: 'q-check',
+              label: 'Acepto horario',
+              type: 'check',
+              required: true,
+              options: [],
+            ),
+          ],
+        ),
+      );
+
+      await tester.pumpWidget(_testDetail(repository));
+      await tester.pumpAndSettle();
+
+      await tester.ensureVisible(
+        find.byType(CheckboxListTile),
+      );
+
+      await tester.tap(find.byType(CheckboxListTile));
+      await tester.pump();
+
+      await tester.tap(find.byType(CheckboxListTile));
+      await tester.pump();
+
+      await _tapSubmit(tester);
+      await tester.pumpAndSettle();
+
+      expect(
+        repository.lastAnswers.single.value,
+        'false',
+      );
+    },
+  );
+
+  testWidgets(
+    'Tipo desconocido usa texto generico',
+        (tester) async {
+      final repository = _FakeOffersRepository(
+        offer: _offer(
+          questions: const [
+            OfferQuestion(
+              id: 'q-unknown',
+              label: 'Otra pregunta',
+              type: 'rating',
+              required: true,
+              options: [],
+            ),
+          ],
+        ),
+      );
+
+      await tester.pumpWidget(_testDetail(repository));
+      await tester.pumpAndSettle();
+
+      await tester.ensureVisible(
+        find.widgetWithText(
+          TextFormField,
+          'Otra pregunta *',
+        ),
+      );
+
+      await tester.enterText(
+        find.widgetWithText(
+          TextFormField,
+          'Otra pregunta *',
+        ),
+        'Valor',
+      );
+
+      await _tapSubmit(tester);
+      await tester.pumpAndSettle();
+
+      expect(
+        repository.lastAnswers.single.questionId,
+        'q-unknown',
+      );
+
+      expect(
+        repository.lastAnswers.single.value,
+        'Valor',
+      );
+    },
+  );
+
+  testWidgets(
+    'Comentario se envia con trim',
+        (tester) async {
+      final repository = _FakeOffersRepository(
+        offer: _offer(questions: const []),
+      );
+
+      await tester.pumpWidget(_testDetail(repository));
+      await tester.pumpAndSettle();
+
+      await tester.ensureVisible(
+        find.widgetWithText(
+          TextFormField,
+          'Comentario',
+        ),
+      );
+
+      await tester.enterText(
+        find.widgetWithText(
+          TextFormField,
+          'Comentario',
+        ),
+        '  Hola  ',
+      );
+
+      await _tapSubmit(tester);
+      await tester.pumpAndSettle();
+
+      expect(repository.lastComment, 'Hola');
+    },
+  );
+
+  testWidgets(
+    'Loading deshabilita submit y evita doble submit',
+        (tester) async {
+      final repository = _FakeOffersRepository(
+        offer: _offer(questions: const []),
+      )..applyCompleter = Completer<ApplyOfferResult>();
+
+      await tester.pumpWidget(_testDetail(repository));
+      await tester.pumpAndSettle();
+
+      await _tapSubmit(tester);
+      await _tapSubmit(tester);
+      await tester.pump();
+
+      expect(repository.applyCalls, 1);
+
+      expect(
+        tester.widget<FilledButton>(
+          find.byType(FilledButton),
+        ).onPressed,
+        isNull,
+      );
+    },
+  );
+
+  testWidgets(
+    'Exito muestra confirmacion y evita segunda aplicacion',
+        (tester) async {
+      await tester.pumpWidget(
+        _testDetail(
+          _FakeOffersRepository(
+            offer: _offer(questions: const []),
           ),
-        ],
-      ),
-    );
-    await tester.pumpWidget(_testDetail(repository));
-    await tester.pumpAndSettle();
+        ),
+      );
 
-    await _tapSubmit(tester);
-    await tester.pump();
-    expect(find.text('Esta pregunta es obligatoria'), findsOneWidget);
+      await tester.pumpAndSettle();
 
-    await tester.ensureVisible(
-      find.widgetWithText(TextFormField, 'Experiencia *'),
-    );
-    await tester.enterText(
-      find.widgetWithText(TextFormField, 'Experiencia *'),
-      'Uno',
-    );
-    await _tapSubmit(tester);
-    await tester.pumpAndSettle();
+      await _tapSubmit(tester);
+      await tester.pumpAndSettle();
 
-    expect(repository.lastAnswers.single.questionId, 'q1');
-    expect(repository.lastAnswers.single.value, 'Uno');
-  });
+      expect(
+        find.textContaining('correctamente.'),
+        findsOneWidget,
+      );
 
-  testWidgets('Pregunta date se envia yyyy-MM-dd', (tester) async {
-    final repository = _FakeOffersRepository(
-      offer: _offer(
-        questions: const [
-          OfferQuestion(
-            id: 'q-date',
-            label: 'Fecha disponible',
-            type: 'date',
-            required: true,
-            options: [],
-          ),
-        ],
-      ),
-    );
-    await tester.pumpWidget(_testDetail(repository));
-    await tester.pumpAndSettle();
+      expect(
+        find.text('Ya aplicaste a esta oferta.'),
+        findsOneWidget,
+      );
 
-    await tester.ensureVisible(
-      find.widgetWithText(TextFormField, 'Fecha disponible *'),
-    );
-    await tester.tap(find.widgetWithText(TextFormField, 'Fecha disponible *'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('OK'));
-    await tester.pumpAndSettle();
-    await _tapSubmit(tester);
-    await tester.pumpAndSettle();
+      expect(
+        find.text('Enviar aplicacion'),
+        findsNothing,
+      );
+    },
+  );
 
-    expect(repository.lastAnswers.single.questionId, 'q-date');
-    expect(
-      repository.lastAnswers.single.value,
-      matches(r'^\d{4}-\d{2}-\d{2}$'),
-    );
-  });
-
-  testWidgets('Pregunta select con options envia opcion', (tester) async {
-    final repository = _FakeOffersRepository(
-      offer: _offer(
-        questions: const [
-          OfferQuestion(
-            id: 'q-select',
-            label: 'Turno',
-            type: 'select',
-            required: true,
-            options: ['Dia', 'Noche'],
-          ),
-        ],
-      ),
-    );
-    await tester.pumpWidget(_testDetail(repository));
-    await tester.pumpAndSettle();
-
-    await tester.ensureVisible(find.byType(DropdownButtonFormField<String>));
-    await tester.tap(find.byType(DropdownButtonFormField<String>));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Noche').last);
-    await tester.pumpAndSettle();
-    await _tapSubmit(tester);
-    await tester.pumpAndSettle();
-
-    expect(repository.lastAnswers.single.value, 'Noche');
-  });
-
-  testWidgets('Select sin options no rompe e impide enviar si es requerida', (
-    tester,
-  ) async {
-    final repository = _FakeOffersRepository(
-      offer: _offer(
-        questions: const [
-          OfferQuestion(
-            id: 'q-select',
-            label: 'Turno',
-            type: 'select',
-            required: true,
-            options: [],
-          ),
-        ],
-      ),
-    );
-    await tester.pumpWidget(_testDetail(repository));
-    await tester.pumpAndSettle();
-
-    expect(find.text('Sin opciones disponibles'), findsOneWidget);
-    await _tapSubmit(tester);
-    await tester.pump();
-
-    expect(
-      find.text('No hay opciones disponibles para esta pregunta requerida'),
-      findsOneWidget,
-    );
-    expect(repository.applyCalls, 0);
-  });
-
-  testWidgets('Pregunta check false se considera respuesta valida', (
-    tester,
-  ) async {
-    final repository = _FakeOffersRepository(
-      offer: _offer(
-        questions: const [
-          OfferQuestion(
-            id: 'q-check',
-            label: 'Acepto horario',
-            type: 'check',
-            required: true,
-            options: [],
-          ),
-        ],
-      ),
-    );
-    await tester.pumpWidget(_testDetail(repository));
-    await tester.pumpAndSettle();
-
-    await tester.ensureVisible(find.byType(CheckboxListTile));
-    await tester.tap(find.byType(CheckboxListTile));
-    await tester.pump();
-    await tester.tap(find.byType(CheckboxListTile));
-    await tester.pump();
-    await _tapSubmit(tester);
-    await tester.pumpAndSettle();
-
-    expect(repository.lastAnswers.single.value, 'false');
-  });
-
-  testWidgets('Tipo desconocido usa texto generico', (tester) async {
-    final repository = _FakeOffersRepository(
-      offer: _offer(
-        questions: const [
-          OfferQuestion(
-            id: 'q-unknown',
-            label: 'Otra pregunta',
-            type: 'rating',
-            required: true,
-            options: [],
-          ),
-        ],
-      ),
-    );
-    await tester.pumpWidget(_testDetail(repository));
-    await tester.pumpAndSettle();
-
-    await tester.ensureVisible(
-      find.widgetWithText(TextFormField, 'Otra pregunta *'),
-    );
-    await tester.enterText(
-      find.widgetWithText(TextFormField, 'Otra pregunta *'),
-      'Valor',
-    );
-    await _tapSubmit(tester);
-    await tester.pumpAndSettle();
-
-    expect(repository.lastAnswers.single.questionId, 'q-unknown');
-    expect(repository.lastAnswers.single.value, 'Valor');
-  });
-
-  testWidgets('Comentario se envia con trim', (tester) async {
-    final repository = _FakeOffersRepository(
-      offer: _offer(questions: const []),
-    );
-    await tester.pumpWidget(_testDetail(repository));
-    await tester.pumpAndSettle();
-
-    await tester.ensureVisible(
-      find.widgetWithText(TextFormField, 'Comentario'),
-    );
-    await tester.enterText(
-      find.widgetWithText(TextFormField, 'Comentario'),
-      '  Hola  ',
-    );
-    await _tapSubmit(tester);
-    await tester.pumpAndSettle();
-
-    expect(repository.lastComment, 'Hola');
-  });
-
-  testWidgets('Loading deshabilita submit y evita doble submit', (
-    tester,
-  ) async {
-    final repository = _FakeOffersRepository(offer: _offer(questions: const []))
-      ..applyCompleter = Completer<ApplyOfferResult>();
-    await tester.pumpWidget(_testDetail(repository));
-    await tester.pumpAndSettle();
-
-    await _tapSubmit(tester);
-    await _tapSubmit(tester);
-    await tester.pump();
-
-    expect(repository.applyCalls, 1);
-    expect(
-      tester.widget<FilledButton>(find.byType(FilledButton)).onPressed,
-      isNull,
-    );
-  });
-
-  testWidgets('Exito muestra confirmacion y evita segunda aplicacion', (
-    tester,
-  ) async {
-    await tester.pumpWidget(
-      _testDetail(_FakeOffersRepository(offer: _offer(questions: const []))),
-    );
-    await tester.pumpAndSettle();
-
-    await _tapSubmit(tester);
-    await tester.pumpAndSettle();
-
-    expect(find.textContaining('correctamente.'), findsOneWidget);
-    expect(find.text('Ya aplicaste a esta oferta.'), findsOneWidget);
-    expect(find.text('Enviar aplicacion'), findsNothing);
-  });
-
-  testWidgets('Error 409 muestra mensaje exacto y conserva datos', (
-    tester,
-  ) async {
-    final repository = _FakeOffersRepository(offer: _offer(questions: const []))
-      ..applyError = const ApiException(
+  testWidgets(
+    'Error 409 muestra mensaje exacto y conserva datos',
+        (tester) async {
+      final repository = _FakeOffersRepository(
+        offer: _offer(questions: const []),
+      )..applyError = const ApiException(
         message: 'Ya aplicaste a esta oferta.',
         statusCode: 409,
       );
-    await tester.pumpWidget(_testDetail(repository));
-    await tester.pumpAndSettle();
 
-    await tester.ensureVisible(
-      find.widgetWithText(TextFormField, 'Comentario'),
-    );
-    await tester.enterText(
-      find.widgetWithText(TextFormField, 'Comentario'),
-      'Mi respuesta',
-    );
-    await _tapSubmit(tester);
-    await tester.pumpAndSettle();
+      await tester.pumpWidget(_testDetail(repository));
+      await tester.pumpAndSettle();
 
-    expect(find.text('Ya aplicaste a esta oferta.'), findsWidgets);
-    expect(find.text('Enviar aplicacion'), findsNothing);
-  });
+      await tester.ensureVisible(
+        find.widgetWithText(
+          TextFormField,
+          'Comentario',
+        ),
+      );
 
-  testWidgets('Error conserva datos y permite reintentar', (tester) async {
-    final repository = _FakeOffersRepository(offer: _offer(questions: const []))
-      ..applyError = const ApiException(message: 'Error temporal');
-    await tester.pumpWidget(_testDetail(repository));
-    await tester.pumpAndSettle();
+      await tester.enterText(
+        find.widgetWithText(
+          TextFormField,
+          'Comentario',
+        ),
+        'Mi respuesta',
+      );
 
-    await tester.ensureVisible(
-      find.widgetWithText(TextFormField, 'Comentario'),
-    );
-    await tester.enterText(
-      find.widgetWithText(TextFormField, 'Comentario'),
-      'Mi respuesta',
-    );
-    await _tapSubmit(tester);
-    await tester.pumpAndSettle();
+      await _tapSubmit(tester);
+      await tester.pumpAndSettle();
 
-    expect(find.text('Error temporal'), findsOneWidget);
-    expect(find.text('Mi respuesta'), findsOneWidget);
+      expect(
+        find.text('Ya aplicaste a esta oferta.'),
+        findsWidgets,
+      );
 
-    repository.applyError = null;
-    await _tapSubmit(tester);
-    await tester.pumpAndSettle();
+      expect(
+        find.text('Enviar aplicacion'),
+        findsNothing,
+      );
+    },
+  );
 
-    expect(repository.applyCalls, 2);
-  });
+  testWidgets(
+    'Error conserva datos y permite reintentar',
+        (tester) async {
+      final repository = _FakeOffersRepository(
+        offer: _offer(questions: const []),
+      )..applyError = const ApiException(
+        message: 'Error temporal',
+      );
 
-  testWidgets('Teclado y scroll funcionan', (tester) async {
-    tester.view.physicalSize = const Size(320, 520);
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.resetPhysicalSize);
-    addTearDown(tester.view.resetDevicePixelRatio);
+      await tester.pumpWidget(_testDetail(repository));
+      await tester.pumpAndSettle();
 
-    await tester.pumpWidget(_testDetail(_FakeOffersRepository()));
-    await tester.pumpAndSettle();
+      await tester.ensureVisible(
+        find.widgetWithText(
+          TextFormField,
+          'Comentario',
+        ),
+      );
 
-    await tester.showKeyboard(find.widgetWithText(TextFormField, 'Comentario'));
-    await tester.drag(
-      find.byType(SingleChildScrollView),
-      const Offset(0, -240),
-    );
-    await tester.pump();
+      await tester.enterText(
+        find.widgetWithText(
+          TextFormField,
+          'Comentario',
+        ),
+        'Mi respuesta',
+      );
 
-    expect(tester.takeException(), isNull);
-  });
+      await _tapSubmit(tester);
+      await tester.pumpAndSettle();
 
-  testWidgets('Formulario de B permanece habilitado tras aplicar a A', (
-    tester,
-  ) async {
-    await tester.pumpWidget(
-      _testForm(
-        offer: _offer(id: 'offer-a', questions: const []),
-        successMessage: 'Aplicacion enviada correctamente.',
-      ),
-    );
+      expect(
+        find.text('Error temporal'),
+        findsOneWidget,
+      );
 
-    expect(find.text('Enviar aplicacion'), findsNothing);
+      expect(
+        find.text('Mi respuesta'),
+        findsOneWidget,
+      );
 
-    await tester.pumpWidget(
-      _testForm(
-        offer: _offer(id: 'offer-b', questions: const []),
-      ),
-    );
-    await tester.pump();
+      repository.applyError = null;
 
-    expect(find.text('Enviar aplicacion'), findsOneWidget);
-    expect(
-      tester.widget<FilledButton>(find.byType(FilledButton)).onPressed,
-      isNotNull,
-    );
-  });
+      await _tapSubmit(tester);
+      await tester.pumpAndSettle();
+
+      expect(repository.applyCalls, 2);
+    },
+  );
+
+  testWidgets(
+    'Teclado y scroll funcionan',
+        (tester) async {
+      tester.view.physicalSize = const Size(320, 520);
+      tester.view.devicePixelRatio = 1;
+
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await tester.pumpWidget(
+        _testDetail(_FakeOffersRepository()),
+      );
+
+      await tester.pumpAndSettle();
+
+      await tester.showKeyboard(
+        find.widgetWithText(
+          TextFormField,
+          'Comentario',
+        ),
+      );
+
+      await tester.drag(
+        find.byType(SingleChildScrollView),
+        const Offset(0, -240),
+      );
+
+      await tester.pump();
+
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'Formulario de B permanece habilitado tras aplicar a A',
+        (tester) async {
+      await tester.pumpWidget(
+        _testForm(
+          offer: _offer(
+            id: 'offer-a',
+            questions: const [],
+          ),
+          successMessage: 'Aplicacion enviada correctamente.',
+        ),
+      );
+
+      expect(
+        find.text('Enviar aplicacion'),
+        findsNothing,
+      );
+
+      await tester.pumpWidget(
+        _testForm(
+          offer: _offer(
+            id: 'offer-b',
+            questions: const [],
+          ),
+        ),
+      );
+
+      await tester.pump();
+
+      expect(
+        find.text('Enviar aplicacion'),
+        findsOneWidget,
+      );
+
+      expect(
+        tester.widget<FilledButton>(
+          find.byType(FilledButton),
+        ).onPressed,
+        isNotNull,
+      );
+    },
+  );
 }
 
 Widget _testDetail(_FakeOffersRepository repository) {
@@ -615,7 +842,9 @@ Widget _testDetail(_FakeOffersRepository repository) {
     ],
     child: MaterialApp(
       theme: AppTheme.light,
-      home: const OfferDetailScreen(offerId: 'offer-id'),
+      home: const OfferDetailScreen(
+        offerId: 'offer-id',
+      ),
     ),
   );
 }
@@ -667,13 +896,23 @@ Offer _offer({
     contractType: 'temporal',
     description: 'Necesito un programador junior.',
     address: 'Santo Domingo',
-    location: const OfferLocation(lat: 18.4, lng: -69.9),
-    payment: const OfferPayment(amount: 50, currency: 'USD', period: 'total'),
+    location: const OfferLocation(
+      lat: 18.4,
+      lng: -69.9,
+    ),
+    payment: const OfferPayment(
+      amount: 50,
+      currency: 'USD',
+      period: 'total',
+    ),
     photo: photo,
     deadline: identical(deadline, _deadlineUnset)
         ? DateTime(2026, 10, 30)
         : deadline as DateTime?,
-    customAnswers: const {'turno': 'nocturno', 'vacio': ''},
+    customAnswers: const {
+      'turno': 'nocturno',
+      'vacio': '',
+    },
     questions: questions,
     status: 'published',
     applicantsCount: 2,
@@ -687,32 +926,47 @@ Offer _offer({
 
 Future<void> _tapSubmit(WidgetTester tester) async {
   final button = find.text('Enviar aplicacion');
+
   await tester.ensureVisible(button);
   await tester.tap(button);
 }
 
 class _FakeOffersRepository implements OffersRepository {
-  _FakeOffersRepository({Offer? offer}) : offer = offer ?? _offer();
+  _FakeOffersRepository({Offer? offer})
+      : offer = offer ?? _offer();
 
   Offer offer;
-  final applicationsRepository = _FakeApplicationsRepository();
+
+  final applicationsRepository =
+  _FakeApplicationsRepository();
+
   Object? detailError;
   Object? applyError;
+
   Completer<Offer>? offerCompleter;
   Completer<ApplyOfferResult>? applyCompleter;
+
   int detailCalls = 0;
   int applyCalls = 0;
+
   final likeCalls = <String>[];
   final unlikeCalls = <String>[];
+
   String? lastOfferId;
   String? lastComment;
+
   List<ApplyOfferAnswer> lastAnswers = const [];
 
   @override
-  Future<List<JobType>> getJobTypes() async => const [];
+  Future<List<JobType>> getJobTypes() async {
+    return const [];
+  }
 
   @override
-  Future<List<Offer>> getOffers({String? jobTypeKey, String? contractType}) {
+  Future<List<Offer>> getOffers({
+    String? jobTypeKey,
+    String? contractType,
+  }) {
     return Future.value([offer]);
   }
 
@@ -725,11 +979,13 @@ class _FakeOffersRepository implements OffersRepository {
   Future<Offer> getOfferById(String id) {
     detailCalls++;
     lastOfferId = id;
+
     if (detailError != null) {
       throw detailError!;
     }
 
-    return offerCompleter?.future ?? Future.value(offer);
+    return offerCompleter?.future ??
+        Future.value(offer);
   }
 
   @override
@@ -742,26 +998,42 @@ class _FakeOffersRepository implements OffersRepository {
     lastOfferId = offerId;
     lastComment = comment;
     lastAnswers = answers;
+
     if (applyError != null) {
       throw applyError!;
     }
 
     return applyCompleter?.future ??
         Future.value(
-          const ApplyOfferResult(id: 'application-id', status: 'applied'),
+          const ApplyOfferResult(
+            id: 'application-id',
+            status: 'applied',
+          ),
         );
   }
 
   @override
-  Future<OfferLikeResult> likeOffer(String offerId) async {
+  Future<OfferLikeResult> likeOffer(
+      String offerId,
+      ) async {
     likeCalls.add(offerId);
-    return const OfferLikeResult(liked: true, likesCount: 4);
+
+    return const OfferLikeResult(
+      liked: true,
+      likesCount: 4,
+    );
   }
 
   @override
-  Future<OfferLikeResult> unlikeOffer(String offerId) async {
+  Future<OfferLikeResult> unlikeOffer(
+      String offerId,
+      ) async {
     unlikeCalls.add(offerId);
-    return const OfferLikeResult(liked: false, likesCount: 3);
+
+    return const OfferLikeResult(
+      liked: false,
+      likesCount: 3,
+    );
   }
 
   @override
@@ -770,23 +1042,60 @@ class _FakeOffersRepository implements OffersRepository {
   }
 }
 
-class _FakeApplicationsRepository implements ApplicationsRepository {
+class _FakeApplicationsRepository
+    implements ApplicationsRepository {
   List<Application> applications = const [];
+
   Object? error;
+
   int calls = 0;
 
   @override
   Future<List<Application>> getMyApplications() async {
     calls++;
+
     if (error != null) {
       throw error!;
     }
 
     return applications;
   }
+
+  @override
+  Future<List<Application>> getOfferApplications(
+      String offerId,
+      ) async {
+    return applications;
+  }
+
+  @override
+  Future<Application> updateApplication({
+    required String applicationId,
+    int? rating,
+    String? status,
+    double? salary,
+    String? currency,
+    DateTime? startDate,
+    String? duration,
+  }) async {
+    if (error != null) {
+      throw error!;
+    }
+
+    return applications.firstWhere(
+          (application) =>
+      application.id == applicationId,
+      orElse: () => throw StateError(
+        'Aplicación no encontrada: $applicationId',
+      ),
+    );
+  }
 }
 
-Application _application(String offerId, {String status = 'applied'}) {
+Application _application(
+    String offerId, {
+      String status = 'applied',
+    }) {
   return Application(
     id: 'application-$offerId',
     offerId: offerId,
