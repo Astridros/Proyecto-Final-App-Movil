@@ -69,8 +69,8 @@ void main() {
   });
 
   testWidgets('OfferDetailScreen conecta estado de like por offerId', (
-    tester,
-  ) async {
+      tester,
+      ) async {
     final repository = _FakeOffersRepository(
       offer: _offer(likedByMe: true, likesCount: 6),
     );
@@ -167,7 +167,7 @@ void main() {
 
   testWidgets(
     'Al abrir oferta A con aplicacion existente no aparece formulario',
-    (tester) async {
+        (tester) async {
       final repository = _FakeOffersRepository(
         offer: _offer(questions: const []),
       );
@@ -201,8 +201,8 @@ void main() {
   });
 
   testWidgets('Oferta B sin aplicacion existente muestra formulario', (
-    tester,
-  ) async {
+      tester,
+      ) async {
     final repository = _FakeOffersRepository(
       offer: _offer(questions: const []),
     );
@@ -230,8 +230,8 @@ void main() {
   });
 
   testWidgets('Aplicaciones de otras ofertas no bloquean la actual', (
-    tester,
-  ) async {
+      tester,
+      ) async {
     final repository = _FakeOffersRepository(
       offer: _offer(questions: const []),
     );
@@ -246,8 +246,8 @@ void main() {
   });
 
   testWidgets('Error al cargar aplicaciones no rompe el detalle', (
-    tester,
-  ) async {
+      tester,
+      ) async {
     final repository = _FakeOffersRepository(
       offer: _offer(questions: const []),
     );
@@ -264,8 +264,8 @@ void main() {
   });
 
   testWidgets('Pregunta text requerida muestra error y luego envia id', (
-    tester,
-  ) async {
+      tester,
+      ) async {
     final repository = _FakeOffersRepository(
       offer: _offer(
         questions: const [
@@ -363,8 +363,8 @@ void main() {
   });
 
   testWidgets('Select sin options no rompe e impide enviar si es requerida', (
-    tester,
-  ) async {
+      tester,
+      ) async {
     final repository = _FakeOffersRepository(
       offer: _offer(
         questions: const [
@@ -393,8 +393,8 @@ void main() {
   });
 
   testWidgets('Pregunta check false se considera respuesta valida', (
-    tester,
-  ) async {
+      tester,
+      ) async {
     final repository = _FakeOffersRepository(
       offer: _offer(
         questions: const [
@@ -474,8 +474,8 @@ void main() {
   });
 
   testWidgets('Loading deshabilita submit y evita doble submit', (
-    tester,
-  ) async {
+      tester,
+      ) async {
     final repository = _FakeOffersRepository(offer: _offer(questions: const []))
       ..applyCompleter = Completer<ApplyOfferResult>();
     await tester.pumpWidget(_testDetail(repository));
@@ -493,8 +493,8 @@ void main() {
   });
 
   testWidgets('Exito muestra confirmacion y evita segunda aplicacion', (
-    tester,
-  ) async {
+      tester,
+      ) async {
     await tester.pumpWidget(
       _testDetail(_FakeOffersRepository(offer: _offer(questions: const []))),
     );
@@ -509,8 +509,8 @@ void main() {
   });
 
   testWidgets('Error 409 muestra mensaje exacto y conserva datos', (
-    tester,
-  ) async {
+      tester,
+      ) async {
     final repository = _FakeOffersRepository(offer: _offer(questions: const []))
       ..applyError = const ApiException(
         message: 'Ya aplicaste a esta oferta.',
@@ -579,8 +579,8 @@ void main() {
   });
 
   testWidgets('Formulario de B permanece habilitado tras aplicar a A', (
-    tester,
-  ) async {
+      tester,
+      ) async {
     await tester.pumpWidget(
       _testForm(
         offer: _offer(id: 'offer-a', questions: const []),
@@ -763,6 +763,11 @@ class _FakeOffersRepository implements OffersRepository {
   Future<List<Offer>> getMyLikedOffers() async {
     return const [];
   }
+
+  @override
+  Future<List<Offer>> getMyOffers() async {
+    return const [];
+  }
 }
 
 class _FakeApplicationsRepository implements ApplicationsRepository {
@@ -778,6 +783,34 @@ class _FakeApplicationsRepository implements ApplicationsRepository {
     }
 
     return applications;
+  }
+
+  @override
+  Future<List<Application>> getOfferApplications(
+      String offerId,
+      ) async {
+    calls++;
+
+    if (error != null) {
+      throw error!;
+    }
+
+    return applications
+        .where((application) => application.offerId == offerId)
+        .toList();
+  }
+
+  @override
+  Future<Application> updateApplication({
+    required String applicationId,
+    int? rating,
+    String? status,
+    double? salary,
+    String? currency,
+    DateTime? startDate,
+    String? duration,
+  }) {
+    throw UnimplementedError();
   }
 }
 

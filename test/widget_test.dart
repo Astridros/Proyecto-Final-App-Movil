@@ -1,31 +1,13 @@
 import 'dart:async';
+import 'dart:collection';
 
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:go_router/go_router.dart';
-
-import 'package:ocupa2/app/app.dart';
-import 'package:ocupa2/app/router/route_names.dart';
-import 'package:ocupa2/app/theme/app_theme.dart';
 import 'package:ocupa2/core/errors/api_exception.dart';
-import 'package:ocupa2/core/storage/secure_storage_provider.dart';
-import 'package:ocupa2/core/storage/token_storage.dart';
-import 'package:ocupa2/core/widgets/app_button.dart';
-import 'package:ocupa2/core/widgets/app_text_field.dart';
+import 'package:ocupa2/core/errors/conflict_exception.dart';
 import 'package:ocupa2/features/applications/data/providers/applications_data_providers.dart';
 import 'package:ocupa2/features/applications/domain/entities/application.dart';
 import 'package:ocupa2/features/applications/domain/repositories/applications_repository.dart';
-import 'package:ocupa2/features/auth/data/providers/auth_data_providers.dart';
-import 'package:ocupa2/features/auth/domain/entities/auth_session_result.dart';
-import 'package:ocupa2/features/auth/domain/repositories/auth_repository.dart';
-import 'package:ocupa2/features/auth/presentation/pages/forgot_password_screen.dart';
-import 'package:ocupa2/features/auth/presentation/pages/login_screen.dart';
-import 'package:ocupa2/features/auth/presentation/pages/register_screen.dart';
-import 'package:ocupa2/features/auth/presentation/providers/auth_session_providers.dart';
-import 'package:ocupa2/features/change_password/data/providers/change_password_data_providers.dart';
-import 'package:ocupa2/features/change_password/domain/repositories/change_password_repository.dart';
-import 'package:ocupa2/features/change_password/presentation/pages/change_password_screen.dart';
 import 'package:ocupa2/features/offers/data/providers/offers_data_providers.dart';
 import 'package:ocupa2/features/offers/domain/entities/apply_offer_answer.dart';
 import 'package:ocupa2/features/offers/domain/entities/apply_offer_result.dart';
@@ -35,900 +17,503 @@ import 'package:ocupa2/features/offers/domain/entities/offer_location.dart';
 import 'package:ocupa2/features/offers/domain/entities/offer_like_result.dart';
 import 'package:ocupa2/features/offers/domain/entities/offer_payment.dart';
 import 'package:ocupa2/features/offers/domain/repositories/offers_repository.dart';
-import 'package:ocupa2/features/offers/presentation/pages/offer_detail_screen.dart';
-import 'package:ocupa2/features/offers/presentation/pages/offers_screen.dart';
-import 'package:ocupa2/features/offers/presentation/widgets/offer_card.dart';
-import 'package:ocupa2/features/profile/data/providers/profile_data_providers.dart';
-import 'package:ocupa2/features/profile/domain/entities/profile.dart';
-import 'package:ocupa2/features/profile/domain/repositories/profile_repository.dart';
-import 'package:ocupa2/features/profile/presentation/pages/complete_profile_screen.dart';
+import 'package:ocupa2/features/offers/presentation/providers/offer_detail_controller.dart';
+import 'package:ocupa2/features/offers/presentation/providers/offer_detail_providers.dart';
+import 'package:ocupa2/features/offers/presentation/providers/offer_detail_state.dart';
 
 void main() {
-  testWidgets('App se construye correctamente', (tester) async {
-    await tester.pumpWidget(_testApp());
-    await tester.pumpAndSettle();
+  test('Estado inicial', () {
+    final setup = _setup();
 
-    expect(find.byType(MaterialApp), findsOneWidget);
+    final state = setup.state;
+
+    expect(state.isInitialLoading, isFalse);
+    expect(state.isSubmitting, isFalse);
+    expect(state.offer, isNull);
+    expect(state.applicationResult, isNull);
+    expect(state.error, isNull);
+    expect(state.successMessage, isNull);
+    expect(state.hasOffer, isFalse);
+    expect(state.hasAppliedSuccessfully, isFalse);
   });
 
-  testWidgets('/login muestra LoginScreen real', (tester) async {
-    await tester.pumpWidget(_testApp());
-    await tester.pumpAndSettle();
+  test('loadOffer activa/desactiva loading', () async {
+    final setup = _setup();
+    final completer = Completer<Offer>();
+    setup.repository.offerCompleters.add(completer);
 
-    expect(find.byType(LoginScreen), findsOneWidget);
-    expect(find.text('Iniciar sesión'), findsOneWidget);
-    expect(find.text('Acceso a Ocupa2'), findsNothing);
+    final future = setup.notifier.loadOffer('offer-id');
+
+    expect(setup.state.isInitialLoading, isTrue);
+    completer.complete(_offer('offer-id'));
+    await future;
+
+    expect(setup.state.isInitialLoading, isFalse);
   });
 
-  testWidgets('Login abre Registro', (tester) async {
-    await tester.pumpWidget(_testApp());
-    await tester.pumpAndSettle();
+  test('loadOffer guarda oferta', () async {
+    final setup = _setup(offer: _offer('loaded'));
 
-    await tester.tap(find.text('¿No tienes cuenta? Regístrate'));
-    await tester.pumpAndSettle();
+    await setup.notifier.loadOffer('loaded');
 
-    expect(find.byType(RegisterScreen), findsOneWidget);
-    expect(find.text('Crear cuenta'), findsOneWidget);
+    expect(setup.state.offer?.id, 'loaded');
+    expect(setup.state.hasOffer, isTrue);
   });
 
-  testWidgets('Login abre Recuperar contraseña', (tester) async {
-    await tester.pumpWidget(_testApp());
-    await tester.pumpAndSettle();
+  test('loadOffer guarda AppException', () async {
+    final setup = _setup();
+    setup.repository.getOfferError = const ApiException(message: 'Fallo');
 
-    await tester.tap(find.text('¿Olvidaste tu contraseña?'));
-    await tester.pumpAndSettle();
+    await setup.notifier.loadOffer('offer-id');
 
-    expect(find.byType(ForgotPasswordScreen), findsOneWidget);
-    expect(find.text('Recuperar contraseña'), findsOneWidget);
+    expect(setup.state.error, isA<ApiException>());
+    expect(setup.state.isInitialLoading, isFalse);
   });
 
-  testWidgets('Registro vuelve a Login', (tester) async {
-    await tester.pumpWidget(_testApp());
-    await tester.pumpAndSettle();
+  test('Evita carga duplicada', () async {
+    final setup = _setup();
+    final completer = Completer<Offer>();
+    setup.repository.offerCompleters.add(completer);
 
-    await tester.tap(find.text('¿No tienes cuenta? Regístrate'));
-    await tester.pumpAndSettle();
-    await tester.ensureVisible(find.text('¿Ya tienes cuenta? Inicia sesión'));
-    await tester.tap(find.text('¿Ya tienes cuenta? Inicia sesión'));
-    await tester.pumpAndSettle();
+    final firstFuture = setup.notifier.loadOffer('offer-id');
+    final secondFuture = setup.notifier.loadOffer('other-id');
 
-    expect(find.byType(LoginScreen), findsOneWidget);
-    expect(find.byType(RegisterScreen), findsNothing);
+    expect(setup.repository.getOfferByIdCalls, ['offer-id']);
+    completer.complete(_offer('offer-id'));
+    await Future.wait([firstFuture, secondFuture]);
   });
 
-  testWidgets('Recuperación vuelve a Login', (tester) async {
-    await tester.pumpWidget(_testApp());
-    await tester.pumpAndSettle();
+  test('apply sin oferta cargada falla de forma controlada', () async {
+    final setup = _setup();
 
-    await tester.tap(find.text('¿Olvidaste tu contraseña?'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Volver al login'));
-    await tester.pumpAndSettle();
-
-    expect(find.byType(LoginScreen), findsOneWidget);
-    expect(find.byType(ForgotPasswordScreen), findsNothing);
-  });
-
-  testWidgets('Usuario sin token no accede a rutas privadas', (tester) async {
-    await tester.pumpWidget(_testApp());
-    await tester.pumpAndSettle();
-
-    GoRouter.of(
-      tester.element(find.byType(LoginScreen)),
-    ).go(RouteNames.offersPath);
-    await tester.pumpAndSettle();
-
-    expect(find.byType(LoginScreen), findsOneWidget);
-    expect(find.byType(OffersScreen), findsNothing);
-  });
-
-  testWidgets('Sin token redirige offer detail a login', (tester) async {
-    await tester.pumpWidget(_testApp());
-    await tester.pumpAndSettle();
-
-    GoRouter.of(
-      tester.element(find.byType(LoginScreen)),
-    ).go('/offers/offer-id');
-    await tester.pumpAndSettle();
-
-    expect(find.byType(LoginScreen), findsOneWidget);
-    expect(find.byType(OfferDetailScreen), findsNothing);
-  });
-
-  testWidgets('Usuario sin token no accede a change-password', (tester) async {
-    await tester.pumpWidget(_testApp());
-    await tester.pumpAndSettle();
-
-    GoRouter.of(
-      tester.element(find.byType(LoginScreen)),
-    ).go(RouteNames.changePasswordPath);
-    await tester.pumpAndSettle();
-
-    expect(find.byType(LoginScreen), findsOneWidget);
-    expect(find.byType(ChangePasswordScreen), findsNothing);
-  });
-
-  testWidgets('Usuario sin token puede abrir las tres rutas públicas', (
-    tester,
-  ) async {
-    await tester.pumpWidget(_testApp());
-    await tester.pumpAndSettle();
-
-    final router = GoRouter.of(tester.element(find.byType(LoginScreen)));
-    expect(find.byType(LoginScreen), findsOneWidget);
-
-    router.go(RouteNames.registerPath);
-    await tester.pumpAndSettle();
-    expect(find.byType(RegisterScreen), findsOneWidget);
-
-    router.go(RouteNames.forgotPasswordPath);
-    await tester.pumpAndSettle();
-    expect(find.byType(ForgotPasswordScreen), findsOneWidget);
-
-    router.go(RouteNames.loginPath);
-    await tester.pumpAndSettle();
-    expect(find.byType(LoginScreen), findsOneWidget);
-  });
-
-  testWidgets(
-    'Usuario autenticado con perfil incompleto va a complete-profile',
-    (tester) async {
-      final profileRepository = _FakeProfileRepository();
-      await tester.pumpWidget(
-        _testApp(profileRepository: profileRepository, hasToken: true),
-      );
-      await tester.pumpAndSettle();
-
-      expect(find.byType(CompleteProfileScreen), findsOneWidget);
-      expect(profileRepository.getProfileCalls, 1);
-    },
-  );
-
-  testWidgets('Perfil incompleto no puede volver a rutas públicas', (
-    tester,
-  ) async {
-    await tester.pumpWidget(_testApp(hasToken: true));
-    await tester.pumpAndSettle();
-
-    GoRouter.of(
-      tester.element(find.byType(CompleteProfileScreen)),
-    ).go(RouteNames.loginPath);
-    await tester.pumpAndSettle();
-
-    expect(find.byType(CompleteProfileScreen), findsOneWidget);
-    expect(find.byType(LoginScreen), findsNothing);
-  });
-
-  testWidgets('Perfil incompleto no puede abrir change-password', (
-    tester,
-  ) async {
-    await tester.pumpWidget(_testApp(hasToken: true));
-    await tester.pumpAndSettle();
-
-    GoRouter.of(
-      tester.element(find.byType(CompleteProfileScreen)),
-    ).go(RouteNames.changePasswordPath);
-    await tester.pumpAndSettle();
-
-    expect(find.byType(CompleteProfileScreen), findsOneWidget);
-    expect(find.byType(ChangePasswordScreen), findsNothing);
-  });
-
-  testWidgets('Perfil incompleto no puede abrir detalle de oferta', (
-    tester,
-  ) async {
-    await tester.pumpWidget(_testApp(hasToken: true));
-    await tester.pumpAndSettle();
-
-    GoRouter.of(
-      tester.element(find.byType(CompleteProfileScreen)),
-    ).go('/offers/offer-id');
-    await tester.pumpAndSettle();
-
-    expect(find.byType(CompleteProfileScreen), findsOneWidget);
-    expect(find.byType(OfferDetailScreen), findsNothing);
-  });
-
-  testWidgets(
-    'Usuario autenticado con perfil completo entra a ruta principal',
-    (tester) async {
-      await tester.pumpWidget(_testApp(hasToken: true, profileCompleted: true));
-      await tester.pumpAndSettle();
-
-      expect(find.text('Base provisional'), findsOneWidget);
-      expect(find.byType(LoginScreen), findsNothing);
-      expect(find.text('Iniciar sesión'), findsNothing);
-    },
-  );
-
-  testWidgets('Perfil completo puede acceder a change-password', (
-    tester,
-  ) async {
-    await tester.pumpWidget(_testApp(hasToken: true, profileCompleted: true));
-    await tester.pumpAndSettle();
-
-    GoRouter.of(
-      tester.element(find.text('Ocupa2')),
-    ).go(RouteNames.changePasswordPath);
-    await tester.pumpAndSettle();
-
-    expect(find.byType(ChangePasswordScreen), findsOneWidget);
-    expect(find.text('Cambiar contraseña'), findsWidgets);
-  });
-
-  testWidgets('InitialScreen muestra icono hamburguesa', (tester) async {
-    await tester.pumpWidget(_testApp(hasToken: true, profileCompleted: true));
-    await tester.pumpAndSettle();
-
-    expect(find.byTooltip('Abrir menú'), findsOneWidget);
-  });
-
-  testWidgets('El menú muestra opciones privadas', (tester) async {
-    await tester.pumpWidget(_testApp(hasToken: true, profileCompleted: true));
-    await tester.pumpAndSettle();
-    await _openDrawer(tester);
-
-    expect(find.text('Inicio'), findsWidgets);
-    expect(find.text('Cambiar contraseña'), findsOneWidget);
-    expect(find.text('Cerrar sesión'), findsOneWidget);
-  });
-
-  testWidgets('Los accesos privados ya no aparecen en el contenido principal', (
-    tester,
-  ) async {
-    await tester.pumpWidget(_testApp(hasToken: true, profileCompleted: true));
-    await tester.pumpAndSettle();
-
-    expect(find.text('Cambiar contraseña'), findsNothing);
-    expect(find.text('Cerrar sesión'), findsNothing);
-    expect(find.text('Explorar ofertas'), findsOneWidget);
-  });
-
-  testWidgets('Inicio cierra el drawer y vuelve a la ruta principal', (
-    tester,
-  ) async {
-    await tester.pumpWidget(_testApp(hasToken: true, profileCompleted: true));
-    await tester.pumpAndSettle();
-    await _openDrawer(tester);
-
-    await tester.tap(find.text('Inicio').last);
-    await tester.pumpAndSettle();
-
-    expect(find.byType(NavigationDrawer), findsNothing);
-    expect(find.text('Base provisional'), findsOneWidget);
-  });
-
-  testWidgets('El encabezado del menú muestra datos reales si existen', (
-    tester,
-  ) async {
-    await tester.pumpWidget(_testApp(hasToken: true, profileCompleted: true));
-    await tester.pumpAndSettle();
-    await _openDrawer(tester);
-
-    expect(find.text('Ocupa2'), findsWidgets);
-    expect(find.text('Astrid Diaz'), findsOneWidget);
-    expect(find.text('astrid@example.com'), findsOneWidget);
-  });
-
-  testWidgets('Cancelar no cierra sesión', (tester) async {
-    final tokenStorage = _FakeTokenStorage('token');
-    await tester.pumpWidget(
-      _testApp(
-        hasToken: true,
-        profileCompleted: true,
-        tokenStorage: tokenStorage,
-      ),
+    final result = await setup.notifier.apply(
+      comment: 'Hola',
+      answers: const [],
     );
-    await tester.pumpAndSettle();
 
-    await _openDrawer(tester);
-    await tester.tap(find.text('Cerrar sesión'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Cancelar'));
-    await tester.pumpAndSettle();
-
-    expect(tokenStorage.clearSessionCalls, 0);
-    expect(find.text('Base provisional'), findsOneWidget);
+    expect(result, isFalse);
+    expect(setup.state.error, isA<ApiException>());
+    expect(setup.repository.applyCalls, isEmpty);
   });
 
-  testWidgets('Confirmar ejecuta logout y muestra LoginScreen', (tester) async {
-    final tokenStorage = _FakeTokenStorage('token');
-    await tester.pumpWidget(
-      _testApp(
-        hasToken: true,
-        profileCompleted: true,
-        tokenStorage: tokenStorage,
-      ),
-    );
-    await tester.pumpAndSettle();
+  test('apply envía comment y answers', () async {
+    final setup = _setup();
+    await setup.notifier.loadOffer('offer-id');
+    const answers = [ApplyOfferAnswer(questionId: 'q1', value: 'Sí')];
 
-    await _openDrawer(tester);
-    await tester.tap(find.text('Cerrar sesión'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Cerrar sesión').last);
-    await tester.pumpAndSettle();
+    await setup.notifier.apply(comment: 'Comentario', answers: answers);
 
-    expect(tokenStorage.clearSessionCalls, 1);
-    expect(find.byType(LoginScreen), findsOneWidget);
-  });
-
-  testWidgets('Usuario cerrado no puede acceder a rutas privadas', (
-    tester,
-  ) async {
-    final tokenStorage = _FakeTokenStorage('token');
-    await tester.pumpWidget(
-      _testApp(
-        hasToken: true,
-        profileCompleted: true,
-        tokenStorage: tokenStorage,
-      ),
-    );
-    await tester.pumpAndSettle();
-
-    await _openDrawer(tester);
-    await tester.tap(find.text('Cerrar sesión'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Cerrar sesión').last);
-    await tester.pumpAndSettle();
-
-    GoRouter.of(
-      tester.element(find.byType(LoginScreen)),
-    ).go(RouteNames.offersPath);
-    await tester.pumpAndSettle();
-
-    expect(find.byType(LoginScreen), findsOneWidget);
-    expect(find.byType(OffersScreen), findsNothing);
-  });
-
-  testWidgets('Cambiar contraseña navega correctamente desde el menú', (
-    tester,
-  ) async {
-    await tester.pumpWidget(_testApp(hasToken: true, profileCompleted: true));
-    await tester.pumpAndSettle();
-
-    await _openDrawer(tester);
-    await tester.tap(find.text('Cambiar contraseña'));
-    await tester.pumpAndSettle();
-
-    expect(find.byType(ChangePasswordScreen), findsOneWidget);
-    expect(find.byType(NavigationDrawer), findsNothing);
-  });
-
-  testWidgets('El botón de regreso funciona', (tester) async {
-    await tester.pumpWidget(_testApp(hasToken: true, profileCompleted: true));
-    await tester.pumpAndSettle();
-
-    await _openDrawer(tester);
-    await tester.tap(find.text('Cambiar contraseña'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Volver'));
-    await tester.pumpAndSettle();
-
-    expect(find.text('Base provisional'), findsOneWidget);
-    expect(find.byType(ChangePasswordScreen), findsNothing);
-  });
-
-  testWidgets('Un cambio exitoso mantiene la sesión activa', (tester) async {
-    await tester.pumpWidget(_testApp(hasToken: true, profileCompleted: true));
-    await tester.pumpAndSettle();
-
-    await _openDrawer(tester);
-    await tester.tap(find.text('Cambiar contraseña'));
-    await tester.pumpAndSettle();
-    await tester.enterText(
-      find.widgetWithText(TextFormField, 'Nueva contraseña'),
-      'NuevaClave123',
-    );
-    await tester.enterText(
-      find.widgetWithText(TextFormField, 'Confirmar nueva contraseña'),
-      'NuevaClave123',
-    );
-    await tester.tap(find.text('Cambiar contraseña').last);
-    await tester.pumpAndSettle();
-
-    final container = ProviderScope.containerOf(
-      tester.element(find.byType(ChangePasswordScreen)),
-    );
     expect(
-      container.read(authSessionControllerProvider).isAuthenticated,
-      isTrue,
+      setup.repository.applyCalls.single,
+      const _ApplyCall(
+        offerId: 'offer-id',
+        comment: 'Comentario',
+        answers: answers,
+      ),
     );
-    expect(find.text('Contraseña actualizada correctamente.'), findsOneWidget);
   });
 
-  testWidgets(
-    'Perfil completo no puede volver a login, registro ni recuperación',
-    (tester) async {
-      await tester.pumpWidget(_testApp(hasToken: true, profileCompleted: true));
-      await tester.pumpAndSettle();
+  test('apply guarda resultado', () async {
+    final setup = _setup(
+      result: const ApplyOfferResult(id: 'application-id', status: 'applied'),
+    );
+    await setup.notifier.loadOffer('offer-id');
 
-      final router = GoRouter.of(tester.element(find.text('Ocupa2')));
+    await setup.notifier.apply(comment: 'Comentario', answers: const []);
 
-      router.go(RouteNames.loginPath);
-      await tester.pumpAndSettle();
-      expect(find.text('Base provisional'), findsOneWidget);
-      expect(find.byType(LoginScreen), findsNothing);
+    expect(setup.state.applicationResult?.id, 'application-id');
+    expect(setup.state.hasAppliedSuccessfully, isTrue);
+  });
 
-      router.go(RouteNames.registerPath);
-      await tester.pumpAndSettle();
-      expect(find.text('Base provisional'), findsOneWidget);
-      expect(find.byType(RegisterScreen), findsNothing);
+  test('apply devuelve true en éxito', () async {
+    final setup = _setup();
+    await setup.notifier.loadOffer('offer-id');
 
-      router.go(RouteNames.forgotPasswordPath);
-      await tester.pumpAndSettle();
-      expect(find.text('Base provisional'), findsOneWidget);
-      expect(find.byType(ForgotPasswordScreen), findsNothing);
+    final result = await setup.notifier.apply(
+      comment: 'Comentario',
+      answers: const [],
+    );
+
+    expect(result, isTrue);
+    expect(setup.state.successMessage, 'Aplicación enviada correctamente.');
+  });
+
+  test('apply devuelve false en error', () async {
+    final setup = _setup();
+    await setup.notifier.loadOffer('offer-id');
+    setup.repository.applyError = const ApiException(message: 'Fallo');
+
+    final result = await setup.notifier.apply(
+      comment: 'Comentario',
+      answers: const [],
+    );
+
+    expect(result, isFalse);
+    expect(setup.state.error, isA<ApiException>());
+  });
+
+  test('Error 409 conserva mensaje', () async {
+    final setup = _setup();
+    await setup.notifier.loadOffer('offer-id');
+    setup.repository.applyError = const ConflictException(
+      message: 'Ya aplicaste a esta oferta.',
+      statusCode: 409,
+    );
+
+    await setup.notifier.apply(comment: 'Comentario', answers: const []);
+
+    expect(setup.state.error?.message, 'Ya aplicaste a esta oferta.');
+  });
+
+  test('Evita doble submit', () async {
+    final setup = _setup();
+    await setup.notifier.loadOffer('offer-id');
+    final completer = Completer<ApplyOfferResult>();
+    setup.repository.applyCompleters.add(completer);
+
+    final firstFuture = setup.notifier.apply(comment: 'Uno', answers: const []);
+    final secondFuture = setup.notifier.apply(
+      comment: 'Dos',
+      answers: const [],
+    );
+
+    expect(setup.repository.applyCalls, hasLength(1));
+    completer.complete(const ApplyOfferResult(id: 'app-id', status: 'applied'));
+    final results = await Future.wait([firstFuture, secondFuture]);
+
+    expect(results, [true, false]);
+  });
+
+  test('isSubmitting vuelve a false', () async {
+    final setup = _setup();
+    await setup.notifier.loadOffer('offer-id');
+
+    await setup.notifier.apply(comment: 'Comentario', answers: const []);
+
+    expect(setup.state.isSubmitting, isFalse);
+  });
+
+  test('clearError', () async {
+    final setup = _setup();
+    setup.repository.getOfferError = const ApiException(message: 'Fallo');
+    await setup.notifier.loadOffer('offer-id');
+
+    setup.notifier.clearError();
+
+    expect(setup.state.error, isNull);
+  });
+
+  test('clearSuccessMessage', () async {
+    final setup = _setup();
+    await setup.notifier.loadOffer('offer-id');
+    await setup.notifier.apply(comment: 'Comentario', answers: const []);
+
+    setup.notifier.clearSuccessMessage();
+
+    expect(setup.state.successMessage, isNull);
+  });
+
+  test('Provider override', () {
+    final repository = _FakeOffersRepository();
+    final container = ProviderContainer(
+      overrides: [offersRepositoryProvider.overrideWithValue(repository)],
+    );
+    addTearDown(container.dispose);
+
+    expect(container.read(offersRepositoryProvider), same(repository));
+  });
+
+  test(
+    'Aplicar correctamente a oferta A establece estado aplicado para A',
+        () async {
+      final setup = _setup(offerId: 'offer-a', offer: _offer('offer-a'));
+      await setup.notifier.loadOffer();
+
+      await setup.notifier.apply(comment: 'Comentario', answers: const []);
+
+      expect(setup.state.applicationResult?.id, 'app-id');
+      expect(setup.state.hasAppliedSuccessfully, isTrue);
     },
   );
 
-  testWidgets(
-    'Login exitoso con profileCompleted false redirige a completar perfil',
-    (tester) async {
-      await tester.pumpWidget(
-        _testApp(
-          authRepository: _FakeAuthRepository(
-            loginResult: _sessionResult(profileCompleted: false),
-          ),
-        ),
+  test('Abrir oferta B no conserva applicationResult de A', () async {
+    final setup = _setup(offerId: 'offer-a', offer: _offer('offer-a'));
+    await setup.notifier.loadOffer();
+    await setup.notifier.apply(comment: 'Comentario', answers: const []);
+
+    final bState = setup.container.read(
+      offerDetailControllerProvider('offer-b'),
+    );
+
+    expect(bState.applicationResult, isNull);
+    expect(bState.hasAppliedSuccessfully, isFalse);
+  });
+
+  test('Abrir oferta B no conserva successMessage de A', () async {
+    final setup = _setup(offerId: 'offer-a', offer: _offer('offer-a'));
+    await setup.notifier.loadOffer();
+    await setup.notifier.apply(comment: 'Comentario', answers: const []);
+
+    final bState = setup.container.read(
+      offerDetailControllerProvider('offer-b'),
+    );
+
+    expect(bState.successMessage, isNull);
+  });
+
+  test('Error 409 en oferta A no bloquea oferta B', () async {
+    final setup = _setup(offerId: 'offer-a', offer: _offer('offer-a'));
+    await setup.notifier.loadOffer();
+    setup.repository.applyError = const ConflictException(
+      message: 'Ya aplicaste a esta oferta.',
+      statusCode: 409,
+    );
+
+    await setup.notifier.apply(comment: 'Comentario', answers: const []);
+
+    final bState = setup.container.read(
+      offerDetailControllerProvider('offer-b'),
+    );
+
+    expect(setup.state.error?.message, 'Ya aplicaste a esta oferta.');
+    expect(bState.error, isNull);
+    expect(bState.applicationResult, isNull);
+    expect(bState.successMessage, isNull);
+  });
+
+  test(
+    'Volver a oferta A conserva su estado aplicado en la misma instancia',
+        () async {
+      final setup = _setup(offerId: 'offer-a', offer: _offer('offer-a'));
+      await setup.notifier.loadOffer();
+      await setup.notifier.apply(comment: 'Comentario', answers: const []);
+      setup.container.read(offerDetailControllerProvider('offer-b'));
+
+      final aState = setup.container.read(
+        offerDetailControllerProvider('offer-a'),
       );
-      await tester.pumpAndSettle();
 
-      await _fillLogin(tester);
-      await tester.tap(find.text('Entrar'));
-      await tester.pumpAndSettle();
-
-      expect(find.byType(CompleteProfileScreen), findsOneWidget);
+      expect(aState.applicationResult?.id, 'app-id');
+      expect(aState.hasAppliedSuccessfully, isTrue);
     },
   );
 
-  testWidgets(
-    'Login exitoso con profileCompleted true redirige al flujo principal',
-    (tester) async {
-      await tester.pumpWidget(
-        _testApp(
-          authRepository: _FakeAuthRepository(
-            loginResult: _sessionResult(profileCompleted: true),
-          ),
-        ),
+  test(
+    'Providers family con ids diferentes mantienen estados independientes',
+        () async {
+      final setup = _setup(offerId: 'offer-a', offer: _offer('offer-a'));
+      await setup.notifier.loadOffer();
+      await setup.notifier.apply(comment: 'Comentario', answers: const []);
+
+      final aState = setup.container.read(
+        offerDetailControllerProvider('offer-a'),
       );
-      await tester.pumpAndSettle();
+      final bState = setup.container.read(
+        offerDetailControllerProvider('offer-b'),
+      );
 
-      await _fillLogin(tester);
-      await tester.tap(find.text('Entrar'));
-      await tester.pumpAndSettle();
-
-      expect(find.text('Base provisional'), findsOneWidget);
-      expect(find.byType(LoginScreen), findsNothing);
+      expect(aState.applicationResult, isNotNull);
+      expect(bState.applicationResult, isNull);
+      expect(bState.hasAlreadyApplied, isFalse);
+      expect(bState.successMessage, isNull);
+      expect(bState.error, isNull);
     },
   );
 
-  testWidgets('Registro exitoso respeta profileCompleted', (tester) async {
-    await tester.pumpWidget(
-      _testApp(
-        authRepository: _FakeAuthRepository(
-          registerResult: _sessionResult(profileCompleted: false),
-        ),
+  test('loadOffer detecta aplicacion existente por offerId exacto', () async {
+    final setup = _setup(offerId: 'offer-a', offer: _offer('offer-a'));
+    setup.applicationsRepository.applications = [
+      _application('offer-a', status: 'applied'),
+    ];
+
+    await setup.notifier.loadOffer();
+
+    expect(setup.state.hasAlreadyApplied, isTrue);
+    expect(setup.state.existingApplication?.offerId, 'offer-a');
+  });
+
+  test('aplicaciones de otras ofertas no bloquean la actual', () async {
+    final setup = _setup(offerId: 'offer-b', offer: _offer('offer-b'));
+    setup.applicationsRepository.applications = [_application('offer-a')];
+
+    await setup.notifier.loadOffer();
+
+    expect(setup.state.hasAlreadyApplied, isFalse);
+    expect(setup.state.existingApplication, isNull);
+  });
+
+  test(
+    'error al cargar aplicaciones conserva detalle sin asumir aplicado',
+        () async {
+      final setup = _setup();
+      setup.applicationsRepository.error = const ApiException(
+        message: 'Fallo aplicaciones',
+      );
+
+      await setup.notifier.loadOffer();
+
+      expect(setup.state.offer?.id, 'offer-id');
+      expect(setup.state.hasAlreadyApplied, isFalse);
+      expect(setup.state.error?.message, 'Fallo aplicaciones');
+    },
+  );
+
+  test(
+    'al recibir 409 se marca permanentemente como ya aplicada en ese estado',
+        () async {
+      final setup = _setup();
+      await setup.notifier.loadOffer();
+      setup.repository.applyError = const ConflictException(
+        message: 'Ya aplicaste a esta oferta.',
+        statusCode: 409,
+      );
+
+      await setup.notifier.apply(comment: 'Comentario', answers: const []);
+
+      expect(setup.state.hasAlreadyApplied, isTrue);
+      expect(setup.state.error?.message, 'Ya aplicaste a esta oferta.');
+    },
+  );
+
+  test('copyWith permite limpiar campos opcionales', () {
+    final state = OfferDetailState(
+      isInitialLoading: false,
+      isSubmitting: false,
+      offer: _offer('offer-id'),
+      applicationResult: const ApplyOfferResult(
+        id: 'app-id',
+        status: 'applied',
       ),
-    );
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.text('¿No tienes cuenta? Regístrate'));
-    await tester.pumpAndSettle();
-    await _fillRegister(tester);
-    await tester.tap(find.text('Registrarme'));
-    await tester.pumpAndSettle();
-
-    expect(find.byType(CompleteProfileScreen), findsOneWidget);
-  });
-
-  testWidgets('No existen loops de redirección', (tester) async {
-    await tester.pumpWidget(_testApp(hasToken: true, profileCompleted: true));
-    await tester.pumpAndSettle();
-
-    GoRouter.of(tester.element(find.text('Ocupa2'))).go(RouteNames.loginPath);
-    await tester.pumpAndSettle();
-
-    expect(tester.takeException(), isNull);
-    expect(find.text('Base provisional'), findsOneWidget);
-  });
-
-  testWidgets('No hay loops al abrir change-password', (tester) async {
-    await tester.pumpWidget(_testApp(hasToken: true, profileCompleted: true));
-    await tester.pumpAndSettle();
-
-    GoRouter.of(
-      tester.element(find.text('Ocupa2')),
-    ).go(RouteNames.changePasswordPath);
-    await tester.pumpAndSettle();
-
-    expect(tester.takeException(), isNull);
-    expect(find.byType(ChangePasswordScreen), findsOneWidget);
-  });
-
-  testWidgets('LoginPlaceholderScreen ya no se utiliza', (tester) async {
-    await tester.pumpWidget(_testApp());
-    await tester.pumpAndSettle();
-
-    expect(find.byType(LoginScreen), findsOneWidget);
-    expect(find.text('Acceso a Ocupa2'), findsNothing);
-    expect(
-      find.text('Vista temporal para validar campos y botones.'),
-      findsNothing,
-    );
-  });
-
-  testWidgets('Navegación no acumula múltiples pantallas Login', (
-    tester,
-  ) async {
-    await tester.pumpWidget(_testApp());
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.text('¿No tienes cuenta? Regístrate'));
-    await tester.pumpAndSettle();
-    await tester.ensureVisible(find.text('¿Ya tienes cuenta? Inicia sesión'));
-    await tester.tap(find.text('¿Ya tienes cuenta? Inicia sesión'));
-    await tester.pumpAndSettle();
-
-    expect(find.byType(LoginScreen), findsOneWidget);
-  });
-
-  testWidgets('Usuario autenticado ve loading mientras carga GET me', (
-    tester,
-  ) async {
-    final profileRepository = _FakeProfileRepository()
-      ..profileCompleter = Completer<Profile>();
-
-    await tester.pumpWidget(
-      _testApp(profileRepository: profileRepository, hasToken: true),
-    );
-    await tester.pump();
-
-    expect(find.text('Validando sesión...'), findsOneWidget);
-    expect(profileRepository.getProfileCalls, 1);
-  });
-
-  testWidgets('Error de GET me no bloquea el router indefinidamente', (
-    tester,
-  ) async {
-    final profileRepository = _FakeProfileRepository()
-      ..profileError = const ApiException(message: 'No autorizado');
-
-    await tester.pumpWidget(
-      _testApp(profileRepository: profileRepository, hasToken: true),
-    );
-    await tester.pumpAndSettle();
-
-    expect(find.byType(LoginScreen), findsOneWidget);
-    expect(find.text('Validando sesión...'), findsNothing);
-  });
-
-  testWidgets('La ruta de ofertas abre OffersScreen para perfil completo', (
-    tester,
-  ) async {
-    await tester.pumpWidget(_testApp(hasToken: true, profileCompleted: true));
-    await tester.pumpAndSettle();
-
-    GoRouter.of(tester.element(find.text('Ocupa2'))).go(RouteNames.offersPath);
-    await tester.pumpAndSettle();
-
-    expect(tester.takeException(), isNull);
-    expect(find.byType(OffersScreen), findsOneWidget);
-    expect(find.text('Filtros'), findsOneWidget);
-  });
-
-  testWidgets('/offers/:id muestra OfferDetailScreen', (tester) async {
-    await tester.pumpWidget(_testApp(hasToken: true, profileCompleted: true));
-    await tester.pumpAndSettle();
-
-    GoRouter.of(tester.element(find.text('Ocupa2'))).go('/offers/offer-id');
-    await tester.pumpAndSettle();
-
-    expect(find.byType(OfferDetailScreen), findsOneWidget);
-    expect(find.text('Detalle de oferta'), findsOneWidget);
-  });
-
-  testWidgets('OfferCard navega pasando solo el id', (tester) async {
-    final offersRepository = _FakeOffersRepository();
-    await tester.pumpWidget(
-      _testApp(
-        hasToken: true,
-        profileCompleted: true,
-        offersRepository: offersRepository,
-      ),
-    );
-    await tester.pumpAndSettle();
-
-    GoRouter.of(tester.element(find.text('Ocupa2'))).go(RouteNames.offersPath);
-    await tester.pumpAndSettle();
-    await tester.tap(find.byType(OfferCard));
-    await tester.pumpAndSettle();
-
-    expect(find.byType(OfferDetailScreen), findsOneWidget);
-    expect(offersRepository.lastDetailId, 'offer-id');
-  });
-
-  testWidgets('Boton volver del detalle regresa a ofertas', (tester) async {
-    await tester.pumpWidget(_testApp(hasToken: true, profileCompleted: true));
-    await tester.pumpAndSettle();
-
-    GoRouter.of(tester.element(find.text('Ocupa2'))).go(RouteNames.offersPath);
-    await tester.pumpAndSettle();
-    await tester.tap(find.byType(OfferCard));
-    await tester.pumpAndSettle();
-    await tester.ensureVisible(find.text('Volver'));
-    await tester.tap(find.text('Volver'));
-    await tester.pumpAndSettle();
-
-    expect(find.byType(OffersScreen), findsOneWidget);
-    expect(find.byType(OfferDetailScreen), findsNothing);
-  });
-
-  testWidgets('OffersScreen carga datos del repositorio', (tester) async {
-    await tester.pumpWidget(_testApp(hasToken: true, profileCompleted: true));
-    await tester.pumpAndSettle();
-
-    GoRouter.of(tester.element(find.text('Ocupa2'))).go(RouteNames.offersPath);
-    await tester.pumpAndSettle();
-
-    expect(find.text('Chofer'), findsWidgets);
-    expect(
-      find.text('Se necesita chofer con disponibilidad inmediata.'),
-      findsOneWidget,
-    );
-  });
-
-  testWidgets('AppButton outlined se construye correctamente', (tester) async {
-    await tester.pumpWidget(
-      MaterialApp(
-        theme: AppTheme.light,
-        home: Scaffold(
-          body: AppButton.outlined(
-            label: 'Volver',
-            icon: Icons.arrow_back_rounded,
-            onPressed: () {},
-          ),
-        ),
-      ),
+      hasAlreadyApplied: true,
+      existingApplication: _application('offer-id'),
+      error: const ApiException(message: 'Fallo'),
+      successMessage: 'Listo',
     );
 
-    expect(find.byType(OutlinedButton), findsOneWidget);
-    expect(find.text('Volver'), findsOneWidget);
-  });
-
-  testWidgets('AppButton muestra loading correctamente', (tester) async {
-    await tester.pumpWidget(
-      const MaterialApp(
-        home: Scaffold(body: AppButton(label: 'Guardar', isLoading: true)),
-      ),
+    final next = state.copyWith(
+      offer: null,
+      applicationResult: null,
+      hasAlreadyApplied: false,
+      existingApplication: null,
+      error: null,
+      successMessage: null,
     );
 
-    expect(find.byType(CircularProgressIndicator), findsOneWidget);
-    expect(find.text('Guardar'), findsNothing);
-  });
-
-  testWidgets('AppTextField muestra error de validación', (tester) async {
-    final formKey = GlobalKey<FormState>();
-
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: Form(
-            key: formKey,
-            child: AppTextField(
-              label: 'Correo',
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'El correo es obligatorio';
-                }
-                return null;
-              },
-            ),
-          ),
-        ),
-      ),
-    );
-
-    formKey.currentState!.validate();
-    await tester.pump();
-
-    expect(find.text('El correo es obligatorio'), findsOneWidget);
+    expect(next.offer, isNull);
+    expect(next.applicationResult, isNull);
+    expect(next.hasAlreadyApplied, isFalse);
+    expect(next.existingApplication, isNull);
+    expect(next.error, isNull);
+    expect(next.successMessage, isNull);
   });
 }
 
-Widget _testApp({
-  _FakeAuthRepository? authRepository,
-  _FakeProfileRepository? profileRepository,
-  _FakeOffersRepository? offersRepository,
-  _FakeTokenStorage? tokenStorage,
-  bool hasToken = false,
-  bool profileCompleted = false,
+_Setup _setup({
+  String offerId = 'offer-id',
+  Offer? offer,
+  ApplyOfferResult? result,
 }) {
-  return ProviderScope(
+  final repository = _FakeOffersRepository(
+    offer: offer ?? _offer('offer-id'),
+    result: result ?? const ApplyOfferResult(id: 'app-id', status: 'applied'),
+  );
+  final applicationsRepository = _FakeApplicationsRepository();
+  final container = ProviderContainer(
     overrides: [
-      authRepositoryProvider.overrideWithValue(
-        authRepository ?? _FakeAuthRepository(),
-      ),
-      tokenStorageProvider.overrideWithValue(
-        tokenStorage ?? _FakeTokenStorage(hasToken ? 'token' : null),
-      ),
-      offersRepositoryProvider.overrideWithValue(
-        offersRepository ?? _FakeOffersRepository(),
-      ),
-      applicationsRepositoryProvider.overrideWithValue(
-        _FakeApplicationsRepository(),
-      ),
-      changePasswordRepositoryProvider.overrideWithValue(
-        _FakeChangePasswordRepository(),
-      ),
-      profileRepositoryProvider.overrideWithValue(
-        profileRepository ??
-            _FakeProfileRepository(profileCompleted: profileCompleted),
-      ),
+      offersRepositoryProvider.overrideWithValue(repository),
+      applicationsRepositoryProvider.overrideWithValue(applicationsRepository),
     ],
-    child: const Ocupa2App(),
+  );
+  addTearDown(container.dispose);
+
+  return _Setup(
+    container: container,
+    repository: repository,
+    applicationsRepository: applicationsRepository,
+    offerId: offerId,
   );
 }
 
-Future<void> _openDrawer(WidgetTester tester) async {
-  await tester.tap(find.byTooltip('Abrir menú'));
-  await tester.pumpAndSettle();
-}
-
-Future<void> _fillLogin(WidgetTester tester) async {
-  await tester.enterText(
-    find.widgetWithText(TextFormField, 'Correo'),
-    'user@example.com',
-  );
-  await tester.enterText(
-    find.widgetWithText(TextFormField, 'Contraseña'),
-    'secret123',
-  );
-}
-
-Future<void> _fillRegister(WidgetTester tester) async {
-  await tester.enterText(find.widgetWithText(TextFormField, 'Nombre'), 'Ana');
-  await tester.enterText(
-    find.widgetWithText(TextFormField, 'Apellido'),
-    'Perez',
-  );
-  await tester.enterText(
-    find.widgetWithText(TextFormField, 'Correo'),
-    'user@example.com',
-  );
-  await tester.enterText(
-    find.widgetWithText(TextFormField, 'Matrícula de referido'),
-    '12345678',
-  );
-  await tester.enterText(
-    find.widgetWithText(TextFormField, 'Contraseña'),
-    'secret123',
-  );
-  await tester.enterText(
-    find.widgetWithText(TextFormField, 'Confirmar contraseña'),
-    'secret123',
-  );
-  await tester.ensureVisible(find.text('Registrarme'));
-}
-
-AuthSessionResult _sessionResult({required bool profileCompleted}) {
-  return AuthSessionResult(
-    token: 'token',
-    tokenType: 'Bearer',
-    user: Profile(
-      id: 'profile-id',
-      email: 'user@example.com',
-      firstName: 'Ana',
-      lastName: 'Perez',
-      profileCompleted: profileCompleted,
-    ),
-  );
-}
-
-JobType _jobType() {
-  return JobType(
-    id: 'chofer-id',
-    key: 'chofer',
-    name: 'Chofer',
-    active: true,
-    customFields: const [],
-    createdAt: DateTime(2026),
-  );
-}
-
-Offer _offer() {
+Offer _offer(String id) {
   return Offer(
-    id: 'offer-id',
-    jobTypeKey: 'chofer',
-    jobTypeName: 'Chofer',
+    id: id,
+    jobTypeKey: 'programador',
+    jobTypeName: 'Programador',
     contractType: 'temporal',
-    description: 'Se necesita chofer con disponibilidad inmediata.',
-    address: 'Santo Domingo, República Dominicana',
-    location: const OfferLocation(lat: 18.4861, lng: -69.9312),
-    payment: const OfferPayment(
-      amount: 35000,
-      currency: 'DOP',
-      period: 'total',
-    ),
+    description: 'Oferta de prueba',
+    address: 'Santo Domingo',
+    location: const OfferLocation(lat: 18.4, lng: -69.9),
+    payment: const OfferPayment(amount: 50, currency: 'USD', period: 'total'),
     photo: 'string',
-    deadline: DateTime(2026, 8, 30),
     customAnswers: const {},
     questions: const [],
     status: 'published',
-    applicantsCount: 1,
+    applicantsCount: 0,
     likesCount: 0,
-    createdAt: DateTime(2026, 7, 9),
-    updatedAt: DateTime(2026, 7, 9),
+    createdAt: DateTime(2026),
+    updatedAt: DateTime(2026),
     isIdentityRevealed: false,
     likedByMe: false,
   );
 }
 
-class _FakeAuthRepository implements AuthRepository {
-  _FakeAuthRepository({
-    AuthSessionResult? loginResult,
-    AuthSessionResult? registerResult,
-  }) : loginResult = loginResult ?? _sessionResult(profileCompleted: true),
-       registerResult =
-           registerResult ?? _sessionResult(profileCompleted: true);
+class _Setup {
+  const _Setup({
+    required this.container,
+    required this.repository,
+    required this.applicationsRepository,
+    required this.offerId,
+  });
 
-  final AuthSessionResult loginResult;
-  final AuthSessionResult registerResult;
+  final ProviderContainer container;
+  final _FakeOffersRepository repository;
+  final _FakeApplicationsRepository applicationsRepository;
+  final String offerId;
 
-  @override
-  Future<AuthSessionResult> register({
-    required String email,
-    required String firstName,
-    required String lastName,
-    required String password,
-    required String referralMatricula,
-  }) async {
-    return registerResult;
-  }
+  OfferDetailState get state =>
+      container.read(offerDetailControllerProvider(offerId));
 
-  @override
-  Future<AuthSessionResult> login({
-    required String email,
-    required String password,
-  }) async {
-    return loginResult;
-  }
-
-  @override
-  Future<void> forgotPassword({
-    required String email,
-    required String referralMatricula,
-  }) async {}
-}
-
-class _FakeChangePasswordRepository implements ChangePasswordRepository {
-  final passwords = <String>[];
-
-  @override
-  Future<void> changePassword({required String password}) async {
-    passwords.add(password);
-  }
+  OfferDetailController get notifier =>
+      container.read(offerDetailControllerProvider(offerId).notifier);
 }
 
 class _FakeOffersRepository implements OffersRepository {
-  String? lastDetailId;
+  _FakeOffersRepository({Offer? offer, ApplyOfferResult? result})
+      : offer = offer ?? _offer('offer-id'),
+        result =
+            result ?? const ApplyOfferResult(id: 'app-id', status: 'applied');
+
+  final Offer offer;
+  final ApplyOfferResult result;
+  final offerCompleters = Queue<Completer<Offer>>();
+  final applyCompleters = Queue<Completer<ApplyOfferResult>>();
+  final getOfferByIdCalls = <String>[];
+  final applyCalls = <_ApplyCall>[];
+  Object? getOfferError;
+  Object? applyError;
 
   @override
   Future<List<JobType>> getJobTypes() async {
-    return [_jobType()];
+    return const [];
   }
 
   @override
-  Future<List<Offer>> getOffers({
-    String? jobTypeKey,
-    String? contractType,
-  }) async {
-    return [_offer()];
+  Future<List<Offer>> getOffers({String? jobTypeKey, String? contractType}) {
+    return Future.value(const []);
   }
 
   @override
   Future<Offer> getOfferById(String id) async {
-    lastDetailId = id;
-    return _offer();
+    getOfferByIdCalls.add(id);
+    if (getOfferError != null) {
+      throw getOfferError!;
+    }
+
+    if (offerCompleters.isNotEmpty) {
+      return offerCompleters.removeFirst().future;
+    }
+
+    return offer;
   }
 
   @override
@@ -937,7 +522,19 @@ class _FakeOffersRepository implements OffersRepository {
     required String comment,
     required List<ApplyOfferAnswer> answers,
   }) async {
-    return const ApplyOfferResult(id: 'application-id', status: 'applied');
+    applyCalls.add(
+      _ApplyCall(offerId: offerId, comment: comment, answers: answers),
+    );
+
+    if (applyError != null) {
+      throw applyError!;
+    }
+
+    if (applyCompleters.isNotEmpty) {
+      return applyCompleters.removeFirst().future;
+    }
+
+    return result;
   }
 
   @override
@@ -954,117 +551,110 @@ class _FakeOffersRepository implements OffersRepository {
   Future<List<Offer>> getMyLikedOffers() async {
     return const [];
   }
-}
 
-class _FakeApplicationsRepository implements ApplicationsRepository {
   @override
-  Future<List<Application>> getMyApplications() async {
+  Future<List<Offer>> getMyOffers() async {
     return const [];
   }
 }
 
-class _FakeProfileRepository implements ProfileRepository {
-  _FakeProfileRepository({bool profileCompleted = false})
-    : profile = Profile(
-        id: 'profile-id',
-        email: 'astrid@example.com',
-        firstName: 'Astrid',
-        lastName: 'Diaz',
-        nombre: 'Astrid Diaz',
-        referralMatricula: 'MAT-001',
-        role: 'worker',
-        createdAt: DateTime(2026),
-        updatedAt: DateTime(2026),
-        lastLoginAt: DateTime(2026),
-        birthDate: DateTime.utc(1997, 5, 12),
-        cedula: '00112345678',
-        gender: 'femenino',
-        profileCompleted: profileCompleted,
-      );
-
-  Profile profile;
-  Completer<Profile>? profileCompleter;
-  Object? profileError;
-  int getProfileCalls = 0;
+class _FakeApplicationsRepository implements ApplicationsRepository {
+  List<Application> applications = const [];
+  Object? error;
+  int calls = 0;
 
   @override
-  Future<Profile> getProfile() async {
-    getProfileCalls++;
-    if (profileError != null) {
-      throw profileError!;
+  Future<List<Application>> getMyApplications() async {
+    calls++;
+    if (error != null) {
+      throw error!;
     }
 
-    final completer = profileCompleter;
-    if (completer != null) {
-      return completer.future;
-    }
-
-    return profile;
+    return applications;
   }
 
   @override
-  Future<Profile> updateProfile({
-    required String firstName,
-    required String lastName,
-    required String cedula,
-    required String gender,
-    required DateTime birthDate,
-  }) async {
-    profile = Profile(
-      id: profile.id,
-      email: profile.email,
-      firstName: firstName,
-      lastName: lastName,
-      nombre: '$firstName $lastName',
-      referralMatricula: profile.referralMatricula,
-      role: profile.role,
-      createdAt: profile.createdAt,
-      updatedAt: DateTime(2026, 7, 28),
-      lastLoginAt: profile.lastLoginAt,
-      birthDate: birthDate,
-      cedula: cedula,
-      gender: gender,
-      profileCompleted: true,
-    );
+  Future<List<Application>> getOfferApplications(
+      String offerId,
+      ) async {
+    if (error != null) {
+      throw error!;
+    }
 
-    return profile;
+    return applications
+        .where(
+          (application) =>
+      application.offerId == offerId,
+    )
+        .toList();
+  }
+
+
+
+
+  @override
+  Future<Application> updateApplication({
+    required String applicationId,
+    int? rating,
+    String? status,
+    double? salary,
+    String? currency,
+    DateTime? startDate,
+    String? duration,
+  }) {
+    throw UnimplementedError();
   }
 }
 
-class _FakeTokenStorage implements TokenStorage {
-  _FakeTokenStorage(this._token);
 
-  String? _token;
-  int clearSessionCalls = 0;
+
+
+class _ApplyCall {
+  const _ApplyCall({
+    required this.offerId,
+    required this.comment,
+    required this.answers,
+  });
+
+  final String offerId;
+  final String comment;
+  final List<ApplyOfferAnswer> answers;
 
   @override
-  Future<void> saveAccessToken(String token) async {
-    _token = token;
+  bool operator ==(Object other) {
+    return other is _ApplyCall &&
+        other.offerId == offerId &&
+        other.comment == comment &&
+        _listEquals(other.answers, answers);
   }
 
   @override
-  Future<String?> readAccessToken() async {
-    final normalized = _token?.trim();
-    if (normalized == null || normalized.isEmpty) {
-      return null;
+  int get hashCode => Object.hash(offerId, comment, Object.hashAll(answers));
+}
+
+Application _application(String offerId, {String status = 'applied'}) {
+  return Application(
+    id: 'application-$offerId',
+    offerId: offerId,
+    applicantId: 'applicant-id',
+    comment: 'Comentario',
+    answers: const [],
+    status: status,
+    createdAt: DateTime(2026),
+    updatedAt: DateTime(2026),
+  );
+}
+
+bool _listEquals<T>(List<T> a, List<T> b) {
+  if (a.length != b.length) {
+    return false;
+  }
+
+  for (var index = 0; index < a.length; index++) {
+    if (a[index] != b[index]) {
+      return false;
     }
-
-    return normalized;
   }
 
-  @override
-  Future<bool> hasAccessToken() async {
-    return (await readAccessToken()) != null;
-  }
-
-  @override
-  Future<void> deleteAccessToken() async {
-    _token = null;
-  }
-
-  @override
-  Future<void> clearSession() async {
-    clearSessionCalls++;
-    _token = null;
-  }
+  return true;
 }

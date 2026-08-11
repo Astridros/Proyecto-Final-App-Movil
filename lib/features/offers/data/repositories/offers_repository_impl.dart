@@ -6,8 +6,11 @@ import '../../domain/entities/offer_like_result.dart';
 import '../../domain/repositories/offers_repository.dart';
 import '../datasources/offers_remote_datasource.dart';
 
-class OffersRepositoryImpl implements OffersRepository {
-  const OffersRepositoryImpl(this._remoteDataSource);
+class OffersRepositoryImpl
+    implements OffersRepository {
+  const OffersRepositoryImpl(
+      this._remoteDataSource,
+      );
 
   final OffersRemoteDataSource _remoteDataSource;
 
@@ -17,7 +20,10 @@ class OffersRepositoryImpl implements OffersRepository {
   }
 
   @override
-  Future<List<Offer>> getOffers({String? jobTypeKey, String? contractType}) {
+  Future<List<Offer>> getOffers({
+    String? jobTypeKey,
+    String? contractType,
+  }) {
     return _remoteDataSource.getOffers(
       jobTypeKey: jobTypeKey,
       contractType: contractType,
@@ -25,8 +31,12 @@ class OffersRepositoryImpl implements OffersRepository {
   }
 
   @override
-  Future<Offer> getOfferById(String id) {
-    return _remoteDataSource.getOfferById(id);
+  Future<Offer> getOfferById(
+      String id,
+      ) {
+    return _remoteDataSource.getOfferById(
+      id,
+    );
   }
 
   @override
@@ -43,17 +53,32 @@ class OffersRepositoryImpl implements OffersRepository {
   }
 
   @override
-  Future<OfferLikeResult> likeOffer(String offerId) {
-    return _remoteDataSource.likeOffer(offerId);
+  Future<OfferLikeResult> likeOffer(
+      String offerId,
+      ) {
+    return _remoteDataSource.likeOffer(
+      offerId,
+    );
   }
 
   @override
-  Future<OfferLikeResult> unlikeOffer(String offerId) {
-    return _remoteDataSource.unlikeOffer(offerId);
+  Future<OfferLikeResult> unlikeOffer(
+      String offerId,
+      ) {
+    return _remoteDataSource.unlikeOffer(
+      offerId,
+    );
   }
 
   @override
   Future<List<Offer>> getMyLikedOffers() {
-    return _remoteDataSource.getMyLikedOffers();
+    return _remoteDataSource
+        .getMyLikedOffers();
+  }
+
+  // NUEVO
+  @override
+  Future<List<Offer>> getMyOffers() {
+    return _remoteDataSource.getMyOffers();
   }
 }

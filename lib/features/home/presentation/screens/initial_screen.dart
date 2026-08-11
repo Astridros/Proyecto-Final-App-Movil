@@ -92,6 +92,36 @@ class InitialScreen extends ConsumerWidget {
                 width: double.infinity,
               ),
 
+              const SizedBox(
+                height: AppDimensions.spacing16,
+              ),
+
+              AppButton.outlined(
+                label: 'Mis ofertas publicadas',
+                icon: Icons.campaign_outlined,
+                onPressed: () {
+                  context.pushNamed(
+                    RouteNames.myOffers,
+                  );
+                },
+                width: double.infinity,
+              ),
+              const SizedBox(height: AppDimensions.spacing16),
+              AppButton.outlined(
+                label: 'Mis aplicaciones',
+                icon: Icons.assignment_outlined,
+                onPressed: () {
+                  context.pushNamed(
+                    RouteNames.myApplications,
+                  );
+                },
+                width: double.infinity,
+              ),
+
+              const SizedBox(
+                height: AppDimensions.spacing16,
+              ),
+
               const SizedBox(height: AppDimensions.spacing12),
               const SizedBox(height: AppDimensions.spacing12),
               // Angel Daniel Genao 2024-1169: accesos a Noticias y Videos.

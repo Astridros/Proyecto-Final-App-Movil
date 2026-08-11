@@ -33,7 +33,10 @@ void main() {
   });
 
   test('token valido restaura GET me y profileCompleted false', () async {
-    final setup = _setup(hasToken: true, profileCompleted: false);
+    final setup = _setup(
+      hasToken: true,
+      profileCompleted: false,
+    );
 
     await setup.container
         .read(authSessionControllerProvider.notifier)
@@ -46,7 +49,10 @@ void main() {
   });
 
   test('token valido restaura GET me y profileCompleted true', () async {
-    final setup = _setup(hasToken: true, profileCompleted: true);
+    final setup = _setup(
+      hasToken: true,
+      profileCompleted: true,
+    );
 
     await setup.container
         .read(authSessionControllerProvider.notifier)
@@ -66,143 +72,242 @@ void main() {
         .restoreSession();
 
     expect(
-      setup.container.read(authSessionControllerProvider).isRestoring,
+      setup.container
+          .read(authSessionControllerProvider)
+          .isRestoring,
       isTrue,
     );
-    setup.repository.profileCompleter!.complete(_profile());
+
+    setup.repository.profileCompleter!.complete(
+      _profile(),
+    );
+
     await future;
   });
 
   test('error de GET me no deja loading infinito', () async {
     final setup = _setup(hasToken: true);
-    setup.repository.profileError = const ApiException(message: 'Fallo');
+
+    setup.repository.profileError =
+    const ApiException(
+      message: 'Fallo',
+    );
 
     await setup.container
         .read(authSessionControllerProvider.notifier)
         .restoreSession();
 
-    final state = setup.container.read(authSessionControllerProvider);
+    final state =
+    setup.container.read(authSessionControllerProvider);
+
     expect(state.isRestoring, isFalse);
     expect(state.isAuthenticated, isFalse);
     expect(state.error, isA<ApiException>());
   });
 
-  test('updateAuthenticatedProfile marca profileCompleted true', () {
-    final setup = _setup(hasToken: true);
+  test(
+    'updateAuthenticatedProfile marca profileCompleted true',
+        () {
+      final setup = _setup(hasToken: true);
 
-    setup.container
-        .read(authSessionControllerProvider.notifier)
-        .updateAuthenticatedProfile(_profile(profileCompleted: true));
+      setup.container
+          .read(authSessionControllerProvider.notifier)
+          .updateAuthenticatedProfile(
+        _profile(profileCompleted: true),
+      );
 
-    final state = setup.container.read(authSessionControllerProvider);
-    expect(state.isAuthenticated, isTrue);
-    expect(state.canAccessAuthenticatedRoutes, isTrue);
-  });
+      final state =
+      setup.container.read(authSessionControllerProvider);
 
-  test('restaurar app con token vuelve a comprobar profileCompleted', () async {
-    final setup = _setup(hasToken: true, profileCompleted: true);
+      expect(state.isAuthenticated, isTrue);
+      expect(state.canAccessAuthenticatedRoutes, isTrue);
+    },
+  );
 
-    await setup.container
-        .read(authSessionControllerProvider.notifier)
-        .restoreSession();
+  test(
+    'restaurar app con token vuelve a comprobar profileCompleted',
+        () async {
+      final setup = _setup(
+        hasToken: true,
+        profileCompleted: true,
+      );
 
-    expect(setup.repository.getProfileCalls, 1);
-  });
+      await setup.container
+          .read(authSessionControllerProvider.notifier)
+          .restoreSession();
+
+      expect(setup.repository.getProfileCalls, 1);
+    },
+  );
 
   test('logout elimina el token', () async {
     final setup = _setup(hasToken: true);
+
     setup.container
         .read(authSessionControllerProvider.notifier)
-        .updateAuthenticatedProfile(_profile(profileCompleted: true));
+        .updateAuthenticatedProfile(
+      _profile(profileCompleted: true),
+    );
 
-    await setup.container.read(authSessionControllerProvider.notifier).logout();
-
-    expect(await setup.tokenStorage.hasAccessToken(), isFalse);
-    expect(setup.tokenStorage.clearSessionCalls, 1);
-  });
-
-  test('logout limpia el perfil y establece sesion no autenticada', () async {
-    final setup = _setup(hasToken: true);
-    setup.container
+    await setup.container
         .read(authSessionControllerProvider.notifier)
-        .updateAuthenticatedProfile(_profile(profileCompleted: true));
+        .logout();
 
-    await setup.container.read(authSessionControllerProvider.notifier).logout();
+    expect(
+      await setup.tokenStorage.hasAccessToken(),
+      isFalse,
+    );
 
-    final state = setup.container.read(authSessionControllerProvider);
-    expect(state.profile, isNull);
-    expect(state.isAuthenticated, isFalse);
-    expect(state.hasCheckedSession, isTrue);
-    expect(state.error, isNull);
+    expect(
+      setup.tokenStorage.clearSessionCalls,
+      1,
+    );
   });
+
+  test(
+    'logout limpia el perfil y establece sesion no autenticada',
+        () async {
+      final setup = _setup(hasToken: true);
+
+      setup.container
+          .read(authSessionControllerProvider.notifier)
+          .updateAuthenticatedProfile(
+        _profile(profileCompleted: true),
+      );
+
+      await setup.container
+          .read(authSessionControllerProvider.notifier)
+          .logout();
+
+      final state =
+      setup.container.read(authSessionControllerProvider);
+
+      expect(state.profile, isNull);
+      expect(state.isAuthenticated, isFalse);
+      expect(state.hasCheckedSession, isTrue);
+      expect(state.error, isNull);
+    },
+  );
 
   test('logout activa y desactiva isLoggingOut', () async {
     final setup = _setup(hasToken: true);
-    setup.tokenStorage.clearSessionCompleter = Completer<void>();
+
+    setup.tokenStorage.clearSessionCompleter =
+        Completer<void>();
+
     setup.container
         .read(authSessionControllerProvider.notifier)
-        .updateAuthenticatedProfile(_profile(profileCompleted: true));
+        .updateAuthenticatedProfile(
+      _profile(profileCompleted: true),
+    );
 
     final future = setup.container
         .read(authSessionControllerProvider.notifier)
         .logout();
 
     expect(
-      setup.container.read(authSessionControllerProvider).isLoggingOut,
+      setup.container
+          .read(authSessionControllerProvider)
+          .isLoggingOut,
       isTrue,
     );
-    setup.tokenStorage.clearSessionCompleter!.complete();
+
+    setup.tokenStorage.clearSessionCompleter!
+        .complete();
+
     await future;
 
     expect(
-      setup.container.read(authSessionControllerProvider).isLoggingOut,
+      setup.container
+          .read(authSessionControllerProvider)
+          .isLoggingOut,
       isFalse,
     );
   });
 
-  test('error al limpiar almacenamiento conserva estado coherente', () async {
-    final setup = _setup(hasToken: true);
-    final profile = _profile(profileCompleted: true);
-    setup.tokenStorage.clearSessionError = const ApiException(
-      message: 'No se pudo cerrar sesion',
-    );
-    setup.container
-        .read(authSessionControllerProvider.notifier)
-        .updateAuthenticatedProfile(profile);
+  test(
+    'error al limpiar almacenamiento conserva estado coherente',
+        () async {
+      final setup = _setup(hasToken: true);
 
-    await setup.container.read(authSessionControllerProvider.notifier).logout();
+      final profile =
+      _profile(profileCompleted: true);
 
-    final state = setup.container.read(authSessionControllerProvider);
-    expect(state.isAuthenticated, isTrue);
-    expect(state.profile, profile);
-    expect(state.isLoggingOut, isFalse);
-    expect(state.error?.message, 'No se pudo cerrar sesion');
-  });
+      setup.tokenStorage.clearSessionError =
+      const ApiException(
+        message: 'No se pudo cerrar sesion',
+      );
+
+      setup.container
+          .read(authSessionControllerProvider.notifier)
+          .updateAuthenticatedProfile(profile);
+
+      await setup.container
+          .read(authSessionControllerProvider.notifier)
+          .logout();
+
+      final state =
+      setup.container.read(authSessionControllerProvider);
+
+      expect(state.isAuthenticated, isTrue);
+      expect(state.profile, profile);
+      expect(state.isLoggingOut, isFalse);
+      expect(
+        state.error?.message,
+        'No se pudo cerrar sesion',
+      );
+    },
+  );
 
   test('logout no llama ningun endpoint', () async {
     final setup = _setup(hasToken: true);
+
     setup.container
         .read(authSessionControllerProvider.notifier)
-        .updateAuthenticatedProfile(_profile(profileCompleted: true));
+        .updateAuthenticatedProfile(
+      _profile(profileCompleted: true),
+    );
 
-    await setup.container.read(authSessionControllerProvider.notifier).logout();
+    await setup.container
+        .read(authSessionControllerProvider.notifier)
+        .logout();
 
-    expect(setup.repository.getProfileCalls, 0);
+    expect(
+      setup.repository.getProfileCalls,
+      0,
+    );
   });
 
   test(
     'logout invalida estado de likes y nueva sesion no hereda estado',
-    () async {
+        () async {
       final setup = _setup(hasToken: true);
+
       setup.container
           .read(authSessionControllerProvider.notifier)
-          .updateAuthenticatedProfile(_profile(profileCompleted: true));
+          .updateAuthenticatedProfile(
+        _profile(profileCompleted: true),
+      );
+
       setup.container
-          .read(offerLikeControllerProvider('offer-a').notifier)
-          .syncFromOffer(likedByMe: true, likesCount: 5);
+          .read(
+        offerLikeControllerProvider(
+          'offer-a',
+        ).notifier,
+      )
+          .syncFromOffer(
+        likedByMe: true,
+        likesCount: 5,
+      );
 
       expect(
-        setup.container.read(offerLikeControllerProvider('offer-a')).liked,
+        setup.container
+            .read(
+          offerLikeControllerProvider(
+            'offer-a',
+          ),
+        )
+            .liked,
         isTrue,
       );
 
@@ -210,27 +315,57 @@ void main() {
           .read(authSessionControllerProvider.notifier)
           .logout();
 
-      final stateAfterLogout = setup.container.read(
-        offerLikeControllerProvider('offer-a'),
+      final stateAfterLogout =
+      setup.container.read(
+        offerLikeControllerProvider(
+          'offer-a',
+        ),
       );
-      expect(stateAfterLogout.liked, isFalse);
-      expect(stateAfterLogout.likesCount, 0);
+
+      expect(
+        stateAfterLogout.liked,
+        isFalse,
+      );
+
+      expect(
+        stateAfterLogout.likesCount,
+        0,
+      );
     },
   );
 }
 
-_Setup _setup({required bool hasToken, bool profileCompleted = false}) {
-  final repository = _FakeProfileRepository(
-    profile: _profile(profileCompleted: profileCompleted),
+_Setup _setup({
+  required bool hasToken,
+  bool profileCompleted = false,
+}) {
+  final repository =
+  _FakeProfileRepository(
+    profile: _profile(
+      profileCompleted: profileCompleted,
+    ),
   );
-  final tokenStorage = _FakeTokenStorage(hasToken ? 'token' : null);
-  final container = ProviderContainer(
+
+  final tokenStorage =
+  _FakeTokenStorage(
+    hasToken ? 'token' : null,
+  );
+
+  final container =
+  ProviderContainer(
     overrides: [
-      tokenStorageProvider.overrideWithValue(tokenStorage),
-      profileRepositoryProvider.overrideWithValue(repository),
-      offersRepositoryProvider.overrideWithValue(_FakeOffersRepository()),
+      tokenStorageProvider.overrideWithValue(
+        tokenStorage,
+      ),
+      profileRepositoryProvider.overrideWithValue(
+        repository,
+      ),
+      offersRepositoryProvider.overrideWithValue(
+        _FakeOffersRepository(),
+      ),
     ],
   );
+
   addTearDown(container.dispose);
 
   return _Setup(
@@ -240,9 +375,12 @@ _Setup _setup({required bool hasToken, bool profileCompleted = false}) {
   );
 }
 
-class _FakeOffersRepository implements OffersRepository {
+class _FakeOffersRepository
+    implements OffersRepository {
   @override
-  Future<List<JobType>> getJobTypes() async => const [];
+  Future<List<JobType>> getJobTypes() async {
+    return const [];
+  }
 
   @override
   Future<List<Offer>> getOffers({
@@ -267,26 +405,49 @@ class _FakeOffersRepository implements OffersRepository {
   }
 
   @override
-  Future<OfferLikeResult> likeOffer(String offerId) async {
-    return const OfferLikeResult(liked: true, likesCount: 1);
+  Future<OfferLikeResult> likeOffer(
+      String offerId,
+      ) async {
+    return const OfferLikeResult(
+      liked: true,
+      likesCount: 1,
+    );
   }
 
   @override
-  Future<OfferLikeResult> unlikeOffer(String offerId) async {
-    return const OfferLikeResult(liked: false, likesCount: 0);
+  Future<OfferLikeResult> unlikeOffer(
+      String offerId,
+      ) async {
+    return const OfferLikeResult(
+      liked: false,
+      likesCount: 0,
+    );
   }
 
   @override
-  Future<List<Offer>> getMyLikedOffers() async => const [];
+  Future<List<Offer>> getMyLikedOffers() async {
+    return const [];
+  }
+
+  @override
+  Future<List<Offer>> getMyOffers() async {
+    return const [];
+  }
 }
 
-Profile _profile({bool profileCompleted = false}) {
+Profile _profile({
+  bool profileCompleted = false,
+}) {
   return Profile(
     id: 'profile-id',
     email: 'user@example.com',
     firstName: 'Ana',
     lastName: 'Perez',
-    birthDate: DateTime.utc(1997, 5, 12),
+    birthDate: DateTime.utc(
+      1997,
+      5,
+      12,
+    ),
     cedula: '00112345678',
     gender: 'femenino',
     profileCompleted: profileCompleted,
@@ -301,26 +462,37 @@ class _Setup {
   });
 
   final ProviderContainer container;
+
   final _FakeProfileRepository repository;
+
   final _FakeTokenStorage tokenStorage;
 }
 
-class _FakeProfileRepository implements ProfileRepository {
-  _FakeProfileRepository({required this.profile});
+class _FakeProfileRepository
+    implements ProfileRepository {
+  _FakeProfileRepository({
+    required this.profile,
+  });
 
   final Profile profile;
+
   Completer<Profile>? profileCompleter;
+
   Object? profileError;
+
   int getProfileCalls = 0;
 
   @override
   Future<Profile> getProfile() async {
     getProfileCalls++;
+
     if (profileError != null) {
       throw profileError!;
     }
 
-    final completer = profileCompleter;
+    final completer =
+        profileCompleter;
+
     if (completer != null) {
       return completer.future;
     }
@@ -336,27 +508,38 @@ class _FakeProfileRepository implements ProfileRepository {
     required String gender,
     required DateTime birthDate,
   }) async {
-    return _profile(profileCompleted: true);
+    return _profile(
+      profileCompleted: true,
+    );
   }
 }
 
-class _FakeTokenStorage implements TokenStorage {
+class _FakeTokenStorage
+    implements TokenStorage {
   _FakeTokenStorage(this._token);
 
   String? _token;
+
   Completer<void>? clearSessionCompleter;
+
   Object? clearSessionError;
+
   int clearSessionCalls = 0;
 
   @override
-  Future<void> saveAccessToken(String token) async {
+  Future<void> saveAccessToken(
+      String token,
+      ) async {
     _token = token;
   }
 
   @override
   Future<String?> readAccessToken() async {
-    final normalized = _token?.trim();
-    if (normalized == null || normalized.isEmpty) {
+    final normalized =
+    _token?.trim();
+
+    if (normalized == null ||
+        normalized.isEmpty) {
       return null;
     }
 
@@ -365,7 +548,8 @@ class _FakeTokenStorage implements TokenStorage {
 
   @override
   Future<bool> hasAccessToken() async {
-    return (await readAccessToken()) != null;
+    return (await readAccessToken()) !=
+        null;
   }
 
   @override
@@ -376,11 +560,14 @@ class _FakeTokenStorage implements TokenStorage {
   @override
   Future<void> clearSession() async {
     clearSessionCalls++;
+
     if (clearSessionError != null) {
       throw clearSessionError!;
     }
 
-    final completer = clearSessionCompleter;
+    final completer =
+        clearSessionCompleter;
+
     if (completer != null) {
       await completer.future;
     }
