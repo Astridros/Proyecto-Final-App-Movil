@@ -6,14 +6,11 @@ import '../datasources/applications_remote_datasource.dart';
 import '../repositories/applications_repository_impl.dart';
 
 final applicationsRemoteDataSourceProvider =
-Provider<ApplicationsRemoteDataSource>((ref) {
-  return ApplicationsRemoteDataSourceImpl(
-    ref.watch(apiClientProvider),
-  );
-});
+    Provider<ApplicationsRemoteDataSource>((ref) {
+      return ApplicationsRemoteDataSourceImpl(ref.watch(apiClientProvider));
+    });
 
-final applicationsRepositoryProvider =
-Provider<ApplicationsRepository>((ref) {
+final applicationsRepositoryProvider = Provider<ApplicationsRepository>((ref) {
   return ApplicationsRepositoryImpl(
     ref.watch(applicationsRemoteDataSourceProvider),
   );
