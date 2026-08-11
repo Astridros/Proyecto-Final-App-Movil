@@ -112,7 +112,7 @@ class _CreateOfferScreenState extends ConsumerState<CreateOfferScreen> {
                       Expanded(
                         child: AppTextField(
                           label: 'Latitud',
-                          hint: '18.4861',
+                          hint: 'Ej.: 18.4861',
                           controller: _latitudeController,
                           keyboardType: const TextInputType.numberWithOptions(
                             decimal: true,
@@ -125,7 +125,7 @@ class _CreateOfferScreenState extends ConsumerState<CreateOfferScreen> {
                       Expanded(
                         child: AppTextField(
                           label: 'Longitud',
-                          hint: '-69.9312',
+                          hint: 'Ej.: -69.9312',
                           controller: _longitudeController,
                           keyboardType: const TextInputType.numberWithOptions(
                             decimal: true,
@@ -184,7 +184,7 @@ class _CreateOfferScreenState extends ConsumerState<CreateOfferScreen> {
                 children: [
                   AppTextField(
                     label: 'Clave',
-                    hint: 'Ej.: categoria_licencia',
+                    hint: 'Ej.: Categoria licencia',
                     controller: _customAnswerKeyController,
                   ),
                   const SizedBox(height: 12),
