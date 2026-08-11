@@ -18,6 +18,7 @@ import '../../features/news/presentation/pages/news_detail_screen.dart';
 import '../../features/news/presentation/pages/news_screen.dart';
 import '../../features/offers/presentation/pages/offer_detail_screen.dart';
 import '../../features/offers/presentation/screens/create_offer_screen.dart';
+import '../../features/offers/presentation/screens/my_offers_screen.dart';
 import '../../features/offers/presentation/pages/offers_screen.dart';
 import '../../features/profile/presentation/pages/complete_profile_screen.dart';
 import '../../features/videos/domain/entities/video.dart';
@@ -210,6 +211,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         name: RouteNames.publishOffer,
         path: RouteNames.publishOfferPath,
         builder: (context, state) => const CreateOfferScreen(),
+      ),
+      GoRoute(
+        name: RouteNames.myOffers,
+        path: RouteNames.myOffersPath,
+        builder: (context, state) => const MyOffersScreen(),
       ),
     ],
   );

@@ -53,6 +53,7 @@ class InitialScreen extends ConsumerWidget {
         userEmail: session.profile?.email,
         onHome: () => context.goNamed(RouteNames.initial),
         onMiPerfil: () => context.goNamed(RouteNames.profile),
+        onMyOffers: () => context.pushNamed(RouteNames.myOffers),
         onChangePassword: () {
           final path = GoRouterState.of(context).uri.path;
           if (path != RouteNames.changePasswordPath) {
