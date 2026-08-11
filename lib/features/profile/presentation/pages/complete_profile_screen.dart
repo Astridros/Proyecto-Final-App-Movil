@@ -105,6 +105,8 @@ class _CompleteProfileScreenState extends ConsumerState<CompleteProfileScreen> {
                               required cedula,
                               required gender,
                               required birthDate,
+                              email,
+                              referralMatricula,
                             }) async {
                               final success = await controller.submitProfile(
                                 firstName: firstName,

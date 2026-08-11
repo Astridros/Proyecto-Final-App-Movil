@@ -43,6 +43,8 @@ class ProfileController extends Notifier<ProfileState> {
     required String cedula,
     required String gender,
     required DateTime birthDate,
+    String? email,
+    String? referralMatricula,
   }) async {
     if (state.isSubmitting) {
       return false;
@@ -57,6 +59,8 @@ class ProfileController extends Notifier<ProfileState> {
         cedula: cedula,
         gender: gender,
         birthDate: birthDate,
+        email: email,
+        referralMatricula: referralMatricula,
       );
       state = state.copyWith(profile: profile, error: null);
       return true;

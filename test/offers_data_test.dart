@@ -9,6 +9,7 @@ import 'package:ocupa2/features/offers/data/models/apply_offer_answer_model.dart
 import 'package:ocupa2/features/offers/data/models/apply_offer_request_model.dart';
 import 'package:ocupa2/features/offers/data/models/apply_offer_result_model.dart';
 import 'package:ocupa2/features/offers/data/models/api_list_response.dart';
+import 'package:ocupa2/features/offers/data/models/create_offer_request_model.dart';
 import 'package:ocupa2/features/offers/data/models/job_type_model.dart';
 import 'package:ocupa2/features/offers/data/models/offer_like_result_model.dart';
 import 'package:ocupa2/features/offers/data/models/offer_model.dart';
@@ -19,6 +20,7 @@ import 'package:ocupa2/features/offers/domain/entities/apply_offer_answer.dart';
 import 'package:ocupa2/features/offers/domain/entities/apply_offer_result.dart';
 import 'package:ocupa2/features/offers/domain/entities/job_type.dart';
 import 'package:ocupa2/features/offers/domain/entities/offer.dart';
+import 'package:ocupa2/features/offers/domain/entities/offer_question.dart';
 import 'package:ocupa2/features/offers/domain/entities/offer_like_result.dart';
 import 'package:ocupa2/features/offers/domain/repositories/offers_repository.dart';
 
@@ -452,6 +454,55 @@ void main() {
         );
       },
     );
+  });
+
+  group('CreateOfferRequestModel', () {
+    test('serializa el cuerpo exacto para POST /offers', () {
+      final request = CreateOfferRequestModel(
+        jobTypeKey: 'chofer',
+        contractType: 'temporal',
+        description: 'Se necesita chofer.',
+        address: 'Santo Domingo',
+        photo: 'https://example.test/photo.png',
+        latitude: 18.4861,
+        longitude: -69.9312,
+        amount: 1500,
+        currency: 'DOP',
+        deadline: DateTime(2026, 8, 30),
+        paymentId: 'payment-id',
+        customAnswers: const {'categoria_licencia': '03'},
+        questions: const [
+          OfferQuestion(
+            id: 'local-question',
+            label: '¿Tiene licencia?',
+            type: 'text',
+            required: true,
+            options: [],
+          ),
+        ],
+      );
+
+      expect(request.toJson(), {
+        'jobTypeKey': 'chofer',
+        'contractType': 'temporal',
+        'description': 'Se necesita chofer.',
+        'address': 'Santo Domingo',
+        'photo': 'https://example.test/photo.png',
+        'location': {'lat': 18.4861, 'lng': -69.9312},
+        'paymentId': 'payment-id',
+        'payment': {'amount': 1500.0, 'currency': 'DOP'},
+        'deadline': '2026-08-30',
+        'customAnswers': {'categoria_licencia': '03'},
+        'questions': [
+          {
+            'label': '¿Tiene licencia?',
+            'type': 'text',
+            'required': true,
+            'options': <String>[],
+          },
+        ],
+      });
+    });
   });
 
   group('OfferQuestionModel', () {
@@ -925,6 +976,33 @@ void main() {
         offer.jobTypeName,
         'Chofer',
       );
+    });
+
+    test('POST crea una oferta con el cuerpo correcto', () async {
+      final client = _TestApiClient({'ok': true, 'data': _offerJson()});
+      final dataSource = OffersRemoteDataSourceImpl(client.apiClient);
+      final request = CreateOfferRequestModel(
+        jobTypeKey: 'chofer',
+        contractType: 'temporal',
+        description: 'Se necesita chofer.',
+        address: 'Santo Domingo',
+        photo: 'https://example.test/photo.png',
+        latitude: 18.4861,
+        longitude: -69.9312,
+        amount: 1500,
+        currency: 'DOP',
+        deadline: DateTime(2026, 8, 30),
+        paymentId: 'payment-id',
+        customAnswers: const {},
+        questions: const [],
+      );
+
+      final offer = await dataSource.createOffer(request);
+
+      expect(client.lastOptions.method, 'POST');
+      expect(client.lastOptions.path, '/offers');
+      expect(client.lastOptions.data, request.toJson());
+      expect(offer.id, '6a4ef553021413b716070dc8');
     });
 
     test('ID vacío produce error claro', () {

@@ -6,11 +6,16 @@ import '../../../../app/router/route_names.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_dimensions.dart';
 import '../../../../app/theme/app_text_styles.dart';
-import '../../../../core/widgets/app_button.dart';
-import '../../../../core/widgets/app_card.dart';
-import '../../../../core/widgets/ocupa2_logo.dart';
 import '../../../auth/presentation/providers/auth_session_providers.dart';
+import '../../../profile/domain/entities/profile.dart';
+import '../../domain/entities/welcome_slide.dart';
+import '../widgets/main_drawer.dart';
+import '../widgets/quick_access_card.dart';
+import '../widgets/welcome_slider.dart';
 
+// Yeison Familia - modulo Inicio.
+// Pantalla de entrada: slider de bienvenida (requisito de la consigna) mas los
+// accesos rapidos a los modulos del equipo y el menu lateral de la sesion.
 class InitialScreen extends ConsumerWidget {
   const InitialScreen({super.key});
 
@@ -42,11 +47,13 @@ class InitialScreen extends ConsumerWidget {
         ),
         title: const Text('Inicio'),
       ),
-      drawer: _MainDrawer(
+      drawer: MainDrawer(
         isLoggingOut: session.isLoggingOut,
         userName: session.profile?.nombre,
         userEmail: session.profile?.email,
         onHome: () => context.goNamed(RouteNames.initial),
+        onMiPerfil: () => context.goNamed(RouteNames.profile),
+        onMyOffers: () => context.pushNamed(RouteNames.myOffers),
         onChangePassword: () {
           final path = GoRouterState.of(context).uri.path;
           if (path != RouteNames.changePasswordPath) {
@@ -64,15 +71,14 @@ class InitialScreen extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const _BrandHeader(),
-              const SizedBox(height: AppDimensions.spacing24),
-              const _GradientPanel(),
-              const SizedBox(height: AppDimensions.spacing24),
-              Text('Base provisional', style: AppTextStyles.headingSmall),
-              const SizedBox(height: AppDimensions.spacing12),
+              _Greeting(profile: session.profile),
+              const SizedBox(height: AppDimensions.spacing20),
+              const WelcomeSlider(slides: _welcomeSlides),
+              const SizedBox(height: AppDimensions.spacing32),
+              Text('Explora la plataforma', style: AppTextStyles.headingSmall),
+              const SizedBox(height: AppDimensions.spacing4),
               Text(
-                'Esta pantalla permite revisar el tema, los componentes '
-                'compartidos y la navegación inicial del proyecto.',
+                'Entra a las secciones desde aquí.',
                 style: AppTextStyles.bodyMedium.copyWith(
                   color: AppColors.textSecondary,
                 ),
@@ -149,32 +155,7 @@ class InitialScreen extends ConsumerWidget {
               
               const SizedBox(height: AppDimensions.spacing24),
               const SizedBox(height: AppDimensions.spacing16),
-
-              AppButton.outlined(
-                label: 'Acerca de',
-                icon: Icons.info_outline_rounded,
-                onPressed: () => context.pushNamed(RouteNames.about),
-                width: double.infinity,
-              ),
-              const SizedBox(height: AppDimensions.spacing12),
-              const AppCard(
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.info_outline_rounded,
-                      color: AppColors.secondary,
-                      size: AppDimensions.iconMedium,
-                    ),
-                    SizedBox(width: AppDimensions.spacing12),
-                    Expanded(
-                      child: Text(
-                        'No se están consumiendo endpoints en esta etapa.',
-                        style: AppTextStyles.bodyMedium,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+              const _QuickAccessList(),
             ],
           ),
         ),
@@ -212,183 +193,35 @@ class InitialScreen extends ConsumerWidget {
   }
 }
 
-class _MainDrawer extends StatelessWidget {
-  const _MainDrawer({
-    required this.isLoggingOut,
-    required this.userName,
-    required this.userEmail,
-    required this.onHome,
-    required this.onChangePassword,
-    required this.onLogout,
-  });
+class _Greeting extends StatelessWidget {
+  const _Greeting({required this.profile});
 
-  final bool isLoggingOut;
-  final String? userName;
-  final String? userEmail;
-  final VoidCallback onHome;
-  final VoidCallback onChangePassword;
-  final VoidCallback onLogout;
+  final Profile? profile;
 
   @override
   Widget build(BuildContext context) {
-    return NavigationDrawer(
-      children: [
-        _DrawerHeader(userName: userName, userEmail: userEmail),
-        const Divider(height: 1),
-        _DrawerItem(
-          icon: Icons.home_outlined,
-          label: 'Inicio',
-          onTap: () {
-            Navigator.of(context).pop();
-            onHome();
-          },
-        ),
-        _DrawerItem(
-          icon: Icons.lock_reset_outlined,
-          label: 'Cambiar contraseña',
-          onTap: () {
-            Navigator.of(context).pop();
-            onChangePassword();
-          },
-        ),
-        const Divider(height: AppDimensions.spacing24),
-        _DrawerItem(
-          icon: Icons.logout,
-          label: 'Cerrar sesión',
-          foregroundColor: AppColors.error,
-          enabled: !isLoggingOut,
-          onTap: () {
-            Navigator.of(context).pop();
-            onLogout();
-          },
-        ),
-      ],
-    );
-  }
-}
+    final name = _firstName(profile);
 
-class _DrawerHeader extends StatelessWidget {
-  const _DrawerHeader({required this.userName, required this.userEmail});
-
-  final String? userName;
-  final String? userEmail;
-
-  @override
-  Widget build(BuildContext context) {
-    final name = _cleanText(userName);
-    final email = _cleanText(userEmail);
-
-    return SafeArea(
-      bottom: false,
-      child: Padding(
-        padding: const EdgeInsets.all(AppDimensions.spacing16),
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            gradient: AppColors.primaryGradient,
-            borderRadius: BorderRadius.circular(AppDimensions.radiusLarge),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(AppDimensions.spacing16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                DecoratedBox(
-                  decoration: BoxDecoration(
-                    color: AppColors.surface.withValues(alpha: 0.92),
-                    borderRadius: BorderRadius.circular(
-                      AppDimensions.radiusMedium,
-                    ),
-                  ),
-                  child: const Padding(
-                    padding: EdgeInsets.all(AppDimensions.spacing12),
-                    child: Ocupa2Logo(),
-                  ),
-                ),
-                if (name != null || email != null) ...[
-                  const SizedBox(height: AppDimensions.spacing16),
-                  if (name != null)
-                    Text(
-                      name,
-                      style: AppTextStyles.title.copyWith(
-                        color: AppColors.surface,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  if (email != null) ...[
-                    const SizedBox(height: AppDimensions.spacing4),
-                    Text(
-                      email,
-                      style: AppTextStyles.bodySmall.copyWith(
-                        color: AppColors.surface.withValues(alpha: 0.86),
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ],
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  String? _cleanText(String? value) {
-    final trimmed = value?.trim();
-    if (trimmed == null || trimmed.isEmpty) {
-      return null;
-    }
-
-    return trimmed;
-  }
-}
-
-class _DrawerItem extends StatelessWidget {
-  const _DrawerItem({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-    this.foregroundColor,
-    this.enabled = true,
-  });
-
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-  final Color? foregroundColor;
-  final bool enabled;
-
-  @override
-  Widget build(BuildContext context) {
-    final color = enabled ? foregroundColor : AppColors.textDisabled;
-
-    return ListTile(
-      enabled: enabled,
-      leading: Icon(icon, color: color),
-      title: Text(
-        label,
-        style: AppTextStyles.bodyMedium.copyWith(color: color),
-      ),
-      onTap: enabled ? onTap : null,
-    );
-  }
-}
-
-class _BrandHeader extends StatelessWidget {
-  const _BrandHeader();
-
-  @override
-  Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Ocupa2', style: AppTextStyles.display),
+        Text(
+          'Ocupa2',
+          style: AppTextStyles.labelMedium.copyWith(
+            color: AppColors.primary,
+            letterSpacing: 1.4,
+          ),
+        ),
+        const SizedBox(height: AppDimensions.spacing4),
+        Text(
+          name == null ? 'Hola' : 'Hola, $name',
+          style: AppTextStyles.display,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+        ),
         const SizedBox(height: AppDimensions.spacing8),
         Text(
-          'Trabajos temporales organizados en una experiencia móvil limpia '
-          'y consistente para el equipo.',
+          'Encuentra tu próxima oportunidad',
           style: AppTextStyles.bodyLarge.copyWith(
             color: AppColors.textSecondary,
           ),
@@ -396,50 +229,115 @@ class _BrandHeader extends StatelessWidget {
       ],
     );
   }
+
+  // El API devuelve el nombre en firstName o en nombre segun el endpoint, y
+  // ambos pueden venir vacios antes de completar el perfil.
+  String? _firstName(Profile? profile) {
+    if (profile == null) {
+      return null;
+    }
+
+    for (final candidate in [profile.firstName, profile.nombre]) {
+      final trimmed = candidate?.trim();
+      if (trimmed != null && trimmed.isNotEmpty) {
+        return trimmed.split(' ').first;
+      }
+    }
+
+    return null;
+  }
 }
 
-class _GradientPanel extends StatelessWidget {
-  const _GradientPanel();
+class _QuickAccessList extends StatelessWidget {
+  const _QuickAccessList();
 
   @override
   Widget build(BuildContext context) {
-    return Semantics(
-      label: 'Panel visual provisional de Ocupa2',
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppDimensions.spacing20,
-          vertical: AppDimensions.spacing16,
+    // Se usan los mismos nombres de los modulos de la consigna para que el
+    // recorrido de la app coincida con lo que se evalua.
+    return Column(
+      children: [
+        QuickAccessCard(
+          label: 'Explorar ofertas',
+          description: 'Trabajos disponibles y filtros por tipo de empleo',
+          icon: Icons.work_outline_rounded,
+          color: AppColors.primary,
+          onTap: () => context.pushNamed(RouteNames.offers),
         ),
-        decoration: BoxDecoration(
-          gradient: AppColors.primaryGradient,
-          borderRadius: BorderRadius.circular(AppDimensions.radiusExtraLarge),
+        const SizedBox(height: AppDimensions.spacing12),
+        QuickAccessCard(
+          label: 'Mapa de ofertas',
+          description: 'Mira las ofertas ubicadas en el mapa',
+          icon: Icons.map_outlined,
+          color: AppColors.secondary,
+          onTap: () => context.pushNamed(RouteNames.offersMap),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Icon(
-              Icons.handshake_outlined,
-              color: AppColors.surface,
-              size: AppDimensions.iconLarge,
-            ),
-            const SizedBox(height: AppDimensions.spacing16),
-            Text(
-              'Arquitectura lista para crecer',
-              style: AppTextStyles.headingMedium.copyWith(
-                color: AppColors.surface,
-              ),
-            ),
-            const SizedBox(height: AppDimensions.spacing8),
-            Text(
-              'Features separadas, tema compartido y rutas centralizadas.',
-              style: AppTextStyles.bodyMedium.copyWith(
-                color: AppColors.surface.withValues(alpha: 0.9),
-              ),
-            ),
-          ],
+        const SizedBox(height: AppDimensions.spacing12),
+        QuickAccessCard(
+          label: 'Publicar oferta',
+          description: 'Publica un trabajo y recibe aplicantes',
+          icon: Icons.campaign_outlined,
+          color: AppColors.primaryDark,
+          onTap: () => context.pushNamed(RouteNames.publishOffer),
         ),
-      ),
+        const SizedBox(height: AppDimensions.spacing12),
+        QuickAccessCard(
+          label: 'Noticias',
+          description: 'Novedades sobre empleo y oficios',
+          icon: Icons.newspaper_outlined,
+          color: AppColors.accent,
+          onTap: () => context.pushNamed(RouteNames.news),
+        ),
+        const SizedBox(height: AppDimensions.spacing12),
+        QuickAccessCard(
+          label: 'Videos',
+          description: 'Tutoriales y capacitación',
+          icon: Icons.smart_display_outlined,
+          color: AppColors.warning,
+          onTap: () => context.pushNamed(RouteNames.videos),
+        ),
+        const SizedBox(height: AppDimensions.spacing12),
+        QuickAccessCard(
+          label: 'Acerca de',
+          description: 'Equipo de desarrollo',
+          icon: Icons.info_outline_rounded,
+          color: AppColors.success,
+          onTap: () => context.pushNamed(RouteNames.about),
+        ),
+      ],
     );
   }
 }
+
+// Mensajes de bienvenida del slider. Para usar fotos reales basta con agregar
+// imageAsset a la lamina y registrar la carpeta en pubspec.yaml.
+const _welcomeSlides = <WelcomeSlide>[
+  WelcomeSlide(
+    title: 'Bienvenido a Ocupa2',
+    message:
+        'La plataforma donde se conectan quienes necesitan resolver un '
+        'trabajo y quienes saben hacerlo.',
+    icon: Icons.handshake_outlined,
+  ),
+  WelcomeSlide(
+    title: 'Encuentra tu próximo trabajo',
+    message:
+        'Explora ofertas por tipo de empleo o búscalas en el mapa y aplica '
+        'a las que van contigo.',
+    icon: Icons.travel_explore_outlined,
+  ),
+  WelcomeSlide(
+    title: 'Publica lo que necesitas',
+    message:
+        'Crea tu oferta, revisa a los aplicantes, califícalos y elige a tu '
+        'ganador.',
+    icon: Icons.campaign_outlined,
+  ),
+  WelcomeSlide(
+    title: 'Haz valer tu experiencia',
+    message:
+        'Suma tus experiencias y certificados al perfil para destacar entre '
+        'los demás aplicantes.',
+    icon: Icons.workspace_premium_outlined,
+  ),
+];

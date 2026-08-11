@@ -1,5 +1,6 @@
 import '../../domain/entities/apply_offer_answer.dart';
 import '../../domain/entities/apply_offer_result.dart';
+import '../../domain/entities/create_offer_request.dart';
 import '../../domain/entities/job_type.dart';
 import '../../domain/entities/offer.dart';
 import '../../domain/entities/offer_like_result.dart';
@@ -37,6 +38,11 @@ class OffersRepositoryImpl
     return _remoteDataSource.getOfferById(
       id,
     );
+  }
+
+  @override
+  Future<Offer> createOffer(CreateOfferRequest request) {
+    return _remoteDataSource.createOffer(request);
   }
 
   @override

@@ -391,6 +391,11 @@ class _FakeOffersRepository
   }
 
   @override
+  Future<Offer> createOffer(dynamic request) {
+    throw UnimplementedError();
+  }
+
+  @override
   Future<Offer> getOfferById(String id) {
     throw UnimplementedError();
   }
@@ -507,6 +512,8 @@ class _FakeProfileRepository
     required String cedula,
     required String gender,
     required DateTime birthDate,
+    String? email,
+    String? referralMatricula,
   }) async {
     return _profile(
       profileCompleted: true,

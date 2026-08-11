@@ -5,6 +5,7 @@ import '../../features/offers/presentation/pages/my_offers_screen.dart';
 import 'package:ocupa2/features/profile_experience/presentation/screens/add_experience_screen.dart';
 import 'package:ocupa2/features/profile_experience/presentation/screens/experience_screen.dart';
 import 'package:ocupa2/features/profile_experience/presentation/screens/profile_screen.dart';
+import 'package:ocupa2/payments/presentation/screens/payment_screen.dart';
 import '../../features/about/presentation/screens/about_screen.dart';
 import '../../features/auth/presentation/providers/auth_session_providers.dart';
 import '../../features/auth/presentation/pages/forgot_password_screen.dart';
@@ -17,6 +18,8 @@ import '../../features/news/domain/entities/news_item.dart';
 import '../../features/news/presentation/pages/news_detail_screen.dart';
 import '../../features/news/presentation/pages/news_screen.dart';
 import '../../features/offers/presentation/pages/offer_detail_screen.dart';
+import '../../features/offers/presentation/screens/create_offer_screen.dart';
+import '../../features/offers/presentation/screens/my_offers_screen.dart';
 import '../../features/offers/presentation/pages/offers_screen.dart';
 import '../../features/profile/presentation/pages/complete_profile_screen.dart';
 import '../../features/videos/domain/entities/video.dart';
@@ -214,20 +217,38 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const AddExperienceScreen(),
       ),
       GoRoute(
-        path: '/profile',
+        path: RouteNames.profilePath,
         name: RouteNames.profile,
-        builder: (_, __) => const ProfileScreen(),
+        builder: (_, _) => const ProfileScreen(),
       ),
       GoRoute(
-        path: '/edit-profile',
+        path: RouteNames.editProfilePath,
         name: RouteNames.editProfile,
         builder: (context, state) {
           final profile = state.extra as Profile;
 
-          return EditProfileScreen(
-            profile: profile,
-          );
+          return EditProfileScreen(profile: profile);
         },
+      ),
+      GoRoute(
+        name: RouteNames.payment,
+        path: '/payment',
+        builder: (context, state) {
+          return const PaymentScreen();
+        },
+      ),
+      // La pantalla de publicar oferta existia sin ruta registrada, asi que no
+      // se podia alcanzar desde ningun lado. Se registra para engancharla al
+      // Inicio.
+      GoRoute(
+        name: RouteNames.publishOffer,
+        path: RouteNames.publishOfferPath,
+        builder: (context, state) => const CreateOfferScreen(),
+      ),
+      GoRoute(
+        name: RouteNames.myOffers,
+        path: RouteNames.myOffersPath,
+        builder: (context, state) => const MyOffersScreen(),
       ),
     ],
   );

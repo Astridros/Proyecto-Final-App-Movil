@@ -14,6 +14,8 @@ abstract interface class OffersRepository {
 
   Future<Offer> getOfferById(String id);
 
+  Future<Offer> createOffer(CreateOfferRequest request);
+
   Future<ApplyOfferResult> applyToOffer({
     required String offerId,
     required String comment,

@@ -2,6 +2,7 @@ import '../../../../core/errors/api_exception.dart';
 import '../../../../core/network/api_client.dart';
 import '../../domain/entities/apply_offer_answer.dart';
 import '../../domain/entities/apply_offer_result.dart';
+import '../../domain/entities/create_offer_request.dart';
 import '../../domain/entities/job_type.dart';
 import '../../domain/entities/offer.dart';
 import '../../domain/entities/offer_like_result.dart';
@@ -21,6 +22,8 @@ abstract interface class OffersRemoteDataSource {
   });
 
   Future<Offer> getOfferById(String id);
+
+  Future<Offer> createOffer(CreateOfferRequest request);
 
   Future<ApplyOfferResult> applyToOffer({
     required String offerId,
@@ -97,6 +100,17 @@ class OffersRemoteDataSourceImpl implements OffersRemoteDataSource {
       response.data,
       'La oferta',
     );
+
+    return OfferModel.fromJson(data);
+  }
+
+  @override
+  Future<Offer> createOffer(CreateOfferRequest request) async {
+    final response = await _apiClient.post<Object?>(
+      _offersPath,
+      data: CreateOfferRequestModel.fromEntity(request).toJson(),
+    );
+    final data = _responseData(response.data, 'La oferta creada');
 
     return OfferModel.fromJson(data);
   }
