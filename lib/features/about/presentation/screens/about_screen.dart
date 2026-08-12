@@ -38,13 +38,7 @@ class AboutScreen extends StatelessWidget {
       telegramUrl: 'https://t.me/carlos_ejemplo',
       photoAsset: 'assets/images/team/yeison_rojas.jpg',
     ),
-    TeamMember(
-      name: 'Carlos Pérez',
-      studentId: '2024-0003',
-      phone: '+18095550003',
-      telegramUrl: 'https://t.me/carlos_ejemplo',
-      photoAsset: 'assets/images/team/carlos.jpg',
-    ),
+    
     TeamMember(
       name: 'Angel Genao',
       studentId: '2024-1169',
@@ -52,13 +46,7 @@ class AboutScreen extends StatelessWidget {
       telegramUrl: 'https://t.me/carlos_ejemplo',
       photoAsset: 'assets/images/team/angel.jpg',
     ),
-    TeamMember(
-      name: 'Carlos Pérez',
-      studentId: '2024-0003',
-      phone: '+18095550003',
-      telegramUrl: 'https://t.me/carlos_ejemplo',
-      photoAsset: 'assets/images/team/carlos.jpg',
-    ),
+
     TeamMember(
       name: 'Anthony Urbaez',
       studentId: '2023-1394',
