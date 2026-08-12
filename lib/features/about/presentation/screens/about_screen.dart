@@ -44,7 +44,7 @@ class AboutScreen extends StatelessWidget {
       studentId: '2024-1169',
       phone: '+18299109251',
       telegramUrl: 'https://t.me/carlos_ejemplo',
-      photoAsset: 'assets/images/team/angel.jpg',
+      photoAsset: 'assets/images/team/angel.jpeg',
     ),
 
     TeamMember(
