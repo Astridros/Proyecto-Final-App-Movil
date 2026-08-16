@@ -43,7 +43,7 @@ class AboutScreen extends StatelessWidget {
       name: 'Angel Genao',
       studentId: '2024-1169',
       phone: '+18299109251',
-      telegramUrl: 'https://t.me/carlos_ejemplo',
+      telegramUrl: 'https://t.me/angeldanielgenao',
       photoAsset: 'assets/images/team/angel.jpeg',
     ),
 

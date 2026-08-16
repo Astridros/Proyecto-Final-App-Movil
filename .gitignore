@@ -47,3 +47,11 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Plataformas generadas localmente por `flutter create` (el repo solo
+# versiona android/ y web/). Se regeneran con:
+#   flutter create --platforms=ios,windows,linux,macos .
+/ios/
+/linux/
+/macos/
+/windows/

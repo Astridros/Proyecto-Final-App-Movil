@@ -44,6 +44,10 @@ dependencies:
   cached_network_image: ^3.4.1
   shimmer: ^3.0.0
   webview_flutter: ^4.14.1
+  # Implementación Android de webview_flutter. Se declara directa porque el
+  # detalle de video necesita su API específica (permitir reproducción de
+  # video sin gesto previo y pantalla completa del player de YouTube).
+  webview_flutter_android: ^4.13.0
   flutter_map: ^8.2.2
   latlong2: ^0.9.1
 dev_dependencies:
