@@ -2,12 +2,14 @@ import '../../../../core/network/api_client.dart';
 import '../../../../core/errors/api_exception.dart';
 import '../../domain/entities/apply_offer_answer.dart';
 import '../../domain/entities/apply_offer_result.dart';
+import '../../domain/entities/create_offer_request.dart';
 import '../../domain/entities/job_type.dart';
 import '../../domain/entities/offer.dart';
 import '../../domain/entities/offer_like_result.dart';
 import '../models/apply_offer_request_model.dart';
 import '../models/apply_offer_result_model.dart';
 import '../models/api_list_response.dart';
+import '../models/create_offer_request_model.dart';
 import '../models/job_type_model.dart';
 import '../models/offer_like_result_model.dart';
 import '../models/offer_model.dart';
@@ -18,6 +20,8 @@ abstract interface class OffersRemoteDataSource {
   Future<List<Offer>> getOffers({String? jobTypeKey, String? contractType});
 
   Future<Offer> getOfferById(String id);
+
+  Future<Offer> createOffer(CreateOfferRequest request);
 
   Future<ApplyOfferResult> applyToOffer({
     required String offerId,
@@ -78,6 +82,17 @@ class OffersRemoteDataSourceImpl implements OffersRemoteDataSource {
       '$_offersPath/$normalizedId',
     );
     final data = _responseData(response.data, 'La oferta');
+
+    return OfferModel.fromJson(data);
+  }
+
+  @override
+  Future<Offer> createOffer(CreateOfferRequest request) async {
+    final response = await _apiClient.post<Object?>(
+      _offersPath,
+      data: CreateOfferRequestModel.fromEntity(request).toJson(),
+    );
+    final data = _responseData(response.data, 'La oferta creada');
 
     return OfferModel.fromJson(data);
   }

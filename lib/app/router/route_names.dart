@@ -2,6 +2,8 @@ class RouteNames {
   const RouteNames._();
 
   static const initial = 'initial';
+  static const panel = 'panel';
+  static const panelPath = '/panel';
   static const login = 'login';
   static const register = 'register';
   static const forgotPassword = 'forgotPassword';
@@ -28,9 +30,31 @@ class RouteNames {
   static const completeProfilePath = '/complete-profile';
   static const offersPath = '/offers';
   static const offerDetailPath = '/offers/:id';
+  static const myApplications = 'myApplications';
+  static const myApplicationsPath = '/my-applications';
   static const changePasswordPath = '/change-password';
   static const newsPath = '/news';
   static const newsDetailPath = '/news/detail';
   static const videosPath = '/videos';
   static const videoDetailPath = '/videos/detail';
+
+  // Anthony Urbaez - 2023-1394 feature mi perfil / experiencia
+  static const experiences = 'experiences';
+  static const addExperience = 'addExperience';
+  static const editProfile = 'editProfile';
+  static const profile = 'profile';
+  static const payment = 'payment';
+  static const publishOffer = 'publishOffer';
+  static const publishOfferPath = '/publish-offer';
+  static const myPayments = 'myPayments';
+  static const myPaymentsPath = '/my-payments';
+  static const myOffers = 'myOffers';
+  static const myOffersPath = '/my-offers';
+  static const offerApplications = 'offerApplications';
+  static const offerApplicationsPath = '/offers/:id/applications';
+
+  static const experiencesPath = '/experiences';
+  static const addExperiencePath = '/add-experience';
+  static const profilePath = '/profile';
+  static const editProfilePath = '/edit-profile';
 }

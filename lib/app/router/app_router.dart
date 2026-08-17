@@ -1,6 +1,10 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:ocupa2/features/profile_experience/presentation/screens/add_experience_screen.dart';
+import 'package:ocupa2/features/profile_experience/presentation/screens/experience_screen.dart';
+import 'package:ocupa2/features/profile_experience/presentation/screens/profile_screen.dart';
+import 'package:ocupa2/payments/presentation/screens/payment_screen.dart';
 import '../../features/about/presentation/screens/about_screen.dart';
 import '../../features/auth/presentation/providers/auth_session_providers.dart';
 import '../../features/auth/presentation/pages/forgot_password_screen.dart';
@@ -9,10 +13,15 @@ import '../../features/auth/presentation/pages/register_screen.dart';
 import '../../features/auth/presentation/screens/session_loading_screen.dart';
 import '../../features/change_password/presentation/pages/change_password_screen.dart';
 import '../../features/home/presentation/screens/initial_screen.dart';
+import '../../features/home/presentation/screens/panel_screen.dart';
 import '../../features/news/domain/entities/news_item.dart';
 import '../../features/news/presentation/pages/news_detail_screen.dart';
 import '../../features/news/presentation/pages/news_screen.dart';
 import '../../features/offers/presentation/pages/offer_detail_screen.dart';
+import '../../features/applications/presentation/pages/offer_applications_screen.dart';
+import '../../features/offers/presentation/screens/create_offer_screen.dart';
+import '../../features/payments/presentation/pages/my_payments_screen.dart';
+import '../../features/offers/presentation/pages/my_offers_screen.dart';
 import '../../features/offers/presentation/pages/offers_screen.dart';
 import '../../features/profile/presentation/pages/complete_profile_screen.dart';
 import '../../features/videos/domain/entities/video.dart';
@@ -20,6 +29,9 @@ import '../../features/videos/presentation/pages/video_detail_screen.dart';
 import '../../features/videos/presentation/pages/videos_screen.dart';
 import 'route_names.dart';
 import '../../features/offer_map/presentation/screens/offers_map_screen.dart';
+import '../../features/profile_experience/presentation/screens/edit_profile_screen.dart';
+import '../../features/profile/domain/entities/profile.dart';
+import '../../features/applications/presentation/pages/my_applications_screen.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   final refreshNotifier = _GoRouterRefreshNotifier(ref);
@@ -62,6 +74,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: RouteNames.initialPath,
         name: RouteNames.initial,
         builder: (context, state) => const InitialScreen(),
+      ),
+      GoRoute(
+        path: RouteNames.panelPath,
+        name: RouteNames.panel,
+        builder: (context, state) => const PanelScreen(),
       ),
       GoRoute(
         path: RouteNames.loginPath,
@@ -163,6 +180,71 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         name: RouteNames.videoDetail,
         builder: (context, state) =>
             VideoDetailScreen(video: state.extra as Video),
+      ),
+
+      GoRoute(
+        name: RouteNames.experiences,
+        path: RouteNames.experiencesPath,
+        builder: (context, state) => const ExperienceScreen(),
+      ),
+      GoRoute(
+        name: RouteNames.addExperience,
+        path: RouteNames.addExperiencePath,
+        builder: (context, state) => const AddExperienceScreen(),
+      ),
+      GoRoute(
+        path: RouteNames.profilePath,
+        name: RouteNames.profile,
+        builder: (_, _) => const ProfileScreen(),
+      ),
+      GoRoute(
+        path: RouteNames.editProfilePath,
+        name: RouteNames.editProfile,
+        builder: (context, state) {
+          final profile = state.extra as Profile;
+
+          return EditProfileScreen(profile: profile);
+        },
+      ),
+      GoRoute(
+        name: RouteNames.payment,
+        path: '/payment',
+        builder: (context, state) {
+          return const PaymentScreen();
+        },
+      ),
+      // La pantalla de publicar oferta existia sin ruta registrada, asi que no
+      // se podia alcanzar desde ningun lado. Se registra para engancharla al
+      // Inicio.
+      GoRoute(
+        name: RouteNames.publishOffer,
+        path: RouteNames.publishOfferPath,
+        builder: (context, state) => const CreateOfferScreen(),
+      ),
+      GoRoute(
+        name: RouteNames.myPayments,
+        path: RouteNames.myPaymentsPath,
+        builder: (context, state) => const MyPaymentsScreen(),
+      ),
+      GoRoute(
+        name: RouteNames.myOffers,
+        path: RouteNames.myOffersPath,
+        builder: (context, state) => const MyOffersScreen(),
+      ),
+      GoRoute(
+        name: RouteNames.myApplications,
+        path: RouteNames.myApplicationsPath,
+        builder: (context, state) => const MyApplicationsScreen(),
+      ),
+      GoRoute(
+        name: RouteNames.offerApplications,
+        path: RouteNames.offerApplicationsPath,
+        builder: (context, state) {
+          final offerId = state.pathParameters['id'] ?? '';
+          return OfferApplicationsScreen(
+            offerId: offerId,
+          );
+        },
       ),
     ],
   );

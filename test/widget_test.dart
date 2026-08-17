@@ -235,7 +235,7 @@ void main() {
       await tester.pumpWidget(_testApp(hasToken: true, profileCompleted: true));
       await tester.pumpAndSettle();
 
-      expect(find.text('Base provisional'), findsOneWidget);
+      expect(find.text('Encuentra tu próxima oportunidad'), findsOneWidget);
       expect(find.byType(LoginScreen), findsNothing);
       expect(find.text('Iniciar sesión'), findsNothing);
     },
@@ -256,9 +256,10 @@ void main() {
     expect(find.text('Cambiar contraseña'), findsWidgets);
   });
 
-  testWidgets('InitialScreen muestra icono hamburguesa', (tester) async {
+  testWidgets('PanelScreen muestra icono hamburguesa', (tester) async {
     await tester.pumpWidget(_testApp(hasToken: true, profileCompleted: true));
     await tester.pumpAndSettle();
+    await _goToPanel(tester);
 
     expect(find.byTooltip('Abrir menú'), findsOneWidget);
   });
@@ -266,6 +267,7 @@ void main() {
   testWidgets('El menú muestra opciones privadas', (tester) async {
     await tester.pumpWidget(_testApp(hasToken: true, profileCompleted: true));
     await tester.pumpAndSettle();
+    await _goToPanel(tester);
     await _openDrawer(tester);
 
     expect(find.text('Inicio'), findsWidgets);
@@ -278,6 +280,7 @@ void main() {
   ) async {
     await tester.pumpWidget(_testApp(hasToken: true, profileCompleted: true));
     await tester.pumpAndSettle();
+    await _goToPanel(tester);
 
     expect(find.text('Cambiar contraseña'), findsNothing);
     expect(find.text('Cerrar sesión'), findsNothing);
@@ -289,13 +292,14 @@ void main() {
   ) async {
     await tester.pumpWidget(_testApp(hasToken: true, profileCompleted: true));
     await tester.pumpAndSettle();
+    await _goToPanel(tester);
     await _openDrawer(tester);
 
     await tester.tap(find.text('Inicio').last);
     await tester.pumpAndSettle();
 
     expect(find.byType(NavigationDrawer), findsNothing);
-    expect(find.text('Base provisional'), findsOneWidget);
+    expect(find.text('Encuentra tu próxima oportunidad'), findsOneWidget);
   });
 
   testWidgets('El encabezado del menú muestra datos reales si existen', (
@@ -303,6 +307,7 @@ void main() {
   ) async {
     await tester.pumpWidget(_testApp(hasToken: true, profileCompleted: true));
     await tester.pumpAndSettle();
+    await _goToPanel(tester);
     await _openDrawer(tester);
 
     expect(find.text('Ocupa2'), findsWidgets);
@@ -320,6 +325,7 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+    await _goToPanel(tester);
 
     await _openDrawer(tester);
     await tester.tap(find.text('Cerrar sesión'));
@@ -328,7 +334,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(tokenStorage.clearSessionCalls, 0);
-    expect(find.text('Base provisional'), findsOneWidget);
+    expect(find.text('Explorar ofertas'), findsOneWidget);
   });
 
   testWidgets('Confirmar ejecuta logout y muestra LoginScreen', (tester) async {
@@ -341,6 +347,7 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+    await _goToPanel(tester);
 
     await _openDrawer(tester);
     await tester.tap(find.text('Cerrar sesión'));
@@ -364,6 +371,7 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+    await _goToPanel(tester);
 
     await _openDrawer(tester);
     await tester.tap(find.text('Cerrar sesión'));
@@ -385,6 +393,7 @@ void main() {
   ) async {
     await tester.pumpWidget(_testApp(hasToken: true, profileCompleted: true));
     await tester.pumpAndSettle();
+    await _goToPanel(tester);
 
     await _openDrawer(tester);
     await tester.tap(find.text('Cambiar contraseña'));
@@ -397,6 +406,7 @@ void main() {
   testWidgets('El botón de regreso funciona', (tester) async {
     await tester.pumpWidget(_testApp(hasToken: true, profileCompleted: true));
     await tester.pumpAndSettle();
+    await _goToPanel(tester);
 
     await _openDrawer(tester);
     await tester.tap(find.text('Cambiar contraseña'));
@@ -404,13 +414,14 @@ void main() {
     await tester.tap(find.text('Volver'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Base provisional'), findsOneWidget);
+    expect(find.text('Explorar ofertas'), findsOneWidget);
     expect(find.byType(ChangePasswordScreen), findsNothing);
   });
 
   testWidgets('Un cambio exitoso mantiene la sesión activa', (tester) async {
     await tester.pumpWidget(_testApp(hasToken: true, profileCompleted: true));
     await tester.pumpAndSettle();
+    await _goToPanel(tester);
 
     await _openDrawer(tester);
     await tester.tap(find.text('Cambiar contraseña'));
@@ -446,17 +457,17 @@ void main() {
 
       router.go(RouteNames.loginPath);
       await tester.pumpAndSettle();
-      expect(find.text('Base provisional'), findsOneWidget);
+      expect(find.text('Encuentra tu próxima oportunidad'), findsOneWidget);
       expect(find.byType(LoginScreen), findsNothing);
 
       router.go(RouteNames.registerPath);
       await tester.pumpAndSettle();
-      expect(find.text('Base provisional'), findsOneWidget);
+      expect(find.text('Encuentra tu próxima oportunidad'), findsOneWidget);
       expect(find.byType(RegisterScreen), findsNothing);
 
       router.go(RouteNames.forgotPasswordPath);
       await tester.pumpAndSettle();
-      expect(find.text('Base provisional'), findsOneWidget);
+      expect(find.text('Encuentra tu próxima oportunidad'), findsOneWidget);
       expect(find.byType(ForgotPasswordScreen), findsNothing);
     },
   );
@@ -497,7 +508,7 @@ void main() {
       await tester.tap(find.text('Entrar'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Base provisional'), findsOneWidget);
+      expect(find.text('Encuentra tu próxima oportunidad'), findsOneWidget);
       expect(find.byType(LoginScreen), findsNothing);
     },
   );
@@ -529,7 +540,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(tester.takeException(), isNull);
-    expect(find.text('Base provisional'), findsOneWidget);
+    expect(find.text('Encuentra tu próxima oportunidad'), findsOneWidget);
   });
 
   testWidgets('No hay loops al abrir change-password', (tester) async {
@@ -774,6 +785,17 @@ Future<void> _openDrawer(WidgetTester tester) async {
   await tester.pumpAndSettle();
 }
 
+// El menu lateral y los accesos privados viven en el Panel, no en Inicio
+// (Inicio es solo el slider de bienvenida, con boton "Entrar" hacia el
+// Panel). Se navega alli con el router en vez de tocar el boton para no
+// depender de su texto.
+Future<void> _goToPanel(WidgetTester tester) async {
+  GoRouter.of(
+    tester.element(find.text('Ocupa2')),
+  ).goNamed(RouteNames.panel);
+  await tester.pumpAndSettle();
+}
+
 Future<void> _fillLogin(WidgetTester tester) async {
   await tester.enterText(
     find.widgetWithText(TextFormField, 'Correo'),
@@ -926,6 +948,11 @@ class _FakeOffersRepository implements OffersRepository {
   }
 
   @override
+  Future<Offer> createOffer(dynamic request) {
+    throw UnimplementedError();
+  }
+
+  @override
   Future<Offer> getOfferById(String id) async {
     lastDetailId = id;
     return _offer();
@@ -955,11 +982,62 @@ class _FakeOffersRepository implements OffersRepository {
     return const [];
   }
 }
-
 class _FakeApplicationsRepository implements ApplicationsRepository {
+  List<Application> applications = const [];
+  Object? error;
+  int calls = 0;
+
   @override
   Future<List<Application>> getMyApplications() async {
-    return const [];
+    calls++;
+
+    if (error != null) {
+      throw error!;
+    }
+
+    return applications;
+  }
+
+  @override
+  Future<List<Application>> getOfferApplications(
+      String offerId,
+      ) async {
+    if (error != null) {
+      throw error!;
+    }
+
+    return applications
+        .where(
+          (application) => application.offerId == offerId,
+    )
+        .toList();
+  }
+
+  @override
+  Future<Application> updateApplication({
+    required String applicationId,
+    int? rating,
+    String? status,
+    double? salary,
+    String? currency,
+    DateTime? startDate,
+    String? duration,
+  }) async {
+    if (error != null) {
+      throw error!;
+    }
+
+    final index = applications.indexWhere(
+          (application) => application.id == applicationId,
+    );
+
+    if (index == -1) {
+      throw StateError(
+        'Aplicación no encontrada: $applicationId',
+      );
+    }
+
+    return applications[index];
   }
 }
 
@@ -1009,6 +1087,8 @@ class _FakeProfileRepository implements ProfileRepository {
     required String cedula,
     required String gender,
     required DateTime birthDate,
+    String? email,
+    String? referralMatricula,
   }) async {
     profile = Profile(
       id: profile.id,
