@@ -28,7 +28,7 @@ class AboutScreen extends StatelessWidget {
       name: 'Dailyn Castro',
       studentId: '2024-41343',
       phone: '+18296632875',
-      telegramUrl: 'https://t.me/carlos_ejemplo',
+      telegramUrl: 'https://t.me/DAILYNCAS',
       photoAsset: 'assets/images/team/dailyn_castro.jpeg',
     ),
     TeamMember(
@@ -43,7 +43,7 @@ class AboutScreen extends StatelessWidget {
       name: 'Angel Genao',
       studentId: '2024-1169',
       phone: '+18299109251',
-      telegramUrl: 'https://t.me/carlos_ejemplo',
+      telegramUrl: 'https://t.me/ANGELDANIELGENAO',
       photoAsset: 'assets/images/team/angel.jpeg',
     ),
 
@@ -58,7 +58,7 @@ class AboutScreen extends StatelessWidget {
       name: 'Mauriandys Peguero',
       studentId: '2024-1672',
       phone: '+18496269556',
-      telegramUrl: 'https://t.me/+18298572510',
+      telegramUrl: 'https://t.me/itsMauroPeguero',
       photoAsset: 'assets/images/team/mauriandys-peguero.jpeg',
     ),
   ];
